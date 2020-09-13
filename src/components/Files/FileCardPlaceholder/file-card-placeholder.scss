@@ -1,0 +1,88 @@
+@import "../../../styles/mixins.scss";
+
+.file-card-placeholder {
+  display: flex;
+  padding: var(--space-xl);
+  border-radius: 8px;
+  background-color: var(--color-grey-70);
+  border: 1px solid var(--color-grey-50);
+
+  @include breakpoint-sm {
+    padding: var(--space-md);
+  }
+}
+
+.file-card-image-placeholder {
+  width: 108px;
+  height: 160px;
+  margin-right: var(--space-xl);
+  border-radius: 8px;
+  background-color: var(--color-grey-40);
+
+  @include breakpoint-md {
+    margin-right: var(--space-md);
+  }
+}
+
+.file-card-info-placeholder {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.file-card-title-placeholder {
+  height: 16px;
+  width: 100%;
+  border-radius: 999px;
+  background-color: var(--color-grey-40);
+}
+
+.file-card-author-placeholder {
+  height: 8px;
+  width: 40%;
+  margin-top: var(--space-md);
+  border-radius: 999px;
+  background-color: var(--color-grey-40);
+}
+
+.file-card-secondary-info-placeholder {
+  display: flex;
+  margin-top: var(--space-md);
+}
+
+.file-card-secondary-info-item-placeholder {
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-grey-40);
+
+  &:first-of-type {
+    min-width: 0;
+    flex-grow: 1;
+    margin-right: 4px;
+  }
+
+  &:last-of-type {
+    width: 50px;
+  }
+}
+
+.file-card-progress-placeholder {
+  margin-top: auto;
+  margin-bottom: var(--space-md);
+  height: 2px;
+  width: 100%;
+  background-color: var(--color-grey-40);
+}
+
+
+.file-card-bottom-placeholder {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.file-card-bottom-btn-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-grey-40);
+}
