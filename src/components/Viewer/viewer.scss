@@ -109,7 +109,9 @@
 }
 
 .viewer-toolbar-page-input {
-  padding: var(--space-sm);
+  box-sizing: content-box;
+  height: 100%;
+  padding: 0 var(--space-sm);
   border-radius: 0;
   background-color: transparent;
   text-align: right;
@@ -117,6 +119,10 @@
   &:focus {
     margin-right: var(--space-xs);
     background-color: var(--color-grey-30);
+
+    @include breakpoint-sm {
+      padding-left: var(--space-md);
+    }
   }
 
   @include breakpoint-sm {

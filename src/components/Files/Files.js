@@ -349,7 +349,7 @@ export default function Files() {
         <div className={`files-categories-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
           <div className="files-sidebar">
             <div className="files-sidebar-title-container">
-              <h1 className="files-sidebar-title">ModestRead</h1>
+              <span className="files-sidebar-title">ModestRead</span>
             </div>
             <ul className="files-categories">
               {state.categories.map((category, i) => (

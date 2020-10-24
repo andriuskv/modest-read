@@ -1,12 +1,14 @@
 @import "../../styles/mixins.scss";
 
 .banner-image {
-  margin-top: 16vh;
-  margin-bottom: 16vh;
   max-width: 100%;
   height: 80px;
+  margin-top: 16vh;
+  margin-bottom: 16vh;
 
   @include breakpoint-md {
+    height: 72px;
+    padding: 0 var(--space-md);
     margin-top: 12vh;
     margin-bottom: 12vh;
   }
