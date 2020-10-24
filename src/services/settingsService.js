@@ -1,4 +1,4 @@
-const settings = JSON.parse(localStorage.getItem("settings")) || {
+const settings = JSON.parse(localStorage.getItem("modest-read-settings")) || {
   showCategories: false,
   layoutType: "grid",
   invertColors: false,
@@ -11,7 +11,7 @@ function getSettings() {
 
 function setSetting(key, value) {
   settings[key] = value;
-  localStorage.setItem("settings", JSON.stringify(settings));
+  localStorage.setItem("modest-read-settings", JSON.stringify(settings));
 }
 
 export {

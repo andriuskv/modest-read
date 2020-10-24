@@ -615,7 +615,8 @@ export default function Viewer() {
   }
 
   function handleInputFocus(event) {
-    const width = state.file.pageCount < 1000 ? 4 : state.file.pageCount.toString().length;
+    const { pageCount } = state.file;
+    const width = pageCount < 1000 ? 3 : pageCount.toString().length;
     event.target.style.width = `${width}ch`;
     event.target.select();
   }

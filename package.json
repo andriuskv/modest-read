@@ -12,15 +12,15 @@
     "idb-keyval": "^3.2.0",
     "normalize.css": "^8.0.1",
     "pdfjs-dist": "^2.6.347",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.3",
+    "react-scripts": "4.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "node-sass": "^4.14.1",
-    "worker-loader": "^3.0.4"
+    "worker-loader": "^3.0.5"
   },
   "browserslist": [
     "last 4 chrome versions",
