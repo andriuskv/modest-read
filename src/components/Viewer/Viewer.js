@@ -4,6 +4,7 @@ import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata } from "../../utils";
 import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
+import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings, setSetting } from "../../services/settingsService";
 import Dropdown from "../Dropdown";
 import Icon from "../Icon";
@@ -224,7 +225,16 @@ export default function Viewer() {
     const file = await fetchIDBFile(id);
 
     if (file) {
-      setState({ file, filePreviewVisible: true });
+      const currentFile = await fetchCurrentFile();
+
+      if (currentFile && currentFile.name === file.name) {
+        loadFile(currentFile, {
+          fileMetadata: file
+        });
+      }
+      else {
+        setState({ file, filePreviewVisible: true });
+      }
       setSettings(getSettings());
       setDocumentTitle(file.name);
       document.body.style.overscrollBehavior = "none";
@@ -254,10 +264,7 @@ export default function Viewer() {
         if (scrollDirection.current === 1) {
           hideToolbar();
         }
-        else if (!state.file.scrollTop) {
-          revealToolbar();
-        }
-        else if (toolbarScrollOffset.current > 100) {
+        else if (!state.file.scrollTop || toolbarScrollOffset.current > 100) {
           revealToolbar();
         }
         else {
@@ -418,42 +425,42 @@ export default function Viewer() {
     pdfRef.current.appendChild(fragment);
   }
 
-  async function loadFile(file, newFile = null, pdfInstance = null) {
-    const stateFile = newFile || state.file;
-    stateFile.scale = stateFile.scale || { name: "1", value: DEFAUlT_SCALE };
-    stateFile.pageNumber = stateFile.pageNumber || 1;
+  async function loadFile(file, { fileMetadata = null, pdfInstance = null } = {}) {
+    fileMetadata.scale = fileMetadata.scale || { name: "1", value: DEFAUlT_SCALE };
+    fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
     const [{ maxWidth, maxHeight }, pageDimensions] = await Promise.all([
       findBiggestDimensions(pdf),
       getPageDimensions(pdf),
-      renderEmptyPages(pdf, stateFile.scale)
+      renderEmptyPages(pdf, fileMetadata.scale)
     ]);
 
-    delete state.filePreviewVisible;
+    delete state?.filePreviewVisible;
 
     setState({
       ...state,
       instance: pdf,
       pageDimensions,
-      file: stateFile,
+      file: fileMetadata,
       maxWidth,
       maxHeight
     });
 
-    window.scrollTo(stateFile.scrollLeft, stateFile.scrollTop);
-    setScale(stateFile.scale);
-    setPageNumber(stateFile.pageNumber);
+    window.scrollTo(fileMetadata.scrollLeft, fileMetadata.scrollTop);
+    setScale(fileMetadata.scale);
+    setPageNumber(fileMetadata.pageNumber);
 
-    if (stateFile.status !== "read") {
-      if (stateFile.pageCount === 1) {
-        stateFile.status = "read";
+    if (fileMetadata.status !== "read") {
+      if (fileMetadata.pageCount === 1) {
+        fileMetadata.status = "read";
       }
       else {
-        stateFile.status = "reading";
+        fileMetadata.status = "reading";
       }
     }
-    stateFile.accessedAt = Date.now();
-    saveFile(stateFile);
+    fileMetadata.accessedAt = Date.now();
+    saveFile(fileMetadata);
+    saveCurrentFile(file);
   }
 
   async function loadNewFile() {
@@ -475,7 +482,10 @@ export default function Viewer() {
         coverImage
       };
     }
-    loadFile(file, newFile, pdf);
+    loadFile(file, {
+      fileMetadata: newFile,
+      pdf
+    });
     history.replace({ pathname: `/viewer/${newFile.id}`, state: true });
     setDocumentTitle(newFile.name);
   }
@@ -498,7 +508,7 @@ export default function Viewer() {
       });
     }
     else {
-      loadFile(file);
+      loadFile(file, { fileMetadata: state.file });
     }
     event.target.value = "";
   }
