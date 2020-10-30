@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata } from "../../utils";
@@ -659,6 +659,11 @@ export default function Viewer() {
     setSetting(target.name, target.checked);
   }
 
+  function exitViewer() {
+    window.removeEventListener("scroll", memoizedScrollHandler);
+    history.push({ pathname: "/" });
+  }
+
   function renderToolbar() {
     return (
       <div className={`viewer-toolbar${settings.keepToolbarVisible ? " keep-visible" : ""}`} ref={toolbarRef}>
@@ -731,9 +736,9 @@ export default function Viewer() {
             <span className="checkbox-label">Keep toolbar visible.</span>
           </label>
         </Dropdown>
-        <Link to="/" className="btn icon-btn icon-btn-alt" title="Exit">
+        <button className="btn icon-btn icon-btn-alt" onClick={exitViewer} title="Exit">
           <Icon name="exit"/>
-        </Link>
+        </button>
       </div>
     );
   }
