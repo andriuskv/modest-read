@@ -2,7 +2,7 @@
   "files": {
     "static/js/0.2512a530.chunk.js": "/modest-read/static/js/0.2512a530.chunk.js",
     "main.css": "/modest-read/static/css/main.0a942541.chunk.css",
-    "main.js": "/modest-read/static/js/main.c4cc312b.chunk.js",
+    "main.js": "/modest-read/static/js/main.21ccddc4.chunk.js",
     "runtime-main.js": "/modest-read/static/js/runtime-main.41d4b9af.js",
     "static/css/3.a34e2856.chunk.css": "/modest-read/static/css/3.a34e2856.chunk.css",
     "static/js/3.c5bef605.chunk.js": "/modest-read/static/js/3.c5bef605.chunk.js",
@@ -29,6 +29,6 @@
     "static/css/4.24bf1742.chunk.css",
     "static/js/4.94f2a513.chunk.js",
     "static/css/main.0a942541.chunk.css",
-    "static/js/main.c4cc312b.chunk.js"
+    "static/js/main.21ccddc4.chunk.js"
   ]
 }
