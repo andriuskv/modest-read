@@ -6,7 +6,7 @@ import "normalize.css";
 import "./styles/index.scss";
 
 import App from "./components/App";
-import * as serviceWorker from "./serviceWorker";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -15,5 +15,4 @@ ReactDOM.render(
   document.getElementById("root")
 );
 
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.register();
+serviceWorkerRegistration.unregister();

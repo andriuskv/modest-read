@@ -19,14 +19,13 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "node-sass": "^4.14.1",
+    "sass": "^1.28.0",
     "worker-loader": "^3.0.5"
   },
   "browserslist": [
     "last 4 chrome versions",
     "last 4 firefox versions",
     "last 1 and_chr versions",
-    "last 1 edge versions",
     "last 1 safari versions",
     "last 1 ios_saf versions"
   ],
