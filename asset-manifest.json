@@ -1,21 +1,21 @@
 {
   "files": {
-    "static/js/0.2512a530.chunk.js": "/modest-read/static/js/0.2512a530.chunk.js",
-    "main.css": "/modest-read/static/css/main.0a942541.chunk.css",
-    "main.js": "/modest-read/static/js/main.c4cc312b.chunk.js",
-    "runtime-main.js": "/modest-read/static/js/runtime-main.61d6084b.js",
+    "static/js/0.6935aad9.chunk.js": "/modest-read/static/js/0.6935aad9.chunk.js",
+    "main.css": "/modest-read/static/css/main.38f13f7a.chunk.css",
+    "main.js": "/modest-read/static/js/main.8b361e94.chunk.js",
+    "runtime-main.js": "/modest-read/static/js/runtime-main.e84de619.js",
     "static/css/3.a34e2856.chunk.css": "/modest-read/static/css/3.a34e2856.chunk.css",
-    "static/js/3.b8d50b9e.chunk.js": "/modest-read/static/js/3.b8d50b9e.chunk.js",
+    "static/js/3.916f78ec.chunk.js": "/modest-read/static/js/3.916f78ec.chunk.js",
     "static/css/4.24bf1742.chunk.css": "/modest-read/static/css/4.24bf1742.chunk.css",
     "static/js/4.94f2a513.chunk.js": "/modest-read/static/js/4.94f2a513.chunk.js",
-    "static/css/5.1ecfea68.chunk.css": "/modest-read/static/css/5.1ecfea68.chunk.css",
-    "static/js/5.58fe1b21.chunk.js": "/modest-read/static/js/5.58fe1b21.chunk.js",
+    "static/css/5.273cdc25.chunk.css": "/modest-read/static/css/5.273cdc25.chunk.css",
+    "static/js/5.69dbc8f6.chunk.js": "/modest-read/static/js/5.69dbc8f6.chunk.js",
     "static/css/6.2770a6ff.chunk.css": "/modest-read/static/css/6.2770a6ff.chunk.css",
-    "static/js/6.2ea92ba6.chunk.js": "/modest-read/static/js/6.2ea92ba6.chunk.js",
+    "static/js/6.5b239623.chunk.js": "/modest-read/static/js/6.5b239623.chunk.js",
     "static/js/7.da250f04.chunk.js": "/modest-read/static/js/7.da250f04.chunk.js",
     "index.html": "/modest-read/index.html",
     "service-worker.js": "/modest-read/service-worker.js",
-    "static/js/0.2512a530.chunk.js.LICENSE.txt": "/modest-read/static/js/0.2512a530.chunk.js.LICENSE.txt",
+    "static/js/0.6935aad9.chunk.js.LICENSE.txt": "/modest-read/static/js/0.6935aad9.chunk.js.LICENSE.txt",
     "static/js/4.94f2a513.chunk.js.LICENSE.txt": "/modest-read/static/js/4.94f2a513.chunk.js.LICENSE.txt",
     "static/js/pdf.worker.870c40da.worker.js": "/modest-read/static/js/pdf.worker.870c40da.worker.js",
     "static/js/pdf.worker.870c40da.worker.js.LICENSE.txt": "/modest-read/static/js/pdf.worker.870c40da.worker.js.LICENSE.txt",
@@ -25,10 +25,10 @@
     "static/media/landing-page.scss": "/modest-read/static/media/text.200242c4.svg"
   },
   "entrypoints": [
-    "static/js/runtime-main.61d6084b.js",
+    "static/js/runtime-main.e84de619.js",
     "static/css/4.24bf1742.chunk.css",
     "static/js/4.94f2a513.chunk.js",
-    "static/css/main.0a942541.chunk.css",
-    "static/js/main.c4cc312b.chunk.js"
+    "static/css/main.38f13f7a.chunk.css",
+    "static/js/main.8b361e94.chunk.js"
   ]
 }
