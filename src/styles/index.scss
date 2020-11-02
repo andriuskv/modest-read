@@ -228,3 +228,30 @@ main {
 .checkbox-label {
   margin-left: var(--space-md);
 }
+
+.radio-container {
+  display: flex;
+  align-items: center;
+}
+
+.radio-input {
+  &:checked + .radio {
+    background-color: var(--color-primary-10);
+  }
+
+  &.focus-visible + .radio {
+    box-shadow: 0 0 0 1px var(--color-primary-10);
+  }
+}
+
+.radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 6px solid var(--color-grey-70);
+  background-color: var(--color-grey-70);
+}
+
+.radio-label {
+  margin-left: var(--space-md);
+}

@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getFileSizeString } from "../../utils";
 import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
-import { getSettings, setSetting } from "../../services/settingsService";
+import { getSettings, setSettings, setSetting } from "../../services/settingsService";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import NoFilesNotice from "./NoFilesNotice";
+import FilesSort from "./FilesSort";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileCard from "../FileCard";
 import "./files.scss";
@@ -76,13 +77,15 @@ export default function Files() {
   }, [memoizedDropHandler, memoizedDragoverHandler]);
 
   async function init() {
-    const files = await fetchIDBFiles();
     const settings = getSettings();
+    const files = await fetchIDBFiles(settings);
 
     setFiles(files);
     setState({
       visibleCategory: "all",
       categories: getCategories(files),
+      sortBy: settings.sortBy,
+      sortOrder: settings.sortOrder,
       type: settings.layoutType,
       showCategories: settings.showCategories
     });
@@ -335,6 +338,22 @@ export default function Files() {
     setLandingPageHidden(true);
   }
 
+  function sortFileCatalog(sortBy, sortOrder = 1) {
+    if (sortBy === state.sortBy && sortOrder === state.sortOrder) {
+      return;
+    }
+    const sortedFiles = sortFiles(files, { sortBy, sortOrder });
+
+    setFiles(sortedFiles);
+    setState({
+      ...state,
+      sortBy,
+      sortOrder,
+      categories: getCategories(sortedFiles)
+    });
+    setSettings({ sortBy, sortOrder });
+  }
+
   function renderCategoryMenu() {
     return (
       <div className="files-header">
@@ -448,17 +467,21 @@ export default function Files() {
 
   function renderFileCategory() {
     if (state.visibleCategory === "all" && state.showCategories) {
-      return state.categories.slice(1).map((category, i) => (
-        category.files.length ? (
-          <div key={i}>
-            <h3 className="files-category-name">
-              <Icon name={category.icon} size="24px"/>
-              <span>{category.name}</span>
-            </h3>
-            {renderFiles(category.files)}
-          </div>
-        ) : null
-      ));
+      return (
+        <div>
+          {state.categories.slice(1).map((category, i) => (
+            category.files.length ? (
+              <div className="files-category" key={i}>
+                <h3 className="files-category-name">
+                  <Icon name={category.icon} size="24px"/>
+                  <span>{category.name}</span>
+                </h3>
+                {renderFiles(category.files)}
+              </div>
+            ) : null
+          ))}
+        </div>
+      );
     }
     const { files } = state.categories.find(({ id }) => id === state.visibleCategory);
 
@@ -477,6 +500,7 @@ export default function Files() {
         {files.length ? (
           <>
             {renderCategoryMenu()}
+            <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
             {notification && (
               <Notification notification={notification} expandable={notification.expandable}
                 dismiss={dismissNotification}>

@@ -18,6 +18,7 @@
     display: flex;
     align-items: center;
     padding-bottom: var(--space-md);
+    margin-bottom: var(--space-md);
     box-shadow: 0 2px 0 0 var(--color-black-20);
   }
 }
@@ -287,10 +288,25 @@
   }
 }
 
+.files-category {
+  padding-top: var(--space-xxxl);
+
+  &:first-of-type {
+    padding-top: var(--space-xl);
+  }
+
+  @include breakpoint-md {
+    padding-top: var(--space-xl);
+
+    &:first-of-type {
+      padding-top: var(--space-md);
+    }
+  }
+}
+
 .files-category-name {
   display: flex;
   align-items: center;
-  margin-top: var(--space-xxxl);
   font-size: var(--text-lg);
   color: var(--color-grey-10);
 
