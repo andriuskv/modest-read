@@ -1,0 +1,36 @@
+@import "../../../styles/mixins.scss";
+
+.files-search {
+  position: relative;
+  margin-right: var(--space-md);
+
+  @include breakpoint-sm {
+    flex-grow: 1;
+  }
+}
+
+.files-search-item {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-grey-10);
+}
+
+.files-search-icon {
+  left: var(--space-md);
+  pointer-events: none;
+}
+
+.files-search-btn {
+  right: 0;
+}
+
+.files-search-input {
+  width: 200px;
+  padding-left: var(--space-xxxl);
+  padding-right: var(--space-xxxl);
+
+  @include breakpoint-sm {
+    width: 100%;
+  }
+}
