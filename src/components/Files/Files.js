@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getFileSizeString } from "../../utils";
 import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
@@ -8,6 +8,7 @@ import Dropdown from "../Dropdown";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import NoFilesNotice from "./NoFilesNotice";
+import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileCard from "../FileCard";
@@ -19,7 +20,7 @@ export default function Files() {
   const [notification, setNotification] = useState(null);
   const [categoryMenuVisible, setCategoryMenuVisibility] = useState(null);
   const [filesLoading, setFilesLoading] = useState(false);
-  const [landingPageHidden, setLandingPageHidden] = useState(localStorage.getItem("hide-landing-page"));
+  const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
   const memoizedDropHandler = useCallback(handleDrop, [state, files]);
   const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
 
@@ -354,6 +355,32 @@ export default function Files() {
     setSettings({ sortBy, sortOrder });
   }
 
+  function searchFiles(value) {
+    if (value) {
+      const matchedFiles = files.filter(file => {
+        return file.name.toLowerCase().includes(value) ||
+          file.title?.toLowerCase().includes(value) ||
+          file.artist?.toLowerCase().includes(value);
+      });
+
+      setState({
+        ...state,
+        matchedFileCount: matchedFiles.length,
+        searchCategories: matchedFiles.length ? getCategories(matchedFiles) : []
+      });
+    }
+    else {
+      resetSearch();
+    }
+  }
+
+  function resetSearch() {
+    delete state.matchedFileCount;
+    delete state.searchCategories;
+
+    setState({ ...state });
+  }
+
   function renderCategoryMenu() {
     return (
       <div className="files-header">
@@ -466,10 +493,15 @@ export default function Files() {
   }
 
   function renderFileCategory() {
+    const categories = state.searchCategories || state.categories;
+
     if (state.visibleCategory === "all" && state.showCategories) {
+      if (state.matchedFileCount === 0) {
+        return <p className="files-category-notice">Your search term doesn't match any files.</p>;
+      }
       return (
         <div>
-          {state.categories.slice(1).map((category, i) => (
+          {categories.slice(1).map((category, i) => (
             category.files.length ? (
               <div className="files-category" key={i}>
                 <h3 className="files-category-name">
@@ -483,12 +515,17 @@ export default function Files() {
         </div>
       );
     }
-    const { files } = state.categories.find(({ id }) => id === state.visibleCategory);
+    const { files } = categories.find(({ id }) => id === state.visibleCategory);
 
     if (files.length) {
       return renderFiles(files);
     }
-    return <p className="files-empty-category-notice">You have no files in this category.</p>;
+    const { files: originalFiles } = state.categories.find(({ id }) => id === state.visibleCategory);
+    const message = state.searchCategories && originalFiles.length ?
+      "Your search term doesn't match any files in this category." :
+      "You have no files in this category.";
+
+    return <p className="files-category-notice">{message}</p>;
   }
 
   if (!landingPageHidden) {
@@ -500,7 +537,10 @@ export default function Files() {
         {files.length ? (
           <>
             {renderCategoryMenu()}
-            <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
+            <div className="files-top-bar">
+              <FileSearch searchFiles={searchFiles} resetSearch={resetSearch}/>
+              <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
+            </div>
             {notification && (
               <Notification notification={notification} expandable={notification.expandable}
                 dismiss={dismissNotification}>

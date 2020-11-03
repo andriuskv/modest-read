@@ -15,8 +15,8 @@ function fetchIDBFile(id) {
   return get(id, store);
 }
 
-function saveFile(snippet) {
-  set(snippet.id, snippet, store);
+function saveFile(file) {
+  set(file.id, file, store);
 }
 
 function deleteIDBFile(id) {

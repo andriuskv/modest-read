@@ -288,6 +288,12 @@
   }
 }
 
+.files-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .files-category {
   padding-top: var(--space-xxxl);
 
@@ -370,11 +376,17 @@
   }
 }
 
-.files-empty-category-notice {
+.files-category-notice {
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 100%;
+  padding: var(--space-xl);
   transform: translate(-50%, -50%);
   font-size: var(--text-xl);
-  white-space: nowrap;
+  text-align: center;
+
+  @include breakpoint-sm {
+    font-size: var(--text-lg);
+  }
 }
