@@ -63,11 +63,32 @@ function getFileSizeString(bytes) {
   return `${size} ${suffixes[l]}`;
 }
 
+function execFuncOnPageElement(elements, number, callback) {
+  for (const element of elements) {
+    if (parseInt(element.getAttribute("data-page-number"), 10) === number) {
+      return callback(element);
+    }
+  }
+}
+
+function getPageElementBox(number, elements) {
+  return execFuncOnPageElement(elements, number, element => element.getBoundingClientRect());
+}
+
+function scrollToPage(number, elements, keepToolbarVisible) {
+  execFuncOnPageElement(elements, number, element => {
+    const offset = keepToolbarVisible ? 40 : 0;
+    window.scrollTo(document.documentElement.scrollLeft, element.offsetTop - offset);
+  });
+}
+
 export {
   setDocumentTitle,
   classNames,
   pageToDataURL,
   getPdfInstance,
   parseMetadata,
-  getFileSizeString
+  getFileSizeString,
+  getPageElementBox,
+  scrollToPage
 };

@@ -11,6 +11,10 @@ function getSettings() {
   return settings;
 }
 
+function getSetting(key) {
+  return settings[key];
+}
+
 function setSettings(newSettings) {
   Object.assign(settings, newSettings);
   saveSettings();
@@ -27,6 +31,7 @@ function saveSettings() {
 
 export {
   getSettings,
+  getSetting,
   setSettings,
   setSetting
 };

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata } from "../../utils";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getPageElementBox, scrollToPage } from "../../utils";
 import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
 import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings, setSetting } from "../../services/settingsService";
+import LinkService from "../../services/viewerLinkService";
 import Dropdown from "../Dropdown";
 import Icon from "../Icon";
 import FilePreview from "./FilePreview";
@@ -108,7 +109,7 @@ export default function Viewer() {
 
     function updatePagesWithNewScale(newScale) {
       const scrollLeft = document.documentElement.scrollLeft;
-      const { top } = getPageElementBox(pageNumber);
+      const { top } = getPageElementBox(pageNumber, pdfRef.current.children);
 
       updatePages(newScale.value);
 
@@ -152,8 +153,7 @@ export default function Viewer() {
       canvas.classList.add("viewer-page-canvas");
 
       if (container.hasAttribute("data-rerender-needed")) {
-        oldCanvas = container.firstElementChild;
-        textLayerDiv = container.lastElementChild;
+        ([oldCanvas, textLayerDiv] = container.children);
         textLayerDiv.innerHTML = "";
 
         container.removeAttribute("data-rerender-needed");
@@ -186,6 +186,8 @@ export default function Viewer() {
           viewport,
           textDivs: []
         });
+
+        renderAnnotations(viewport, page, container);
       });
 
       if (oldCanvas) {
@@ -347,6 +349,33 @@ export default function Viewer() {
     ctrlPressed.current = event.ctrlKey;
   }
 
+  async function renderAnnotations(viewport, page, container) {
+    const annotations = await page.getAnnotations();
+
+    if (!annotations.length) {
+      return;
+    }
+    const annotationLayerDiv = container.children[2];
+    const params = {
+      page,
+      annotations,
+      viewport: viewport.clone({ dontFlip: true }),
+      div: annotationLayerDiv,
+      linkService: new LinkService(state.instance, pdfRef.current, window.location.href)
+    };
+
+    if (annotationLayerDiv) {
+      pdfjs.AnnotationLayer.update(params);
+    }
+    else {
+      const div = document.createElement("div");
+      div.className = "viewer-annotation-layer";
+      container.appendChild(div);
+      params.div = div;
+      pdfjs.AnnotationLayer.render(params);
+    }
+  }
+
   function revealToolbar() {
     if (toolbarRef.current.classList.contains("hidden")) {
       toolbarScrollOffset.current = 0;
@@ -381,6 +410,9 @@ export default function Viewer() {
   }
 
   function getVisiblePageCount(views) {
+    if (views.length < 2) {
+      return 1;
+    }
     const count = Math.ceil(document.documentElement.offsetHeight / ((views[0].height + views[1].height) / 2));
 
     if (count < 2) {
@@ -430,7 +462,7 @@ export default function Viewer() {
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
     const [{ maxWidth, maxHeight }, pageDimensions] = await Promise.all([
-      findBiggestDimensions(pdf),
+      findBiggestDimensions(pdf, fileMetadata.pageCount),
       getPageDimensions(pdf),
       renderEmptyPages(pdf, fileMetadata.scale)
     ]);
@@ -513,11 +545,11 @@ export default function Viewer() {
     event.target.value = "";
   }
 
-  async function findBiggestDimensions(pdf) {
+  async function findBiggestDimensions(pdf, pageCount) {
     let maxWidth = 0;
     let maxHeight = 0;
 
-    for (let i = 1; i < 3; i += 1) {
+    for (let i = 1; i <= Math.min(3, pageCount); i += 1) {
       const page = await pdf.getPage(i);
       const { width, height } = page.getViewport({ scale: 1 });
 
@@ -580,12 +612,12 @@ export default function Viewer() {
 
   function previousPage() {
     keepToolbarVisible.current = true;
-    scrollToPage(pageNumber - 1);
+    scrollToPage(pageNumber - 1, pdfRef.current.children, settings.keepToolbarVisible);
   }
 
   function nextPage() {
     keepToolbarVisible.current = true;
-    scrollToPage(pageNumber + 1);
+    scrollToPage(pageNumber + 1, pdfRef.current.children, settings.keepToolbarVisible);
   }
 
   function handleInputKeydown(event) {
@@ -610,7 +642,7 @@ export default function Viewer() {
 
     if (number !== pageNumber) {
       keepToolbarVisible.current = true;
-      scrollToPage(number);
+      scrollToPage(number, pdfRef.current.children, settings.keepToolbarVisible);
     }
   }
 
@@ -629,25 +661,6 @@ export default function Viewer() {
     const width = pageCount < 1000 ? 3 : pageCount.toString().length;
     event.target.style.width = `${width}ch`;
     event.target.select();
-  }
-
-  function execFuncOnPageElement(number, callback) {
-    for (const element of pdfRef.current.children) {
-      if (parseInt(element.getAttribute("data-page-number"), 10) === number) {
-        return callback(element);
-      }
-    }
-  }
-
-  function getPageElementBox(number) {
-    return execFuncOnPageElement(number, element => element.getBoundingClientRect());
-  }
-
-  function scrollToPage(number) {
-    execFuncOnPageElement(number, element => {
-      const offset = settings.keepToolbarVisible ? 40 : 0;
-      window.scrollTo(state.file.scrollLeft, element.offsetTop - offset);
-    });
   }
 
   function hideFileLoadMessage() {

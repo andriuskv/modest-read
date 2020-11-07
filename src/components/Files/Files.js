@@ -167,7 +167,7 @@ export default function Files() {
         });
       }
     }
-    const newSortedFiles = sortFiles(newFiles.concat(files));
+    const newSortedFiles = sortFiles(newFiles.concat(files), { sortBy: state.sortBy, sortOrder: state.sortOrder });
 
     setFiles(newSortedFiles);
     setFilesLoading(true);
