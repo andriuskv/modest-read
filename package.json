@@ -24,7 +24,7 @@
     "workbox-strategies": "^5.1.4"
   },
   "devDependencies": {
-    "sass": "^1.28.0",
+    "sass": "^1.29.0",
     "worker-loader": "^3.0.5"
   },
   "browserslist": [
