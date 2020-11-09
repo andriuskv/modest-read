@@ -5,28 +5,22 @@ import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getPageElementBox, scrollToPage } from "../../utils";
 import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
 import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
-import { getSettings, setSetting } from "../../services/settingsService";
+import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
-import Dropdown from "../Dropdown";
-import Icon from "../Icon";
 import FilePreview from "./FilePreview";
-import FileInfo from "./FileInfo";
+import Toolbar from "./Toolbar";
 import NoFileNotice from "./NoFileNotice";
 import "./viewer.scss";
 
 export default function Viewer() {
-  const DEFAUlT_SCALE = 1.3333;
   const history = useHistory();
   const { id } = useParams();
   const [state, setState] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState({ name: "1", value: DEFAUlT_SCALE });
+  const [scale, setScale] = useState(() => getDefaultScale());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState(() => getSettings());
   const pdfRef = useRef(null);
-  const toolbarRef = useRef(null);
-  const keepToolbarVisible = useRef(false);
-  const toolbarScrollOffset = useRef(0);
   const pageRendering = useRef(false);
   const pendingPages = useRef([]);
   const observer = useRef(null);
@@ -36,7 +30,6 @@ export default function Viewer() {
   const scrollDirection = useRef(0);
   const ctrlPressed = useRef(false);
   const memoizedScrollHandler = useCallback(handleScroll, [scale]);
-  const memoizedMouseMoveHandler = useCallback(handeMouseMove, [scale]);
   const memoizedWheelHandler = useCallback(handleWheel, [scale]);
   const memoizedKeyUpHandler = useCallback(handleKeyUp, [scale]);
   const memoizedKeyDownHandler = useCallback(handleKeyDown, [scale, pageNumber]);
@@ -53,20 +46,16 @@ export default function Viewer() {
     if (!state || !state.instance) {
       return;
     }
-    const pdf = pdfRef.current;
-
-    pdf.addEventListener("mousemove", memoizedMouseMoveHandler);
     window.addEventListener("scroll", memoizedScrollHandler);
     window.addEventListener("wheel", memoizedWheelHandler, { passive: false });
     window.addEventListener("keyup", memoizedKeyUpHandler);
 
     return () => {
-      pdf.removeEventListener("mousemove", memoizedMouseMoveHandler);
       window.removeEventListener("scroll", memoizedScrollHandler);
       window.removeEventListener("wheel", memoizedWheelHandler, { passive: false });
       window.removeEventListener("keyup", memoizedKeyUpHandler);
     };
-  }, [memoizedScrollHandler, memoizedMouseMoveHandler, memoizedWheelHandler, memoizedKeyUpHandler]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [memoizedScrollHandler, memoizedWheelHandler, memoizedKeyUpHandler]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     window.addEventListener("keydown", memoizedKeyDownHandler);
@@ -110,13 +99,15 @@ export default function Viewer() {
     function updatePagesWithNewScale(newScale) {
       const scrollLeft = document.documentElement.scrollLeft;
       const { top } = getPageElementBox(pageNumber, pdfRef.current.children);
+      const newScaleValue = newScale.currentScale;
+      const scaleRatio = newScaleValue / state.file.scale.currentScale;
 
-      updatePages(newScale.value);
+      updatePages(newScaleValue);
 
       state.file.scale = newScale;
       state.views = getPageViews();
-      state.file.scrollTop = state.views[pageNumber - 1].top - top * newScale.value / state.file.scale.value;
-      state.file.scrollLeft = scrollLeft * newScale.value / state.file.scale.value;
+      state.file.scrollTop = state.views[pageNumber - 1].top - top * scaleRatio;
+      state.file.scrollLeft = scrollLeft * scaleRatio;
       state.pagesInViewport = getVisiblePageCount(state.views);
 
       window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
@@ -144,8 +135,8 @@ export default function Viewer() {
     async function renderPageContent(container) {
       const number = parseInt(container.getAttribute("data-page-number"), 10);
       const pageDimension = state.pageDimensions[number - 1];
-      const w = Math.floor(pageDimension.width * scale.value);
-      const h = Math.floor(pageDimension.height * scale.value);
+      const w = Math.floor(pageDimension.width * scale.currentScale);
+      const h = Math.floor(pageDimension.height * scale.currentScale);
       const canvas = document.createElement("canvas");
       let textLayerDiv = null;
       let oldCanvas = null;
@@ -166,7 +157,7 @@ export default function Viewer() {
         container.appendChild(textLayerDiv);
       }
       const page = await state.instance.getPage(number);
-      const viewport = page.getViewport({ scale: scale.value });
+      const viewport = page.getViewport({ scale: scale.currentScale });
 
       canvas.width = w % 2 === 0 ? w : w + 1;
       canvas.height = h + 1;
@@ -212,7 +203,7 @@ export default function Viewer() {
       observer.current.disconnect();
     }
     observer.current = new IntersectionObserver(callback, {
-      rootMargin: `${state.maxHeight * state.file.scale.value}px 0px`
+      rootMargin: `${state.maxHeight * state.file.scale.currentScale}px 0px`
     });
     Array.from(pdfRef.current.children).forEach(element => {
       observer.current.observe(element);
@@ -229,6 +220,14 @@ export default function Viewer() {
     if (file) {
       const currentFile = await fetchCurrentFile();
 
+      if (file.scale.value) {
+        file.scale = {
+          ...getDefaultScale(),
+          name: file.scale.name,
+          currentScale: file.scale.value
+        };
+      }
+
       if (currentFile && currentFile.name === file.name) {
         loadFile(currentFile, {
           fileMetadata: file
@@ -237,7 +236,6 @@ export default function Viewer() {
       else {
         setState({ file, filePreviewVisible: true });
       }
-      setSettings(getSettings());
       setDocumentTitle(file.name);
       document.body.style.overscrollBehavior = "none";
     }
@@ -256,24 +254,10 @@ export default function Viewer() {
     requestAnimationFrame(() => {
       const { scrollTop, scrollLeft } = document.documentElement;
       const oldPageNumber = state.file.pageNumber;
-      const scrollDiff = state.file.scrollTop - scrollTop;
       scrollDirection.current = scrollTop > state.file.scrollTop ? 1 : -1;
       state.file.scrollTop = scrollTop < 0 ? 0 : scrollTop;
       state.file.scrollLeft = scrollLeft;
       state.file.pageNumber = getVisiblePageNumber(state.views, state.file.scrollTop);
-
-      if (!keepToolbarVisible.current) {
-        if (scrollDirection.current === 1) {
-          hideToolbar();
-        }
-        else if (!state.file.scrollTop || toolbarScrollOffset.current > 100) {
-          revealToolbar();
-        }
-        else {
-          toolbarScrollOffset.current += scrollDiff;
-        }
-      }
-      keepToolbarVisible.current = false;
 
       clearTimeout(scrollTimeout.current);
       scrollTimeout.current = setTimeout(() => {
@@ -286,19 +270,6 @@ export default function Viewer() {
       }
       updatingPageNumber.current = false;
     });
-  }
-
-  function handeMouseMove(event) {
-    if (event.clientY < 80 &&
-      event.clientX < event.currentTarget.clientWidth &&
-      toolbarRef.current.classList.contains("hidden")
-    ) {
-      toolbarRef.current.classList.remove("hidden");
-
-      setTimeout(() => {
-        toolbarRef.current.classList.remove("hiding");
-      }, 200);
-    }
   }
 
   function handleWheel(event) {
@@ -349,6 +320,16 @@ export default function Viewer() {
     ctrlPressed.current = event.ctrlKey;
   }
 
+  function getDefaultScale() {
+    return {
+      name: "1",
+      currentScale: 1.3333,
+      initialScale: 1.3333,
+      minScale: 0.333325,
+      maxScale: 13.333
+    };
+  }
+
   async function renderAnnotations(viewport, page, container) {
     const annotations = await page.getAnnotations();
 
@@ -373,28 +354,6 @@ export default function Viewer() {
       container.appendChild(div);
       params.div = div;
       pdfjs.AnnotationLayer.render(params);
-    }
-  }
-
-  function revealToolbar() {
-    if (toolbarRef.current.classList.contains("hidden")) {
-      toolbarScrollOffset.current = 0;
-      toolbarRef.current.classList.remove("hidden");
-
-      setTimeout(() => {
-        toolbarRef.current.classList.remove("hiding");
-      }, 200);
-    }
-  }
-
-  function hideToolbar() {
-    if (!toolbarRef.current.classList.contains("hidden")) {
-      toolbarScrollOffset.current = 0;
-      toolbarRef.current.classList.add("hiding");
-
-      setTimeout(() => {
-        toolbarRef.current.classList.add("hidden");
-      }, 200);
     }
   }
 
@@ -436,7 +395,7 @@ export default function Viewer() {
   async function renderEmptyPage(i, scale, fragmenet, pdf) {
     const div = document.createElement("div");
     const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: scale.value });
+    const viewport = page.getViewport({ scale: scale.currentScale });
 
     div.style.width = `${Math.floor(viewport.width)}px`;
     div.style.height = `${Math.floor(viewport.height)}px`;
@@ -458,7 +417,7 @@ export default function Viewer() {
   }
 
   async function loadFile(file, { fileMetadata = null, pdfInstance = null } = {}) {
-    fileMetadata.scale = fileMetadata.scale || { name: "1", value: DEFAUlT_SCALE };
+    fileMetadata.scale = fileMetadata.scale || getDefaultScale();
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
     const [{ maxWidth, maxHeight }, pageDimensions] = await Promise.all([
@@ -482,9 +441,9 @@ export default function Viewer() {
     setScale(fileMetadata.scale);
     setPageNumber(fileMetadata.pageNumber);
 
-    if (fileMetadata.status !== "read") {
+    if (fileMetadata.status !== "have read") {
       if (fileMetadata.pageCount === 1) {
-        fileMetadata.status = "read";
+        fileMetadata.status = "have read";
       }
       else {
         fileMetadata.status = "reading";
@@ -509,7 +468,7 @@ export default function Viewer() {
         id: uuidv4(),
         name: file.name,
         createdAt: Date.now(),
-        scale: { name: "1", value: DEFAUlT_SCALE },
+        scale: getDefaultScale(),
         pageCount: pdf.numPages,
         coverImage
       };
@@ -568,7 +527,7 @@ export default function Viewer() {
   }
 
   async function handleSelect(event) {
-    let newScale = DEFAUlT_SCALE;
+    let newScale = 0;
 
     if (event.target.value === "fit-width") {
       const maxWidth = document.documentElement.offsetWidth - 16;
@@ -580,10 +539,15 @@ export default function Viewer() {
       newScale = maxHeight / state.maxHeight;
     }
     else {
-      newScale = DEFAUlT_SCALE * event.target.value;
+      newScale = scale.initialScale * event.target.value;
     }
     updatingPages.current = true;
-    setScale({ name: event.target.value, value: newScale });
+
+    setScale({
+      ...scale,
+      name: event.target.value,
+      currentScale: newScale
+    });
   }
 
   function getVisiblePageNumber(views, top) {
@@ -601,75 +565,48 @@ export default function Viewer() {
   }
 
   function zoomOut() {
+    const newScale = Math.max(scale.currentScale / 1.1, scale.minScale);
     updatingPages.current = true;
-    setScale({ name: "custom", value: Math.max(scale.value / 1.1, 0.333325) });
+
+    setScale({
+      ...scale,
+      name: "custom",
+      currentScale: newScale,
+      displayValue: Math.round(newScale * 100 / scale.initialScale)
+    });
   }
 
   function zoomIn() {
+    const newScale = Math.min(scale.currentScale * 1.1, scale.maxScale);
     updatingPages.current = true;
-    setScale({ name: "custom", value: Math.min(scale.value * 1.1, 13.333) });
+
+    setScale({
+      ...scale,
+      name: "custom",
+      currentScale: newScale,
+      displayValue: Math.round(newScale * 100 / scale.initialScale)
+    });
   }
 
   function previousPage() {
-    keepToolbarVisible.current = true;
     scrollToPage(pageNumber - 1, pdfRef.current.children, settings.keepToolbarVisible);
   }
 
   function nextPage() {
-    keepToolbarVisible.current = true;
     scrollToPage(pageNumber + 1, pdfRef.current.children, settings.keepToolbarVisible);
   }
 
-  function handleInputKeydown(event) {
-    if (event.key === "Enter") {
-      event.target.blur();
-    }
-  }
-
-  function handleInputBlur(event) {
-    let number = parseInt(event.target.value, 10);
-
-    if (Number.isNaN(number)) {
-      number = state.file.pageNumber;
-    }
-    else if (number < 1) {
-      number = 1;
-    }
-    else if (number > state.file.pageCount) {
-      number = state.file.pageCount;
-    }
-    event.target.style.width = `${number.toString().length}ch`;
-
-    if (number !== pageNumber) {
-      keepToolbarVisible.current = true;
-      scrollToPage(number, pdfRef.current.children, settings.keepToolbarVisible);
-    }
-  }
-
-  function handleInputChange(event) {
-    setPageNumber(event.target.value);
-  }
-
-  function handleInputClick(event) {
-    if (event.target !== event.currentTarget.firstElementChild) {
-      event.currentTarget.firstElementChild.focus();
-    }
-  }
-
-  function handleInputFocus(event) {
-    const { pageCount } = state.file;
-    const width = pageCount < 1000 ? 3 : pageCount.toString().length;
-    event.target.style.width = `${width}ch`;
-    event.target.select();
+  function scrollToNewPage(newPageNumber) {
+    scrollToPage(newPageNumber, pdfRef.current.children, settings.keepToolbarVisible);
+    setPageNumber(newPageNumber);
   }
 
   function hideFileLoadMessage() {
     setFileLoadMessage(null);
   }
 
-  function handleSettingChange({ target }) {
-    setSettings({ ...settings, [target.name]: target.checked });
-    setSetting(target.name, target.checked);
+  function updateSettings(setting, value) {
+    setSettings({ ...settings, [setting]: value });
   }
 
   function exitViewer() {
@@ -677,91 +614,9 @@ export default function Viewer() {
     history.push({ pathname: "/" });
   }
 
-  function renderToolbar() {
-    return (
-      <div className={`viewer-toolbar${settings.keepToolbarVisible ? " keep-visible" : ""}`} ref={toolbarRef}>
-        <FileInfo file={state.file}/>
-        <div className="viewer-toolbar-tools">
-          <div className="viewer-toolbar-zoom">
-            <button className="btn icon-btn viewer-toolbar-tool-btn" onClick={zoomOut} title="Zoom out"
-              disabled={updatingPages.current || scale.value <= 0.333325}>
-              <Icon name="minus"/>
-            </button>
-            <select className="input viewer-toolbar-zoom-select" onChange={handleSelect} value={scale.name} disabled={updatingPages.current}>
-              <option value="custom" style={{ display: "none" }}>{Math.round(scale.value * 100 / DEFAUlT_SCALE)}%</option>
-              <option value="fit-width">Fit Width</option>
-              <option value="fit-page">Fit Page</option>
-              <option value="0.5">50%</option>
-              <option value="0.75">75%</option>
-              <option value="1">100%</option>
-              <option value="1.5">150%</option>
-              <option value="2">200%</option>
-              <option value="3">300%</option>
-              <option value="4">400%</option>
-            </select>
-            <button className="btn icon-btn viewer-toolbar-tool-btn" onClick={zoomIn} title="Zoom in"
-              disabled={updatingPages.current || scale.value >= 13.333}>
-              <Icon name="plus"/>
-            </button>
-          </div>
-          <div className="viewer-toolbar-page">
-            <button className="btn icon-btn viewer-toolbar-tool-btn"
-              onClick={previousPage} disabled={state.file.pageNumber <= 1}>
-              <Icon name="arrow-up"/>
-            </button>
-            <div className="viewer-toolbar-page-input-container" onClick={handleInputClick}>
-              <input type="text" inputMode="numeric" className="input viewer-toolbar-page-input" onChange={handleInputChange} value={pageNumber}
-                onBlur={handleInputBlur} onFocus={handleInputFocus} onKeyDown={handleInputKeydown} style={{ width: `${state.file.pageNumber.toString().length}ch`}}/>
-              <div>of {state.file.pageCount}</div>
-            </div>
-            <button className="btn icon-btn viewer-toolbar-tool-btn"
-              onClick={nextPage} disabled={state.file.pageNumber >= state.file.pageCount}>
-              <Icon name="arrow-down"/>
-            </button>
-          </div>
-        </div>
-        <Dropdown
-          container={{ className: "viewer-toolbar-settings-container" }}
-          toggle={{
-            content: <Icon name="settings"/>,
-            title: "Settings",
-            className: "btn icon-btn icon-btn-alt"
-          }}
-          body={{ className: "viewer-toolbar-settings" }}>
-          <label className="viewer-toolbar-settings-item">
-            <input type="checkbox" className="sr-only checkbox-input"
-              name="invertColors"
-              onChange={handleSettingChange}
-              checked={settings.invertColors}/>
-            <div className="checkbox">
-              <div className="checkbox-tick"></div>
-            </div>
-            <span className="checkbox-label">Invert page colors.</span>
-          </label>
-          <label className="viewer-toolbar-settings-item">
-            <input type="checkbox" className="sr-only checkbox-input"
-              name="keepToolbarVisible"
-              onChange={handleSettingChange}
-              checked={settings.keepToolbarVisible}/>
-            <div className="checkbox">
-              <div className="checkbox-tick"></div>
-            </div>
-            <span className="checkbox-label">Keep toolbar visible.</span>
-          </label>
-        </Dropdown>
-        <button className="btn icon-btn icon-btn-alt" onClick={exitViewer} title="Exit">
-          <Icon name="exit"/>
-        </button>
-      </div>
-    );
-  }
-
   if (state?.error) {
-    return (
-      <NoFileNotice/>
-    );
+    return <NoFileNotice/>;
   }
-
   return (
     <>
       {state?.filePreviewVisible && <FilePreview file={state.file} notification={fileLoadMessage}
@@ -769,7 +624,17 @@ export default function Viewer() {
         handleFileUpload={handleFileUpload}
         loadNewFile={loadNewFile}/>
       }
-      {state?.instance && renderToolbar()}
+      {state && (
+        <Toolbar file={state.file}
+          zoomOut={zoomOut}
+          zoomIn={zoomIn}
+          previousPage={previousPage}
+          nextPage={nextPage}
+          handleSelect={handleSelect}
+          scrollToNewPage={scrollToNewPage}
+          updateSettings={updateSettings}
+          exitViewer={exitViewer}/>
+      )}
       <div className={`viewer-pdf${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
     </>
   );
