@@ -1,0 +1,63 @@
+.viewer-drop-modal {
+  z-index: 1;
+  position: fixed;
+  top: calc(40px + var(--space-md));
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 320px;
+  transition: 0.2s top;
+
+  .viewer-toolbar.hidden + & {
+    top: var(--space-md);
+  }
+}
+
+.viewer-notification.negative {
+  --notification-background-color: var(--color-negative-20);
+  --notification-color: var(--color-white);
+
+  box-shadow: none;
+
+  .notification-btn {
+    color: inherit;
+
+    &:hover, &.focus-visible {
+      --background-color: var(--color-white-20);
+    }
+  }
+}
+
+.viewer-drop-warning {
+  padding: var(--space-md);
+  border-radius: 8px;
+  background-color: var(--color-grey-70);
+}
+
+.viewer-drop-warning-mesasge-container {
+  display: flex;
+  align-items: center;
+}
+
+.viewer-drop-warning-mesasge {
+  margin-left: var(--space-md);
+}
+
+.viewer-drop-warning-checkbox-container {
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-grey-10);
+
+  .checkbox {
+    background-color: var(--color-grey-40);
+  }
+}
+
+.viewer-drop-warning-bottom {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.viewer-drop-warning-btn {
+  margin-left: var(--space-md);
+}

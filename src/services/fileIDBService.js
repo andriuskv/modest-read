@@ -4,7 +4,7 @@ const store = new Store("ModestKeep", "files");
 
 function fetchIDBFiles(settings) {
   return keys(store).then(keys => Promise.all(keys.map(fetchIDBFile)))
-    .then(files => sortFiles(files, settings))
+    .then(files => settings ? sortFiles(files, settings) : files)
     .catch(e => {
       console.log(e);
       return [];

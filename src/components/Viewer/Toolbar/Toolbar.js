@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getSettings, setSetting } from "../../../services/settingsService";
 import Icon from "../../Icon";
 import Dropdown from "../../Dropdown";
@@ -13,26 +13,25 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
   const toolbarScrollOffset = useRef(0);
   const scrolling = useRef(false);
   const movingMouse = useRef(false);
+  const memoizedScrollHandler = useCallback(handleScroll, [file]);
 
   useEffect(() => {
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
-
-    setSettings(getSettings());
 
     if (media.matches) {
       toolbarRef.current.classList.add("hidden");
       window.addEventListener("pointerup", handleClick);
     }
     else {
-      window.addEventListener("scroll", handleScroll);
+      window.addEventListener("scroll", memoizedScrollHandler);
       window.addEventListener("mousemove", handeMouseMove);
     }
     return () => {
       window.removeEventListener("pointerup", handleClick);
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", memoizedScrollHandler);
       window.removeEventListener("mousemove", handeMouseMove);
     };
-  }, []);
+  }, [file]);
 
   useEffect(() => {
     setPageNumber(file.pageNumber);
@@ -87,7 +86,7 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
           hideToolbar();
         }
       }
-      else if (!file.scrollTop || toolbarScrollOffset.current > 100) {
+      else if (!scrollTop || toolbarScrollOffset.current > 100) {
         revealToolbar();
       }
       else {
@@ -117,7 +116,6 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
       }
       movingMouse.current = false;
     });
-
   }
 
   function handleClick({ target }) {
@@ -178,7 +176,7 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
   }
 
   function localExitViewer() {
-    window.removeEventListener("scroll", handleScroll);
+    window.removeEventListener("scroll", memoizedScrollHandler);
     window.removeEventListener("mousemove", handeMouseMove);
     exitViewer();
   }

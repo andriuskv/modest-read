@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
@@ -9,6 +9,7 @@ import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
+import DropModal from "./DropModal";
 import NoFileNotice from "./NoFileNotice";
 import "./viewer.scss";
 
@@ -20,6 +21,13 @@ export default function Viewer() {
   const [scale, setScale] = useState(() => getDefaultScale());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [settings, setSettings] = useState(() => getSettings());
+  const [preferences, setPreferences] = useState(() => {
+    const preferences = JSON.parse(localStorage.getItem("viewer-preferences")) || {
+      saveFile: true
+    };
+    preferences.saveFile = true;
+    return preferences;
+  });
   const pdfRef = useRef(null);
   const pageRendering = useRef(false);
   const pendingPages = useRef([]);
@@ -29,10 +37,12 @@ export default function Viewer() {
   const updatingPages = useRef(false);
   const scrollDirection = useRef(0);
   const ctrlPressed = useRef(false);
-  const memoizedScrollHandler = useCallback(handleScroll, [scale]);
+  const initStage = useRef(true);
+  const memoizedScrollHandler = useCallback(handleScroll, [scale, preferences]);
   const memoizedWheelHandler = useCallback(handleWheel, [scale]);
   const memoizedKeyUpHandler = useCallback(handleKeyUp, [scale]);
   const memoizedKeyDownHandler = useCallback(handleKeyDown, [scale, pageNumber]);
+  const memoizedDropHandler = useCallback(handleDrop, [state]);
 
   useEffect(() => {
     init();
@@ -46,16 +56,14 @@ export default function Viewer() {
     if (!state || !state.instance) {
       return;
     }
-    window.addEventListener("scroll", memoizedScrollHandler);
     window.addEventListener("wheel", memoizedWheelHandler, { passive: false });
     window.addEventListener("keyup", memoizedKeyUpHandler);
 
     return () => {
-      window.removeEventListener("scroll", memoizedScrollHandler);
       window.removeEventListener("wheel", memoizedWheelHandler, { passive: false });
       window.removeEventListener("keyup", memoizedKeyUpHandler);
     };
-  }, [memoizedScrollHandler, memoizedWheelHandler, memoizedKeyUpHandler]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [memoizedWheelHandler, memoizedKeyUpHandler]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     window.addEventListener("keydown", memoizedKeyDownHandler);
@@ -64,6 +72,24 @@ export default function Viewer() {
       window.removeEventListener("keydown", memoizedKeyDownHandler);
     };
   }, [memoizedKeyDownHandler]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", memoizedScrollHandler);
+
+    return () => {
+      window.removeEventListener("scroll", memoizedScrollHandler);
+    };
+  }, [memoizedScrollHandler]);
+
+  useEffect(() => {
+    window.addEventListener("drop", memoizedDropHandler);
+    window.addEventListener("dragover", handleDragover);
+
+    return () => {
+      window.removeEventListener("drop", memoizedDropHandler);
+      window.removeEventListener("dragover", handleDragover);
+    };
+  }, [memoizedDropHandler]);
 
   useEffect(() => {
     if (!state || !state.instance) {
@@ -112,7 +138,10 @@ export default function Viewer() {
 
       window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
       setState({ ...state });
-      saveFile(state.file);
+
+      if (!initStage.current && preferences.saveFile) {
+        saveFile(state.file);
+      }
     }
 
     function callback(entries) {
@@ -209,6 +238,7 @@ export default function Viewer() {
       observer.current.observe(element);
     });
     updatingPages.current = false;
+    initStage.current = false;
   }, [scale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function init() {
@@ -220,7 +250,7 @@ export default function Viewer() {
     if (file) {
       const currentFile = await fetchCurrentFile();
 
-      if (file.scale.value) {
+      if (file.scale?.value) {
         file.scale = {
           ...getDefaultScale(),
           name: file.scale.name,
@@ -259,10 +289,12 @@ export default function Viewer() {
       state.file.scrollLeft = scrollLeft;
       state.file.pageNumber = getVisiblePageNumber(state.views, state.file.scrollTop);
 
-      clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => {
-        saveFile(state.file);
-      }, 1000);
+      if (preferences.saveFile) {
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          saveFile(state.file);
+        }, 1000);
+      }
 
       if (state.file.pageNumber !== oldPageNumber) {
         setPageNumber(state.file.pageNumber);
@@ -318,6 +350,20 @@ export default function Viewer() {
 
   function handleKeyUp(event) {
     ctrlPressed.current = event.ctrlKey;
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+
+    if (event.dataTransfer.files.length) {
+      const [file] = event.dataTransfer.files;
+
+      uploadFile(file);
+    }
+  }
+
+  function handleDragover(event) {
+    event.preventDefault();
   }
 
   function getDefaultScale() {
@@ -416,7 +462,7 @@ export default function Viewer() {
     pdfRef.current.appendChild(fragment);
   }
 
-  async function loadFile(file, { fileMetadata = null, pdfInstance = null } = {}) {
+  async function loadFile(file, { save = true, fileMetadata = null, pdfInstance = null } = {}) {
     fileMetadata.scale = fileMetadata.scale || getDefaultScale();
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
@@ -450,14 +496,24 @@ export default function Viewer() {
       }
     }
     fileMetadata.accessedAt = Date.now();
-    saveFile(fileMetadata);
-    saveCurrentFile(file);
+
+    if (save) {
+      saveLoadedFile(file, fileMetadata);
+    }
   }
 
-  async function loadNewFile() {
-    const { file } = fileLoadMessage;
+  async function findFile(file) {
     const files = await fetchIDBFiles();
-    let newFile = files.find(({ name }) => name === file.name);
+    return files.find(({ name }) => name === file.name);
+  }
+
+  function loadPreviewFile() {
+    loadNewFile(fileLoadMessage);
+    hideFileLoadMessage();
+  }
+
+  async function loadNewFile({ file, save = true }) {
+    let newFile = await findFile(file);
     let pdf = null;
 
     if (!newFile) {
@@ -472,35 +528,80 @@ export default function Viewer() {
         pageCount: pdf.numPages,
         coverImage
       };
+
+      if (!fileLoadMessage) {
+        save = preferences.dropWarningHidden ? preferences.saveDroppedFile : false;
+
+        if (!preferences.dropWarningHidden) {
+          setFileLoadMessage({
+            file,
+            type: "warning",
+            value: "Do you want to save this file?"
+          });
+        }
+      }
     }
+    setPreferences({ ...preferences, saveFile: save });
     loadFile(file, {
       fileMetadata: newFile,
+      save,
       pdf
     });
     history.replace({ pathname: `/viewer/${newFile.id}`, state: true });
     setDocumentTitle(newFile.name);
   }
 
-  async function handleFileUpload(event) {
-    const [file] = event.target.files;
-
+  async function uploadFile(file) {
     if (!file.name.endsWith(".pdf")) {
       setFileLoadMessage({
         file,
         type: "negative",
-        value: "File is not supported."
+        value: "File format is not supported."
       });
     }
     else if (file.name !== state.file.name) {
-      setFileLoadMessage({
-        file,
-        type: "warning",
-        value: "File does not match currently loaded file.\nDo you want to load it anyway?"
-      });
+      if (state.filePreviewVisible) {
+        setFileLoadMessage({
+          file,
+          type: "warning",
+          value: "File does not match currently loaded file.\nDo you want to load it anyway?"
+        });
+      }
+      else {
+        initStage.current = true;
+        pdfRef.current.innerHTML = "";
+
+        loadNewFile({ file });
+        window.removeEventListener("scroll", memoizedScrollHandler);
+      }
     }
     else {
       loadFile(file, { fileMetadata: state.file });
+      hideFileLoadMessage();
     }
+  }
+
+  function saveLoadedFile(file, fileMetadata) {
+    saveFile(fileMetadata);
+    saveCurrentFile(file);
+  }
+
+  function saveDroppedFile(preferences) {
+    saveLoadedFile(fileLoadMessage.file, state.file);
+    hideDropModal(preferences);
+  }
+
+  function hideDropModal(preferences) {
+    preferences.saveFile = preferences.saveDroppedFile;
+
+    hideFileLoadMessage();
+    setPreferences(preferences);
+  }
+
+  function handleFileUpload(event) {
+    const [file] = event.target.files;
+
+    uploadFile(file);
     event.target.value = "";
   }
 
@@ -619,21 +720,31 @@ export default function Viewer() {
   }
   return (
     <>
-      {state?.filePreviewVisible && <FilePreview file={state.file} notification={fileLoadMessage}
-        dismissNotification={hideFileLoadMessage}
-        handleFileUpload={handleFileUpload}
-        loadNewFile={loadNewFile}/>
-      }
-      {state && (
-        <Toolbar file={state.file}
-          zoomOut={zoomOut}
-          zoomIn={zoomIn}
-          previousPage={previousPage}
-          nextPage={nextPage}
-          handleSelect={handleSelect}
-          scrollToNewPage={scrollToNewPage}
-          updateSettings={updateSettings}
-          exitViewer={exitViewer}/>
+      {state?.filePreviewVisible && (
+        <FilePreview file={state.file} notification={fileLoadMessage}
+          dismissNotification={hideFileLoadMessage}
+          handleFileUpload={handleFileUpload}
+          loadPreviewFile={loadPreviewFile}/>
+      )}
+      {state?.instance && (
+        <>
+          <Toolbar file={state.file}
+            zoomOut={zoomOut}
+            zoomIn={zoomIn}
+            previousPage={previousPage}
+            nextPage={nextPage}
+            handleSelect={handleSelect}
+            scrollToNewPage={scrollToNewPage}
+            updateSettings={updateSettings}
+            exitViewer={exitViewer}/>
+          {fileLoadMessage && (
+            <DropModal message={fileLoadMessage}
+              preferences={preferences}
+              saveDroppedFile={saveDroppedFile}
+              hideDropModal={hideDropModal}
+              dismissNotification={hideFileLoadMessage}/>
+          )}
+        </>
       )}
       <div className={`viewer-pdf${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
     </>

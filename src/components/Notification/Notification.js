@@ -3,7 +3,7 @@ import "./notification.scss";
 import { classNames } from "../../utils";
 import Icon from "../Icon";
 
-export default function Notification({ notification, expandable, margin, children, dismiss }) {
+export default function Notification({ notification, expandable, className = "", margin, children, dismiss }) {
   const [state, setState] = useState(notification);
   const [expanded, setExpanded] = useState(false);
   const type = notification.type || "negative";
@@ -27,7 +27,7 @@ export default function Notification({ notification, expandable, margin, childre
   }
 
   return (
-    <div className={classNames("notification", type, margin ? `margin-${margin}` : "", expanded ? "expanded" : "", state.flashing ? "flash" : "")}>
+    <div className={classNames("notification", className, type, margin ? `margin-${margin}` : "", expanded ? "expanded" : "", state.flashing ? "flash" : "")}>
       <Icon name={type === "negative" ? "circle-cross" : "circle-check"} className="notification-icon" size="24px"/>
       {expandable ? (
         <div className="notification-expandable-content-container">
