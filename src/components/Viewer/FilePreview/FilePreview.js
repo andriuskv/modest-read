@@ -6,7 +6,7 @@ import BannerImage from "../../BannerImage";
 import FileCard from "../../FileCard";
 import "./file-preview.scss";
 
-export default function FilePreview({ file, notification, dismissNotification, handleFileUpload, loadNewFile }) {
+export default function FilePreview({ file, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
   return (
     <div className="viewer-file-preview-container">
       <BannerImage/>
@@ -31,7 +31,7 @@ export default function FilePreview({ file, notification, dismissNotification, h
             </div>
             <div className="viewer-file-preview-warning-bottom">
               <button className="btn text-btn viewer-file-preview-warning-btn" onClick={dismissNotification}>No</button>
-              <button className="btn viewer-file-preview-warning-btn" onClick={loadNewFile}>Yes</button>
+              <button className="btn viewer-file-preview-warning-btn" onClick={loadPreviewFile}>Yes</button>
             </div>
           </div>
         )}
