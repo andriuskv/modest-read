@@ -11,28 +11,29 @@ export default function DropModal({ message, preferences, saveDroppedFile, hideD
   }
 
   function save() {
-    const preferences = {
-      dropWarningHidden: hide,
-      saveDroppedFile: true
-    };
-
-    saveDroppedFile(preferences);
-
-    if (hide) {
-      savePreferences(preferences);
-    }
+    changeFileSaveStatus(true);
   }
 
   function hideDropWarning() {
-    const preferences = {
+    changeFileSaveStatus(false);
+  }
+
+  function changeFileSaveStatus(saveFile) {
+    const updatedPreferences = {
+      ...preferences,
       dropWarningHidden: hide,
-      saveDroppedFile: false
+      saveDroppedFile: saveFile
     };
 
-    hideDropModal(preferences);
+    if (saveFile) {
+      saveDroppedFile(updatedPreferences);
+    }
+    else {
+      hideDropModal(updatedPreferences);
+    }
 
     if (hide) {
-      savePreferences(preferences);
+      savePreferences(updatedPreferences);
     }
   }
 
