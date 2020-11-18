@@ -7,6 +7,7 @@ import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBSer
 import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
+import Icon from "../Icon";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import DropModal from "./DropModal";
@@ -23,8 +24,13 @@ export default function Viewer() {
   const [settings, setSettings] = useState(() => getSettings());
   const [preferences, setPreferences] = useState(() => {
     const preferences = JSON.parse(localStorage.getItem("viewer-preferences")) || {
-      saveFile: true
+      saveFile: true,
+      viewMode: "multi"
     };
+
+    if (!preferences.viewMode) {
+      preferences.viewMode = "multi";
+    }
     preferences.saveFile = true;
     return preferences;
   });
@@ -39,6 +45,8 @@ export default function Viewer() {
   const ctrlPressed = useRef(false);
   const initStage = useRef(true);
   const memoizedScrollHandler = useCallback(handleScroll, [scale, preferences]);
+  const memoizedSinglePageScrollHandler = useCallback(handleSinglePageScroll, [pageNumber, preferences]);
+  const memoizedClickHandler = useCallback(handleClick, [state, preferences]);
   const memoizedWheelHandler = useCallback(handleWheel, [scale]);
   const memoizedKeyUpHandler = useCallback(handleKeyUp, [scale]);
   const memoizedKeyDownHandler = useCallback(handleKeyDown, [scale, pageNumber]);
@@ -74,12 +82,46 @@ export default function Viewer() {
   }, [memoizedKeyDownHandler]);
 
   useEffect(() => {
+    if (preferences.viewMode === "single") {
+      window.removeEventListener("scroll", memoizedScrollHandler);
+      return;
+    }
     window.addEventListener("scroll", memoizedScrollHandler);
 
     return () => {
       window.removeEventListener("scroll", memoizedScrollHandler);
     };
   }, [memoizedScrollHandler]);
+
+  useEffect(() => {
+    if (!state || !state.instance) {
+      return;
+    }
+    else if (preferences.viewMode === "multi") {
+      window.removeEventListener("scroll", memoizedSinglePageScrollHandler);
+      return;
+    }
+    window.addEventListener("scroll", memoizedSinglePageScrollHandler);
+
+    return () => {
+      window.removeEventListener("scroll", memoizedSinglePageScrollHandler);
+    };
+  }, [memoizedSinglePageScrollHandler]);
+
+  useEffect(() => {
+    if (!state || !state.instance) {
+      return;
+    }
+    else if (preferences.viewMode === "multi") {
+      window.removeEventListener("click", memoizedClickHandler);
+      return;
+    }
+    window.addEventListener("click", memoizedClickHandler);
+
+    return () => {
+      window.removeEventListener("click", memoizedClickHandler);
+    };
+  }, [memoizedClickHandler]);
 
   useEffect(() => {
     window.addEventListener("drop", memoizedDropHandler);
@@ -92,30 +134,29 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
-    if (!state || !state.instance) {
+    if (!state || !state.instance || preferences.viewMode === "single") {
       return;
     }
+
     function updatePages(scaleValue) {
       for (const [index, element] of Object.entries(pdfRef.current.children)) {
-        const pageDimension = state.pageDimensions[index];
-        const w = Math.floor(pageDimension.width * scaleValue);
-        const h = Math.floor(pageDimension.height * scaleValue);
+        const { width, height } = getScaledPageDimensions(index, scaleValue);
 
-        element.style.width = `${w}px`;
-        element.style.height = `${h}px`;
+        element.style.width = `${width}px`;
+        element.style.height = `${height}px`;
 
         if (element.hasAttribute("data-loaded")) {
           const canvas = element.firstElementChild;
-          const { width } = canvas;
+          const { width: canvasWidth } = canvas;
 
-          if (w === width) {
+          if (width === canvasWidth) {
             canvas.style.width = "";
             canvas.style.height = "";
             element.removeAttribute("data-rerender-needed");
           }
           else {
-            canvas.style.width = `${w}px`;
-            canvas.style.height = `${h}px`;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
             element.setAttribute("data-rerender-needed", true);
           }
         }
@@ -123,7 +164,7 @@ export default function Viewer() {
     }
 
     function updatePagesWithNewScale(newScale) {
-      const scrollLeft = document.documentElement.scrollLeft;
+      const { scrollLeft } = document.documentElement;
       const { top } = getPageElementBox(pageNumber, pdfRef.current.children);
       const newScaleValue = newScale.currentScale;
       const scaleRatio = newScaleValue / state.file.scale.currentScale;
@@ -161,71 +202,6 @@ export default function Viewer() {
       });
     }
 
-    async function renderPageContent(container) {
-      const number = parseInt(container.getAttribute("data-page-number"), 10);
-      const pageDimension = state.pageDimensions[number - 1];
-      const w = Math.floor(pageDimension.width * scale.currentScale);
-      const h = Math.floor(pageDimension.height * scale.currentScale);
-      const canvas = document.createElement("canvas");
-      let textLayerDiv = null;
-      let oldCanvas = null;
-
-      canvas.classList.add("viewer-page-canvas");
-
-      if (container.hasAttribute("data-rerender-needed")) {
-        ([oldCanvas, textLayerDiv] = container.children);
-        textLayerDiv.innerHTML = "";
-
-        container.removeAttribute("data-rerender-needed");
-      }
-      else {
-        textLayerDiv = document.createElement("div");
-        textLayerDiv.classList.add("viewer-page-text");
-
-        container.appendChild(canvas);
-        container.appendChild(textLayerDiv);
-      }
-      const page = await state.instance.getPage(number);
-      const viewport = page.getViewport({ scale: scale.currentScale });
-
-      canvas.width = w % 2 === 0 ? w : w + 1;
-      canvas.height = h + 1;
-      textLayerDiv.style.width = `${w}px`;
-      textLayerDiv.style.height = `${h}px`;
-
-      await page.render({
-        canvasContext: canvas.getContext("2d"),
-        enableWebGL: true,
-        viewport
-      }).promise;
-
-      requestAnimationFrame(async () => {
-        pdfjs.renderTextLayer({
-          textContent: await page.getTextContent(),
-          container: textLayerDiv,
-          viewport,
-          textDivs: []
-        });
-
-        renderAnnotations(viewport, page, container);
-      });
-
-      if (oldCanvas) {
-        container.replaceChild(canvas, oldCanvas);
-      }
-
-      if (pendingPages.current.length) {
-        while (pendingPages.current.length) {
-          const element = scrollDirection.current === 1 ? pendingPages.current.pop() : pendingPages.current.shift();
-          element.setAttribute("data-loaded", "true");
-          renderPageContent(element);
-        }
-      }
-      else {
-        pageRendering.current = false;
-      }
-    }
-
     updatePagesWithNewScale(scale);
 
     if (observer.current) {
@@ -239,7 +215,43 @@ export default function Viewer() {
     });
     updatingPages.current = false;
     initStage.current = false;
-  }, [scale]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scale, preferences.viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSinglePageChange() {
+    const pageElement = pdfRef.current.firstElementChild;
+
+    if (pageElement.classList.contains("hidden")) {
+      pageElement.classList.remove("hidden");
+      window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
+    }
+    pageElement.setAttribute("data-page-number", pageNumber);
+    updatePageInSingleMode(pageNumber, scale.currentScale);
+    await renderPageContent(pageElement);
+    pageElement.setAttribute("data-loaded", "true");
+
+    if (pageNumber !== state.file.pageNumber) {
+      window.scrollTo(0, 0);
+    }
+    state.file.pageNumber = pageNumber;
+    state.file.scale = scale;
+
+    setState({ ...state });
+
+    if (preferences.saveFile) {
+      saveFile(state.file);
+    }
+  }
+
+  useEffect(() => {
+    if (!state || !state.instance || preferences.viewMode === "multi") {
+      return;
+    }
+    else if (initStage.current) {
+      initStage.current = false;
+      return;
+    }
+    handleSinglePageChange();
+  }, [scale, pageNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function init() {
     if (history.location.state) {
@@ -275,6 +287,94 @@ export default function Viewer() {
     }
   }
 
+  function updatePageInSingleMode(pageNumber, scaleValue) {
+    const { width, height } = getScaledPageDimensions(pageNumber - 1, scaleValue);
+    const element = pdfRef.current.firstElementChild;
+
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
+
+    if (element.hasAttribute("data-loaded")) {
+      const canvas = element.firstElementChild;
+
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      element.setAttribute("data-rerender-needed", true);
+    }
+  }
+
+  function getScaledPageDimensions(index, scale) {
+    const pageDimension = state.pageDimensions[index];
+    const width = Math.floor(pageDimension.width * scale);
+    const height = Math.floor(pageDimension.height * scale);
+
+    return { width, height };
+  }
+
+  async function renderPageContent(container) {
+    const number = parseInt(container.getAttribute("data-page-number"), 10);
+    const { width, height } = getScaledPageDimensions(number - 1, scale.currentScale);
+    const canvas = document.createElement("canvas");
+    let textLayerDiv = null;
+    let oldCanvas = null;
+
+    canvas.classList.add("viewer-page-canvas");
+
+    if (container.hasAttribute("data-rerender-needed")) {
+      ([oldCanvas, textLayerDiv] = container.children);
+      textLayerDiv.innerHTML = "";
+
+      container.removeAttribute("data-rerender-needed");
+    }
+    else {
+      textLayerDiv = document.createElement("div");
+      textLayerDiv.classList.add("viewer-page-text");
+
+      container.appendChild(canvas);
+      container.appendChild(textLayerDiv);
+    }
+    const page = await state.instance.getPage(number);
+    const viewport = page.getViewport({ scale: scale.currentScale });
+
+    canvas.width = width;
+    canvas.height = height;
+    textLayerDiv.style.width = `${width}px`;
+    textLayerDiv.style.height = `${height}px`;
+
+    await page.render({
+      canvasContext: canvas.getContext("2d"),
+      enableWebGL: true,
+      viewport
+    }).promise;
+
+    requestAnimationFrame(async () => {
+      pdfjs.renderTextLayer({
+        textContent: await page.getTextContent(),
+        container: textLayerDiv,
+        viewport,
+        textDivs: []
+      });
+
+      renderAnnotations(viewport, page, container);
+    });
+
+    if (oldCanvas) {
+      container.replaceChild(canvas, oldCanvas);
+    }
+
+    if (pendingPages.current.length) {
+      while (pendingPages.current.length) {
+        const element = scrollDirection.current === 1 ? pendingPages.current.pop() : pendingPages.current.shift();
+        element.setAttribute("data-loaded", "true");
+        renderPageContent(element);
+      }
+    }
+    else {
+      pageRendering.current = false;
+    }
+  }
+
   function handleScroll() {
     if (updatingPageNumber.current) {
       return;
@@ -302,6 +402,49 @@ export default function Viewer() {
       }
       updatingPageNumber.current = false;
     });
+  }
+
+  function handleSinglePageScroll() {
+    if (updatingPageNumber.current) {
+      return;
+    }
+    updatingPageNumber.current = true;
+
+    requestAnimationFrame(() => {
+      const { scrollTop, scrollLeft } = document.documentElement;
+      state.file.scrollTop = scrollTop < 0 ? 0 : scrollTop;
+      state.file.scrollLeft = scrollLeft;
+
+      if (preferences.saveFile) {
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          saveFile(state.file);
+        }, 1000);
+      }
+      setState({ ...state });
+      updatingPageNumber.current = false;
+    });
+  }
+
+  async function handleClick(event) {
+    if (event.target.nodeName === "A") {
+      const url = new URL(event.target.href);
+
+      if (url.origin !== window.location.origin) {
+        return;
+      }
+      const arr = url.hash.split("#");
+      const data = unescape(arr[arr.length - 1]);
+      let dest = "";
+
+      try {
+        dest = JSON.parse(data);
+      } catch {
+        dest = await state.instance.getDestination(data);
+      }
+      const index = await state.instance.getPageIndex(dest[0]);
+      setPageNumber(index + 1);
+    }
   }
 
   function handleWheel(event) {
@@ -378,11 +521,14 @@ export default function Viewer() {
 
   async function renderAnnotations(viewport, page, container) {
     const annotations = await page.getAnnotations();
+    const annotationLayerDiv = container.children[2];
 
     if (!annotations.length) {
+      if (annotationLayerDiv) {
+        annotationLayerDiv.remove();
+      }
       return;
     }
-    const annotationLayerDiv = container.children[2];
     const params = {
       page,
       annotations,
@@ -391,7 +537,7 @@ export default function Viewer() {
       linkService: new LinkService(state.instance, pdfRef.current, window.location.href)
     };
 
-    if (annotationLayerDiv) {
+    if (annotationLayerDiv && preferences.viewMode === "multi") {
       pdfjs.AnnotationLayer.update(params);
     }
     else {
@@ -400,6 +546,10 @@ export default function Viewer() {
       container.appendChild(div);
       params.div = div;
       pdfjs.AnnotationLayer.render(params);
+
+      if (annotationLayerDiv) {
+        annotationLayerDiv.remove();
+      }
     }
   }
 
@@ -438,17 +588,32 @@ export default function Viewer() {
     return dimensions;
   }
 
-  async function renderEmptyPage(i, scale, fragmenet, pdf) {
-    const div = document.createElement("div");
-    const page = await pdf.getPage(i);
+  async function getPageDiv(pdf, scale, pageNumber) {
+    const page = await pdf.getPage(pageNumber);
     const viewport = page.getViewport({ scale: scale.currentScale });
+    const div = document.createElement("div");
 
     div.style.width = `${Math.floor(viewport.width)}px`;
     div.style.height = `${Math.floor(viewport.height)}px`;
 
-    div.setAttribute("data-page-number", i);
+    div.setAttribute("data-page-number", pageNumber);
     div.classList.add("viewer-page");
+    return div;
+  }
+
+  async function renderEmptyPage(pageNumber, scale, fragmenet, pdf) {
+    const div = await getPageDiv(pdf, scale, pageNumber);
+
     fragmenet.appendChild(div);
+  }
+
+  async function renderSingleEmptyPage(pdf, fileMetadata, hide) {
+    const div = await getPageDiv(pdf, fileMetadata.scale, fileMetadata.pageNumber);
+
+    if (hide) {
+      div.classList.add("hidden");
+    }
+    pdfRef.current.appendChild(div);
   }
 
   async function renderEmptyPages(pdf, scale) {
@@ -469,7 +634,9 @@ export default function Viewer() {
     const [{ maxWidth, maxHeight }, pageDimensions] = await Promise.all([
       findBiggestDimensions(pdf, fileMetadata.pageCount),
       getPageDimensions(pdf),
-      renderEmptyPages(pdf, fileMetadata.scale)
+      preferences.viewMode === "multi" ?
+        renderEmptyPages(pdf, fileMetadata.scale) :
+        renderSingleEmptyPage(pdf, fileMetadata, true)
     ]);
 
     delete state?.filePreviewVisible;
@@ -690,11 +857,21 @@ export default function Viewer() {
   }
 
   function previousPage() {
-    scrollToPage(pageNumber - 1, pdfRef.current.children, settings.keepToolbarVisible);
+    if (preferences.viewMode === "single") {
+      setPageNumber(pageNumber - 1);
+    }
+    else {
+      scrollToPage(pageNumber - 1, pdfRef.current.children, settings.keepToolbarVisible);
+    }
   }
 
   function nextPage() {
-    scrollToPage(pageNumber + 1, pdfRef.current.children, settings.keepToolbarVisible);
+    if (preferences.viewMode === "single") {
+      setPageNumber(pageNumber + 1);
+    }
+    else {
+      scrollToPage(pageNumber + 1, pdfRef.current.children, settings.keepToolbarVisible);
+    }
   }
 
   function scrollToNewPage(newPageNumber) {
@@ -710,9 +887,36 @@ export default function Viewer() {
     setSettings({ ...settings, [setting]: value });
   }
 
+  async function changeViewMode(mode) {
+    const updatedPreferences = {
+      ...preferences,
+      viewMode: mode
+    };
+    pdfRef.current.innerHTML = "";
+
+    if (mode === "multi") {
+      await renderEmptyPages(state.instance, state.file.scale);
+      scrollToNewPage(pageNumber);
+    }
+    else {
+      window.removeEventListener("scroll", memoizedScrollHandler);
+      await renderSingleEmptyPage(state.instance, state.file);
+      updatePageInSingleMode(pageNumber, scale.currentScale);
+      await renderPageContent(pdfRef.current.firstElementChild);
+      pdfRef.current.firstElementChild.setAttribute("data-loaded", "true");
+      window.scrollTo(0, 0);
+    }
+    setPreferences(updatedPreferences);
+    savePreferences(updatedPreferences);
+  }
+
   function exitViewer() {
     window.removeEventListener("scroll", memoizedScrollHandler);
     history.push({ pathname: "/" });
+  }
+
+  function savePreferences(preferences) {
+    localStorage.setItem("viewer-preferences", JSON.stringify(preferences));
   }
 
   if (state?.error) {
@@ -729,6 +933,7 @@ export default function Viewer() {
       {state?.instance && (
         <>
           <Toolbar file={state.file}
+            preferences={preferences}
             zoomOut={zoomOut}
             zoomIn={zoomIn}
             previousPage={previousPage}
@@ -736,6 +941,7 @@ export default function Viewer() {
             handleSelect={handleSelect}
             scrollToNewPage={scrollToNewPage}
             updateSettings={updateSettings}
+            changeViewMode={changeViewMode}
             exitViewer={exitViewer}/>
           {fileLoadMessage && (
             <DropModal message={fileLoadMessage}
@@ -747,6 +953,16 @@ export default function Viewer() {
         </>
       )}
       <div className={`viewer-pdf${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
+      {preferences.viewMode === "single" && (
+        <>
+          <button className="btn icon-btn viewer-navigation-btn previous" onClick={previousPage}>
+            <Icon name="chevron-left"/>
+          </button>
+          <button className="btn icon-btn viewer-navigation-btn next" onClick={nextPage}>
+            <Icon name="chevron-right"/>
+          </button>
+        </>
+      )}
     </>
   );
 }

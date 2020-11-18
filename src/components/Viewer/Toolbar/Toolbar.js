@@ -5,7 +5,7 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage, handleSelect, scrollToNewPage, updateSettings, exitViewer }) {
+export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, handleSelect, scrollToNewPage, updateSettings, changeViewMode, exitViewer }) {
   const [settings, setSettings] = useState(() => getSettings());
   const [pageNumber, setPageNumber] = useState(file.pageNumber);
   const keepVisible = useRef(false);
@@ -19,7 +19,7 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
     if (media.matches) {
-      toolbarRef.current.classList.add("hidden");
+      toolbarRef.current.classList.toggle("hidden", file.scrollTop > 0);
       window.addEventListener("pointerup", handleClick);
     }
     else {
@@ -119,7 +119,7 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
   }
 
   function handleClick({ target }) {
-    if (!target.closest(".viewer-toolbar")) {
+    if (!target.closest(".viewer-toolbar") && !target.closest(".btn")) {
       keepVisible.current = false;
       toolbarRef.current.classList.toggle("hidden");
     }
@@ -224,37 +224,52 @@ export default function Toolbar({ file, zoomOut, zoomIn, previousPage, nextPage,
         </div>
       </div>
       <Dropdown
-        container={{ className: "viewer-toolbar-settings-container" }}
+        container={{ className: "viewer-toolbar-dropdown-container" }}
         toggle={{
-          content: <Icon name="settings"/>,
-          title: "Settings",
+          content: <Icon name="dots-vertical"/>,
+          title: "More",
           className: "btn icon-btn icon-btn-alt"
         }}
-        body={{ className: "viewer-toolbar-settings" }}>
-        <label className="viewer-toolbar-settings-item">
-          <input type="checkbox" className="sr-only checkbox-input"
-            name="invertColors"
-            onChange={handleSettingChange}
-            checked={settings.invertColors}/>
-          <div className="checkbox">
-            <div className="checkbox-tick"></div>
-          </div>
-          <span className="checkbox-label">Invert page colors.</span>
-        </label>
-        <label className="viewer-toolbar-settings-item">
-          <input type="checkbox" className="sr-only checkbox-input"
-            name="keepToolbarVisible"
-            onChange={handleSettingChange}
-            checked={settings.keepToolbarVisible}/>
-          <div className="checkbox">
-            <div className="checkbox-tick"></div>
-          </div>
-          <span className="checkbox-label">Keep toolbar visible.</span>
-        </label>
+        body={{ className: "viewer-toolbar-dropdown" }}>
+        <div>
+          <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
+            onClick={() => changeViewMode("multi")}>
+            <Icon name="book"/>
+            <span>Multi page</span>
+          </button>
+          <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "single" ? ` active` : ""}`}
+            onClick={() => changeViewMode("single")}>
+            <Icon name="book-check-mark"/>
+            <span>Single page</span>
+          </button>
+        </div>
+        <div className="viewer-toolbar-settings">
+          <label className="viewer-toolbar-settings-item">
+            <input type="checkbox" className="sr-only checkbox-input"
+              name="invertColors"
+              onChange={handleSettingChange}
+              checked={settings.invertColors}/>
+            <div className="checkbox">
+              <div className="checkbox-tick"></div>
+            </div>
+            <span className="checkbox-label">Invert page colors.</span>
+          </label>
+          <label className="viewer-toolbar-settings-item">
+            <input type="checkbox" className="sr-only checkbox-input"
+              name="keepToolbarVisible"
+              onChange={handleSettingChange}
+              checked={settings.keepToolbarVisible}/>
+            <div className="checkbox">
+              <div className="checkbox-tick"></div>
+            </div>
+            <span className="checkbox-label">Keep toolbar visible.</span>
+          </label>
+        </div>
+        <button className="btn icon-text-btn viewer-toolbar-exit-btn" onClick={localExitViewer} title="Exit">
+          <Icon name="exit"/>
+          <span>Exit Viewer</span>
+        </button>
       </Dropdown>
-      <button className="btn icon-btn icon-btn-alt" onClick={localExitViewer} title="Exit">
-        <Icon name="exit"/>
-      </button>
     </div>
   );
 }

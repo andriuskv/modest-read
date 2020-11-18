@@ -1,3 +1,5 @@
+@import "../../styles/mixins.scss";
+
 .viewer-pdf {
   padding-top: 40px;
 
@@ -19,6 +21,10 @@
   border: var(--space-md) solid transparent;
   background-color: white;
   background-clip: content-box;
+
+  &.hidden {
+    display: none;
+  }
 }
 
 .viewer-page-canvas {
@@ -61,5 +67,28 @@
         opacity: 0.2;
       }
     }
+  }
+}
+
+.viewer-navigation-btn {
+  position: fixed;
+  display: none;
+  bottom: var(--space-md);
+
+  &:hover {
+    --background-color: transform;
+    color: var(--color-grey-10);
+  }
+
+  &.previous {
+    left: var(--space-md);
+  }
+
+  &.next {
+    right: var(--space-md);
+  }
+
+  @include breakpoint-sm {
+    display: block;
   }
 }
