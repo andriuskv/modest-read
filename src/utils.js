@@ -82,6 +82,22 @@ function scrollToPage(number, elements, keepToolbarVisible) {
   });
 }
 
+function getScrollbarWidth() {
+  const outer = document.createElement("div");
+  const inner = document.createElement("div");
+
+  outer.style.visibility = "hidden";
+  outer.style.overflow = "scroll";
+
+  outer.appendChild(inner);
+  document.body.appendChild(outer);
+
+  const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+
+  outer.remove();
+  return scrollbarWidth;
+}
+
 export {
   setDocumentTitle,
   classNames,
@@ -90,5 +106,6 @@ export {
   parseMetadata,
   getFileSizeString,
   getPageElementBox,
-  scrollToPage
+  scrollToPage,
+  getScrollbarWidth
 };
