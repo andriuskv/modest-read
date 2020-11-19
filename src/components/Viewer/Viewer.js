@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getPageElementBox, scrollToPage } from "../../utils";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getPageElementBox, scrollToPage, getScrollbarWidth } from "../../utils";
 import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
 import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings } from "../../services/settingsService";
@@ -208,7 +208,7 @@ export default function Viewer() {
       observer.current.disconnect();
     }
     observer.current = new IntersectionObserver(callback, {
-      rootMargin: `${state.maxHeight * state.file.scale.currentScale}px 0px`
+      rootMargin: "200px 0px"
     });
     Array.from(pdfRef.current.children).forEach(element => {
       observer.current.observe(element);
@@ -509,6 +509,11 @@ export default function Viewer() {
     event.preventDefault();
   }
 
+  async function getPageViewport(pdf, pageNumber, scale = 1) {
+    const page = await pdf.getPage(pageNumber);
+    return page.getViewport({ scale });
+  }
+
   function getDefaultScale() {
     return {
       name: "1",
@@ -580,8 +585,7 @@ export default function Viewer() {
     const dimensions = [];
 
     for (let i = 0; i < pdf.numPages; i += 1) {
-      const page = await pdf.getPage(i + 1);
-      const { width, height } = page.getViewport({ scale: 1 });
+      const { width, height } = await getPageViewport(pdf, i + 1);
 
       dimensions.push({ width, height });
     }
@@ -589,12 +593,11 @@ export default function Viewer() {
   }
 
   async function getPageDiv(pdf, scale, pageNumber) {
-    const page = await pdf.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: scale.currentScale });
+    const { width, height } = await getPageViewport(pdf, pageNumber, scale.currentScale);
     const div = document.createElement("div");
 
-    div.style.width = `${Math.floor(viewport.width)}px`;
-    div.style.height = `${Math.floor(viewport.height)}px`;
+    div.style.width = `${Math.floor(width)}px`;
+    div.style.height = `${Math.floor(height)}px`;
 
     div.setAttribute("data-page-number", pageNumber);
     div.classList.add("viewer-page");
@@ -631,8 +634,7 @@ export default function Viewer() {
     fileMetadata.scale = fileMetadata.scale || getDefaultScale();
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
-    const [{ maxWidth, maxHeight }, pageDimensions] = await Promise.all([
-      findBiggestDimensions(pdf, fileMetadata.pageCount),
+    const [pageDimensions] = await Promise.all([
       getPageDimensions(pdf),
       preferences.viewMode === "multi" ?
         renderEmptyPages(pdf, fileMetadata.scale) :
@@ -645,9 +647,7 @@ export default function Viewer() {
       ...state,
       instance: pdf,
       pageDimensions,
-      file: fileMetadata,
-      maxWidth,
-      maxHeight
+      file: fileMetadata
     });
 
     window.scrollTo(fileMetadata.scrollLeft, fileMetadata.scrollTop);
@@ -772,48 +772,37 @@ export default function Viewer() {
     event.target.value = "";
   }
 
-  async function findBiggestDimensions(pdf, pageCount) {
-    let maxWidth = 0;
-    let maxHeight = 0;
-
-    for (let i = 1; i <= Math.min(3, pageCount); i += 1) {
-      const page = await pdf.getPage(i);
-      const { width, height } = page.getViewport({ scale: 1 });
-
-      if (width > maxWidth) {
-        maxWidth = width;
-      }
-
-      if (height > maxHeight) {
-        maxHeight = height;
-      }
-    }
-    return {
-      maxWidth: Math.floor(maxWidth),
-      maxHeight: Math.floor(maxHeight)
-    };
-  }
-
-  async function handleSelect(event) {
+  async function handleSelect({ target }) {
+    const { value } = target;
     let newScale = 0;
 
-    if (event.target.value === "fit-width") {
-      const maxWidth = document.documentElement.offsetWidth - 16;
-      newScale = maxWidth / state.maxWidth;
+    if (value === "fit-width") {
+      const isSinglePageViewMode = preferences.viewMode === "single";
+      const { scrollWidth, offsetWidth } = document.documentElement;
+      const { width } = await getPageViewport(state.instance, pageNumber);
+      const scrollbarWidth = isSinglePageViewMode && scrollWidth - offsetWidth === 0 ? getScrollbarWidth() : 0;
+      const maxWidth = offsetWidth - scrollbarWidth - 16;
+
+      newScale = maxWidth / width;
     }
-    else if (event.target.value === "fit-page") {
+    else if (value === "fit-page") {
+      const isSinglePageViewMode = preferences.viewMode === "single";
+      const { scrollWidth, offsetWidth, offsetHeight } = document.documentElement;
+      const { height } = await getPageViewport(state.instance, pageNumber);
+      const scrollbarWidth = scrollWidth - offsetWidth > 0 ? getScrollbarWidth() : 0;
       const { keepToolbarVisible } = settings;
-      const maxHeight = document.documentElement.offsetHeight - (keepToolbarVisible ? 56 : 16);
-      newScale = maxHeight / state.maxHeight;
+      const maxHeight = offsetHeight + scrollbarWidth - (keepToolbarVisible || isSinglePageViewMode ? 56 : 16);
+
+      newScale = maxHeight / height;
     }
     else {
-      newScale = scale.initialScale * event.target.value;
+      newScale = scale.initialScale * value;
     }
     updatingPages.current = true;
 
     setScale({
       ...scale,
-      name: event.target.value,
+      name: value,
       currentScale: newScale
     });
   }
