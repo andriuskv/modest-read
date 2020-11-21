@@ -282,12 +282,12 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
         <div>
           <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
             onClick={() => changeViewMode("multi")}>
-            <Icon name="book"/>
+            <Icon name="pages"/>
             <span>Multi page</span>
           </button>
           <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "single" ? ` active` : ""}`}
             onClick={() => changeViewMode("single")}>
-            <Icon name="book-check-mark"/>
+            <Icon name="page"/>
             <span>Single page</span>
           </button>
         </div>
