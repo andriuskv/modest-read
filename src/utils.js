@@ -77,7 +77,7 @@ function getPageElementBox(number, elements) {
 
 function scrollToPage(number, elements, keepToolbarVisible) {
   execFuncOnPageElement(elements, number, element => {
-    const offset = keepToolbarVisible ? 40 : 0;
+    const offset = keepToolbarVisible || number === 1 ? 40 : 0;
     window.scrollTo(document.documentElement.scrollLeft, element.offsetTop - offset);
   });
 }

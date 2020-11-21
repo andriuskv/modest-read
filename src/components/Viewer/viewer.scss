@@ -1,7 +1,9 @@
 @import "../../styles/mixins.scss";
 
 .viewer-pdf {
-  padding-top: 40px;
+  &.offset {
+    padding-top: 40px;
+  }
 
   &.invert .viewer-page {
     filter: invert(100%);
@@ -72,8 +74,8 @@
 
 .viewer-navigation-btn {
   position: fixed;
-  display: none;
   bottom: var(--space-md);
+  display: none;
 
   &:hover {
     --background-color: transform;
