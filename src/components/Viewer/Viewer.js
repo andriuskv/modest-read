@@ -217,30 +217,17 @@ export default function Viewer() {
     initStage.current = false;
   }, [scale, preferences.viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleSinglePageChange() {
-    const pageElement = pdfRef.current.firstElementChild;
+  useEffect(() => {
+    if (preferences.viewMode === "single") {
+      const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
-    if (pageElement.classList.contains("hidden")) {
-      pageElement.classList.remove("hidden");
-      window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
+      if (media.matches && !settings.keepToolbarVisible) {
+        pdfRef.current.classList.remove("offset");
+        return;
+      }
     }
-    pageElement.setAttribute("data-page-number", pageNumber);
-    updatePageInSingleMode(pageNumber, scale.currentScale);
-    await renderPageContent(pageElement);
-    pageElement.setAttribute("data-loaded", "true");
-
-    if (pageNumber !== state.file.pageNumber) {
-      window.scrollTo(0, 0);
-    }
-    state.file.pageNumber = pageNumber;
-    state.file.scale = scale;
-
-    setState({ ...state });
-
-    if (preferences.saveFile) {
-      saveFile(state.file);
-    }
-  }
+    pdfRef.current.classList.add("offset");
+  }, [preferences.viewMode, settings.keepToolbarVisible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!state || !state.instance || preferences.viewMode === "multi") {
@@ -284,6 +271,31 @@ export default function Viewer() {
     else {
       setState({ error: true });
       setDocumentTitle("Error");
+    }
+  }
+
+  async function handleSinglePageChange() {
+    const pageElement = pdfRef.current.firstElementChild;
+
+    if (pageElement.classList.contains("hidden")) {
+      pageElement.classList.remove("hidden");
+      window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
+    }
+    pageElement.setAttribute("data-page-number", pageNumber);
+    updatePageInSingleMode(pageNumber, scale.currentScale);
+    await renderPageContent(pageElement);
+    pageElement.setAttribute("data-loaded", "true");
+
+    if (pageNumber !== state.file.pageNumber) {
+      window.scrollTo(0, 0);
+    }
+    state.file.pageNumber = pageNumber;
+    state.file.scale = scale;
+
+    setState({ ...state });
+
+    if (preferences.saveFile) {
+      saveFile(state.file);
     }
   }
 
@@ -791,7 +803,7 @@ export default function Viewer() {
       const { height } = await getPageViewport(state.instance, pageNumber);
       const scrollbarWidth = scrollWidth - offsetWidth > 0 ? getScrollbarWidth() : 0;
       const { keepToolbarVisible } = settings;
-      const maxHeight = offsetHeight + scrollbarWidth - (keepToolbarVisible || isSinglePageViewMode ? 56 : 16);
+      const maxHeight = offsetHeight + scrollbarWidth - (keepToolbarVisible || pageNumber === 1 || isSinglePageViewMode ? 56 : 16);
 
       newScale = maxHeight / height;
     }
@@ -941,7 +953,7 @@ export default function Viewer() {
           )}
         </>
       )}
-      <div className={`viewer-pdf${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
+      <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
       {preferences.viewMode === "single" && (
         <>
           <button className="btn icon-btn viewer-navigation-btn previous" onClick={previousPage}>

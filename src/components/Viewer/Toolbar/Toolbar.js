@@ -9,29 +9,38 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
   const [settings, setSettings] = useState(() => getSettings());
   const [pageNumber, setPageNumber] = useState(file.pageNumber);
   const keepVisible = useRef(false);
+  const hideAfterScroll = useRef(file.scrollTop > 0);
   const toolbarRef = useRef(null);
   const toolbarScrollOffset = useRef(0);
   const scrolling = useRef(false);
   const movingMouse = useRef(false);
   const memoizedScrollHandler = useCallback(handleScroll, [file]);
+  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [preferences.viewMode]);
 
   useEffect(() => {
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
     if (media.matches) {
+      toolbarRef.current.classList.toggle("hiding", file.scrollTop > 0);
       toolbarRef.current.classList.toggle("hidden", file.scrollTop > 0);
       window.addEventListener("pointerup", handleClick);
+      window.addEventListener("scroll", memoizedMediaScrollHandler);
+
+      return () => {
+        window.removeEventListener("pointerup", handleClick);
+        window.removeEventListener("scroll", memoizedMediaScrollHandler);
+      };
     }
     else {
       window.addEventListener("scroll", memoizedScrollHandler);
       window.addEventListener("mousemove", handeMouseMove);
+
+      return () => {
+        window.removeEventListener("scroll", memoizedScrollHandler);
+        window.removeEventListener("mousemove", handeMouseMove);
+      };
     }
-    return () => {
-      window.removeEventListener("pointerup", handleClick);
-      window.removeEventListener("scroll", memoizedScrollHandler);
-      window.removeEventListener("mousemove", handeMouseMove);
-    };
-  }, [file]);
+  }, [memoizedScrollHandler, memoizedMediaScrollHandler]);
 
   useEffect(() => {
     setPageNumber(file.pageNumber);
@@ -97,6 +106,30 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
     });
   }
 
+  function handleMatchedMediaScroll() {
+    if (scrolling.current) {
+      return;
+    }
+    scrolling.current = true;
+
+    requestAnimationFrame(() => {
+      const { scrollTop } = document.documentElement;
+
+      if (scrollTop < 80) {
+        if (preferences.viewMode === "multi") {
+          revealToolbar();
+        }
+      }
+      else if (hideAfterScroll.current) {
+        hideToolbar();
+      }
+      else if (preferences.viewMode === "multi") {
+        revealToolbar();
+      }
+      scrolling.current = false;
+    });
+  }
+
   function handeMouseMove(event) {
     if (movingMouse.current) {
       return;
@@ -119,9 +152,24 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
   }
 
   function handleClick({ target }) {
+    const { scrollTop } = document.documentElement;
+
     if (!target.closest(".viewer-toolbar") && !target.closest(".btn")) {
       keepVisible.current = false;
-      toolbarRef.current.classList.toggle("hidden");
+
+      if (preferences.viewMode === "multi" && scrollTop < 40) {
+        hideAfterScroll.current = !hideAfterScroll.current;
+        return;
+      }
+
+      if (toolbarRef.current.classList.contains("hidden")) {
+        hideAfterScroll.current = false;
+        revealToolbar();
+      }
+      else {
+        hideAfterScroll.current = true;
+        hideToolbar();
+      }
     }
   }
 
