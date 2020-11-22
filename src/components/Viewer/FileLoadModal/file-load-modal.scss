@@ -1,4 +1,4 @@
-.viewer-drop-modal {
+.viewer-file-load-modal {
   z-index: 1;
   position: fixed;
   top: calc(40px + var(--space-md));
@@ -16,6 +16,7 @@
   --notification-background-color: var(--color-negative-20);
   --notification-color: var(--color-white);
 
+  min-width: auto;
   box-shadow: none;
 
   .notification-btn {
@@ -27,22 +28,22 @@
   }
 }
 
-.viewer-drop-warning {
+.viewer-file-load-warning {
   padding: var(--space-md);
   border-radius: 8px;
   background-color: var(--color-grey-70);
 }
 
-.viewer-drop-warning-mesasge-container {
+.viewer-file-load-warning-mesasge-container {
   display: flex;
   align-items: center;
 }
 
-.viewer-drop-warning-mesasge {
+.viewer-file-load-warning-mesasge {
   margin-left: var(--space-md);
 }
 
-.viewer-drop-warning-checkbox-container {
+.viewer-file-load-warning-checkbox-container {
   margin-top: var(--space-xl);
   margin-bottom: var(--space-md);
   font-size: var(--text-sm);
@@ -53,11 +54,11 @@
   }
 }
 
-.viewer-drop-warning-bottom {
+.viewer-file-load-warning-bottom {
   display: flex;
   justify-content: flex-end;
 }
 
-.viewer-drop-warning-btn {
+.viewer-file-load-warning-btn {
   margin-left: var(--space-md);
 }
