@@ -5,7 +5,7 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, handleSelect, scrollToNewPage, updateSettings, changeViewMode, exitViewer }) {
+export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
   const [settings, setSettings] = useState(() => getSettings());
   const [pageNumber, setPageNumber] = useState(file.pageNumber);
   const keepVisible = useRef(false);
@@ -279,19 +279,26 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
           className: "btn icon-btn icon-btn-alt"
         }}
         body={{ className: "viewer-toolbar-dropdown" }}>
-        <div>
-          <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
+        <div className="viewer-toolbar-dropdown-group">
+          <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
+            <Icon name="upload"/>
+            <span>Load File</span>
+            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
+          </label>
+        </div>
+        <div className="viewer-toolbar-dropdown-group">
+          <button className={`btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
             onClick={() => changeViewMode("multi")}>
             <Icon name="pages"/>
             <span>Multi page</span>
           </button>
-          <button className={`btn icon-text-btn dropdown-btn viewer-view-mode-btn${preferences.viewMode === "single" ? ` active` : ""}`}
+          <button className={`btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn${preferences.viewMode === "single" ? ` active` : ""}`}
             onClick={() => changeViewMode("single")}>
             <Icon name="page"/>
             <span>Single page</span>
           </button>
         </div>
-        <div className="viewer-toolbar-settings">
+        <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
           <label className="viewer-toolbar-settings-item">
             <input type="checkbox" className="sr-only checkbox-input"
               name="invertColors"
@@ -312,8 +319,19 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
             </div>
             <span className="checkbox-label">Keep toolbar visible.</span>
           </label>
+          {preferences.hideWarning && (
+            <label className="viewer-toolbar-settings-item">
+              <input type="checkbox" className="sr-only checkbox-input"
+                onChange={updateSaveFilePreference}
+                checked={preferences.saveLoadedFile}/>
+              <div className="checkbox">
+                <div className="checkbox-tick"></div>
+              </div>
+              <span className="checkbox-label">Save loaded file.</span>
+            </label>
+          )}
         </div>
-        <button className="btn icon-text-btn viewer-toolbar-exit-btn" onClick={localExitViewer} title="Exit">
+        <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
           <Icon name="exit"/>
           <span>Exit Viewer</span>
         </button>

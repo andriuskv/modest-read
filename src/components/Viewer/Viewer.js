@@ -10,7 +10,7 @@ import LinkService from "../../services/viewerLinkService";
 import Icon from "../Icon";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
-import DropModal from "./DropModal";
+import FileLoadModal from "./FileLoadModal";
 import NoFileNotice from "./NoFileNotice";
 import "./viewer.scss";
 
@@ -709,9 +709,9 @@ export default function Viewer() {
       };
 
       if (!fileLoadMessage) {
-        save = preferences.dropWarningHidden ? preferences.saveDroppedFile : false;
+        save = preferences.hideWarning ? preferences.saveLoadedFile : false;
 
-        if (!preferences.dropWarningHidden) {
+        if (!preferences.hideWarning) {
           setFileLoadMessage({
             file,
             type: "warning",
@@ -733,30 +733,37 @@ export default function Viewer() {
   async function uploadFile(file) {
     if (!file.name.endsWith(".pdf")) {
       setFileLoadMessage({
-        file,
         type: "negative",
-        value: "File format is not supported."
+        value: "File format is not supported.",
+        duration: 4000
       });
     }
-    else if (file.name !== state.file.name) {
+    else if (file.name === state.file.name) {
       if (state.filePreviewVisible) {
-        setFileLoadMessage({
-          file,
-          type: "warning",
-          value: "File does not match currently loaded file.\nDo you want to load it anyway?"
-        });
+        loadFile(file, { fileMetadata: state.file });
+        hideFileLoadMessage();
       }
       else {
-        initStage.current = true;
-        pdfRef.current.innerHTML = "";
-
-        loadNewFile({ file });
-        window.removeEventListener("scroll", memoizedScrollHandler);
+        setFileLoadMessage({
+          type: "negative",
+          value: "File is already loaded.",
+          duration: 4000
+        });
       }
     }
+    else if (state.filePreviewVisible) {
+      setFileLoadMessage({
+        file,
+        type: "warning",
+        value: "File does not match currently loaded file.\nDo you want to load it anyway?"
+      });
+    }
     else {
-      loadFile(file, { fileMetadata: state.file });
-      hideFileLoadMessage();
+      initStage.current = true;
+      pdfRef.current.innerHTML = "";
+
+      loadNewFile({ file });
+      window.removeEventListener("scroll", memoizedScrollHandler);
     }
   }
 
@@ -765,13 +772,13 @@ export default function Viewer() {
     saveCurrentFile(file);
   }
 
-  function saveDroppedFile(preferences) {
+  function saveFileLoadModalFile(preferences) {
     saveLoadedFile(fileLoadMessage.file, state.file);
-    hideDropModal(preferences);
+    hideFileLoadModal(preferences);
   }
 
-  function hideDropModal(preferences) {
-    preferences.saveFile = preferences.saveDroppedFile;
+  function hideFileLoadModal(preferences) {
+    preferences.saveFile = preferences.saveLoadedFile;
 
     hideFileLoadMessage();
     setPreferences(preferences);
@@ -916,6 +923,16 @@ export default function Viewer() {
     history.push({ pathname: "/" });
   }
 
+  function updateSaveFilePreference({ target }) {
+    const updatedPreferences = {
+      ...preferences,
+      saveLoadedFile: target.checked
+    };
+
+    setPreferences(updatedPreferences);
+    savePreferences(updatedPreferences);
+  }
+
   function savePreferences(preferences) {
     localStorage.setItem("viewer-preferences", JSON.stringify(preferences));
   }
@@ -942,13 +959,16 @@ export default function Viewer() {
             handleSelect={handleSelect}
             scrollToNewPage={scrollToNewPage}
             updateSettings={updateSettings}
+            updateSaveFilePreference={updateSaveFilePreference}
             changeViewMode={changeViewMode}
+            handleFileUpload={handleFileUpload}
             exitViewer={exitViewer}/>
           {fileLoadMessage && (
-            <DropModal message={fileLoadMessage}
+            <FileLoadModal message={fileLoadMessage}
               preferences={preferences}
-              saveDroppedFile={saveDroppedFile}
-              hideDropModal={hideDropModal}
+              saveFileLoadModalFile={saveFileLoadModalFile}
+              hideFileLoadModal={hideFileLoadModal}
+              hideFileLoadMessage={hideFileLoadMessage}
               dismissNotification={hideFileLoadMessage}/>
           )}
         </>
