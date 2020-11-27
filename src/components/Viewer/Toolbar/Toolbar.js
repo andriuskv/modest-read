@@ -5,7 +5,7 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
+export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, rotatePages, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
   const [settings, setSettings] = useState(() => getSettings());
   const [pageNumber, setPageNumber] = useState(file.pageNumber);
   const keepVisible = useRef(false);
@@ -285,6 +285,12 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
             <span>Load File</span>
             <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
           </label>
+        </div>
+        <div className="viewer-toolbar-dropdown-group">
+          <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={rotatePages}>
+            <Icon name="rotate"/>
+            <span>Rotate pages</span>
+          </button>
         </div>
         <div className="viewer-toolbar-dropdown-group">
           <button className={`btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
