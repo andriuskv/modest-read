@@ -20,20 +20,10 @@ export default function Viewer() {
   const [state, setState] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(() => getDefaultScale());
+  const [rotation, setRotation] = useState(0);
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [settings, setSettings] = useState(() => getSettings());
-  const [preferences, setPreferences] = useState(() => {
-    const preferences = JSON.parse(localStorage.getItem("viewer-preferences")) || {
-      saveFile: true,
-      viewMode: "multi"
-    };
-
-    if (!preferences.viewMode) {
-      preferences.viewMode = "multi";
-    }
-    preferences.saveFile = true;
-    return preferences;
-  });
+  const [preferences, setPreferences] = useState(() => initPreferences());
   const pdfRef = useRef(null);
   const pageRendering = useRef(false);
   const pendingPages = useRef([]);
@@ -44,8 +34,9 @@ export default function Viewer() {
   const scrollDirection = useRef(0);
   const ctrlPressed = useRef(false);
   const initStage = useRef(true);
-  const memoizedScrollHandler = useCallback(handleScroll, [scale, preferences]);
-  const memoizedSinglePageScrollHandler = useCallback(handleSinglePageScroll, [pageNumber, preferences]);
+  const swapDimensions = useRef(false);
+  const memoizedScrollHandler = useCallback(handleScroll, [scale, rotation, preferences]);
+  const memoizedSinglePageScrollHandler = useCallback(handleSinglePageScroll, [pageNumber, rotation, preferences]);
   const memoizedClickHandler = useCallback(handleClick, [state, preferences]);
   const memoizedWheelHandler = useCallback(handleWheel, [scale]);
   const memoizedKeyUpHandler = useCallback(handleKeyUp, [scale]);
@@ -82,7 +73,10 @@ export default function Viewer() {
   }, [memoizedKeyDownHandler]);
 
   useEffect(() => {
-    if (preferences.viewMode === "single") {
+    if (!state || !state.instance) {
+      return;
+    }
+    else if (preferences.viewMode === "single") {
       window.removeEventListener("scroll", memoizedScrollHandler);
       return;
     }
@@ -173,11 +167,17 @@ export default function Viewer() {
 
       state.file.scale = newScale;
       state.views = getPageViews();
-      state.file.scrollTop = state.views[pageNumber - 1].top - top * scaleRatio;
-      state.file.scrollLeft = scrollLeft * scaleRatio;
       state.pagesInViewport = getVisiblePageCount(state.views);
 
-      window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
+      if (rotation !== state.file.rotation) {
+        state.file.rotation = rotation;
+        scrollToPage(pageNumber, pdfRef.current.children, settings.keepToolbarVisible);
+      }
+      else {
+        state.file.scrollTop = state.views[pageNumber - 1].top - top * scaleRatio;
+        state.file.scrollLeft = scrollLeft * scaleRatio;
+        window.scrollTo(state.file.scrollLeft, state.file.scrollTop);
+      }
       setState({ ...state });
 
       if (!initStage.current && preferences.saveFile) {
@@ -215,7 +215,7 @@ export default function Viewer() {
     });
     updatingPages.current = false;
     initStage.current = false;
-  }, [scale, preferences.viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scale, rotation, pageNumber, preferences.viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (preferences.viewMode === "single") {
@@ -238,7 +238,7 @@ export default function Viewer() {
       return;
     }
     handleSinglePageChange();
-  }, [scale, pageNumber]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scale, rotation, pageNumber, preferences.viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function init() {
     if (history.location.state) {
@@ -274,6 +274,19 @@ export default function Viewer() {
     }
   }
 
+  function initPreferences() {
+    const preferences = JSON.parse(localStorage.getItem("viewer-preferences")) || {
+      saveFile: true,
+      viewMode: "multi"
+    };
+
+    if (!preferences.viewMode) {
+      preferences.viewMode = "multi";
+    }
+    preferences.saveFile = true;
+    return preferences;
+  }
+
   async function handleSinglePageChange() {
     const pageElement = pdfRef.current.firstElementChild;
 
@@ -289,8 +302,9 @@ export default function Viewer() {
     if (pageNumber !== state.file.pageNumber) {
       window.scrollTo(0, 0);
     }
-    state.file.pageNumber = pageNumber;
     state.file.scale = scale;
+    state.file.rotation = rotation;
+    state.file.pageNumber = pageNumber;
 
     setState({ ...state });
 
@@ -318,9 +332,12 @@ export default function Viewer() {
 
   function getScaledPageDimensions(index, scale) {
     const pageDimension = state.pageDimensions[index];
-    const width = Math.floor(pageDimension.width * scale);
-    const height = Math.floor(pageDimension.height * scale);
+    let width = Math.floor(pageDimension.width * scale);
+    let height = Math.floor(pageDimension.height * scale);
 
+    if (swapDimensions.current) {
+      ([width, height] = [height, width]);
+    }
     return { width, height };
   }
 
@@ -347,7 +364,10 @@ export default function Viewer() {
       container.appendChild(textLayerDiv);
     }
     const page = await state.instance.getPage(number);
-    const viewport = page.getViewport({ scale: scale.currentScale });
+    const viewport = page.getViewport({
+      scale: scale.currentScale,
+      rotation: (rotation + page.rotate) % 360
+    });
 
     canvas.width = width;
     canvas.height = height;
@@ -521,9 +541,9 @@ export default function Viewer() {
     event.preventDefault();
   }
 
-  async function getPageViewport(pdf, pageNumber, scale = 1) {
+  async function getPageViewport(pdf, { pageNumber, scale = { currentScale: 1 }, rotation = 0 }) {
     const page = await pdf.getPage(pageNumber);
-    return page.getViewport({ scale });
+    return page.getViewport({ scale: scale.currentScale, rotation });
   }
 
   function getDefaultScale() {
@@ -593,37 +613,37 @@ export default function Viewer() {
     return count;
   }
 
-  async function getPageDimensions(pdf) {
+  async function getPageDimensions(pdf, rotation) {
     const dimensions = [];
 
     for (let i = 0; i < pdf.numPages; i += 1) {
-      const { width, height } = await getPageViewport(pdf, i + 1);
+      const { width, height } = await getPageViewport(pdf, { pageNumber: i + 1, rotation });
 
       dimensions.push({ width, height });
     }
     return dimensions;
   }
 
-  async function getPageDiv(pdf, scale, pageNumber) {
-    const { width, height } = await getPageViewport(pdf, pageNumber, scale.currentScale);
+  async function getPageDiv(pdf, file) {
+    const { width, height } = await getPageViewport(pdf, file);
     const div = document.createElement("div");
 
     div.style.width = `${Math.floor(width)}px`;
     div.style.height = `${Math.floor(height)}px`;
 
-    div.setAttribute("data-page-number", pageNumber);
+    div.setAttribute("data-page-number", file.pageNumber);
     div.classList.add("viewer-page");
     return div;
   }
 
-  async function renderEmptyPage(pageNumber, scale, fragmenet, pdf) {
-    const div = await getPageDiv(pdf, scale, pageNumber);
+  async function renderEmptyPage(pageNumber, file, fragmenet, pdf) {
+    const div = await getPageDiv(pdf, { ...file, pageNumber });
 
     fragmenet.appendChild(div);
   }
 
   async function renderSingleEmptyPage(pdf, fileMetadata, hide) {
-    const div = await getPageDiv(pdf, fileMetadata.scale, fileMetadata.pageNumber);
+    const div = await getPageDiv(pdf, fileMetadata);
 
     if (hide) {
       div.classList.add("hidden");
@@ -631,12 +651,12 @@ export default function Viewer() {
     pdfRef.current.appendChild(div);
   }
 
-  async function renderEmptyPages(pdf, scale) {
+  async function renderEmptyPages(pdf, file) {
     const fragment = new DocumentFragment();
     const promises = [];
 
     for (let i = 0; i < pdf.numPages; i += 1) {
-      promises.push(renderEmptyPage(i + 1, scale, fragment, pdf));
+      promises.push(renderEmptyPage(i + 1, file, fragment, pdf));
     }
     await Promise.all(promises);
     pdfRef.current.appendChild(fragment);
@@ -645,16 +665,19 @@ export default function Viewer() {
   async function loadFile(file, { save = true, fileMetadata = null, pdfInstance = null } = {}) {
     fileMetadata.scale = fileMetadata.scale || getDefaultScale();
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
+    fileMetadata.rotation = fileMetadata.rotation || 0;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
     const [pageDimensions] = await Promise.all([
-      getPageDimensions(pdf),
+      getPageDimensions(pdf, fileMetadata.rotation),
       preferences.viewMode === "multi" ?
-        renderEmptyPages(pdf, fileMetadata.scale) :
+        renderEmptyPages(pdf, fileMetadata) :
         renderSingleEmptyPage(pdf, fileMetadata, true)
     ]);
 
     delete state?.filePreviewVisible;
+    swapDimensions.current = false;
 
+    setRotation(fileMetadata.rotation);
     setState({
       ...state,
       instance: pdf,
@@ -797,21 +820,37 @@ export default function Viewer() {
 
     if (value === "fit-width") {
       const isSinglePageViewMode = preferences.viewMode === "single";
-      const { scrollWidth, offsetWidth } = document.documentElement;
-      const { width } = await getPageViewport(state.instance, pageNumber);
-      const scrollbarWidth = isSinglePageViewMode && scrollWidth - offsetWidth === 0 ? getScrollbarWidth() : 0;
-      const maxWidth = offsetWidth - scrollbarWidth - 16;
+      const { offsetWidth, scrollHeight, offsetHeight } = document.documentElement;
+      const { width } = await getPageViewport(state.instance, { pageNumber, rotation });
+      let scrollbarWidth = 0;
 
+      if (rotation === 90 || rotation === 270) {
+        if (isSinglePageViewMode && scrollHeight > offsetHeight) {
+          scrollbarWidth = -getScrollbarWidth();
+        }
+        else {
+          scrollbarWidth = 0;
+        }
+      }
+      const maxWidth = offsetWidth - scrollbarWidth - 16;
       newScale = maxWidth / width;
     }
     else if (value === "fit-page") {
       const isSinglePageViewMode = preferences.viewMode === "single";
       const { scrollWidth, offsetWidth, offsetHeight } = document.documentElement;
-      const { height } = await getPageViewport(state.instance, pageNumber);
-      const scrollbarWidth = scrollWidth - offsetWidth > 0 ? getScrollbarWidth() : 0;
+      const { height } = await getPageViewport(state.instance, { pageNumber, rotation });
+      let scrollbarWidth = 0;
+
+      if (rotation === 90 || rotation === 270) {
+        if (isSinglePageViewMode && scrollWidth > offsetWidth) {
+          scrollbarWidth = 0;
+        }
+        else {
+          scrollbarWidth = -getScrollbarWidth();
+        }
+      }
       const { keepToolbarVisible } = settings;
       const maxHeight = offsetHeight + scrollbarWidth - (keepToolbarVisible || pageNumber === 1 || isSinglePageViewMode ? 56 : 16);
-
       newScale = maxHeight / height;
     }
     else {
@@ -882,6 +921,12 @@ export default function Viewer() {
     }
   }
 
+  function rotatePages() {
+    const nextRotation = rotation + 90;
+    swapDimensions.current = !swapDimensions.current;
+    setRotation(nextRotation === 360 ? 0 : nextRotation);
+  }
+
   function scrollToNewPage(newPageNumber) {
     scrollToPage(newPageNumber, pdfRef.current.children, settings.keepToolbarVisible);
     setPageNumber(newPageNumber);
@@ -903,7 +948,7 @@ export default function Viewer() {
     pdfRef.current.innerHTML = "";
 
     if (mode === "multi") {
-      await renderEmptyPages(state.instance, state.file.scale);
+      await renderEmptyPages(state.instance, state.file);
       scrollToNewPage(pageNumber);
     }
     else {
@@ -956,6 +1001,7 @@ export default function Viewer() {
             zoomIn={zoomIn}
             previousPage={previousPage}
             nextPage={nextPage}
+            rotatePages={rotatePages}
             handleSelect={handleSelect}
             scrollToNewPage={scrollToNewPage}
             updateSettings={updateSettings}

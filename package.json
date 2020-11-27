@@ -15,7 +15,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.0",
+    "react-scripts": "4.0.1",
     "uuid": "^8.3.1",
     "workbox-core": "^5.1.4",
     "workbox-expiration": "^5.1.4",
