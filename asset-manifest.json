@@ -3,11 +3,11 @@
     "static/js/0.09f410a9.chunk.js": "/modest-read/static/js/0.09f410a9.chunk.js",
     "main.css": "/modest-read/static/css/main.5c3504ea.chunk.css",
     "main.js": "/modest-read/static/js/main.6ca8f557.chunk.js",
-    "runtime-main.js": "/modest-read/static/js/runtime-main.58a06361.js",
+    "runtime-main.js": "/modest-read/static/js/runtime-main.a4f57423.js",
     "static/css/3.6c81a564.chunk.css": "/modest-read/static/css/3.6c81a564.chunk.css",
-    "static/js/3.283dd7f5.chunk.js": "/modest-read/static/js/3.283dd7f5.chunk.js",
+    "static/js/3.2e9e7260.chunk.js": "/modest-read/static/js/3.2e9e7260.chunk.js",
     "static/css/4.fa22c430.chunk.css": "/modest-read/static/css/4.fa22c430.chunk.css",
-    "static/js/4.47d590fc.chunk.js": "/modest-read/static/js/4.47d590fc.chunk.js",
+    "static/js/4.6049b24d.chunk.js": "/modest-read/static/js/4.6049b24d.chunk.js",
     "static/css/5.24bf1742.chunk.css": "/modest-read/static/css/5.24bf1742.chunk.css",
     "static/js/5.2af6a291.chunk.js": "/modest-read/static/js/5.2af6a291.chunk.js",
     "static/css/6.2770a6ff.chunk.css": "/modest-read/static/css/6.2770a6ff.chunk.css",
@@ -25,7 +25,7 @@
     "static/media/landing-page.scss": "/modest-read/static/media/text.200242c4.svg"
   },
   "entrypoints": [
-    "static/js/runtime-main.58a06361.js",
+    "static/js/runtime-main.a4f57423.js",
     "static/css/5.24bf1742.chunk.css",
     "static/js/5.2af6a291.chunk.js",
     "static/css/main.5c3504ea.chunk.css",
