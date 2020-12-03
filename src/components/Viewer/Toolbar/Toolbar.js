@@ -5,7 +5,7 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPage, nextPage, rotatePages, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
+export default function Toolbar({ file, preferences, outline, toggleOutline, zoomOut, zoomIn, previousPage, nextPage, rotatePages, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
   const [settings, setSettings] = useState(() => getSettings());
   const [pageNumber, setPageNumber] = useState(file.pageNumber);
   const keepVisible = useRef(false);
@@ -232,6 +232,11 @@ export default function Toolbar({ file, preferences, zoomOut, zoomIn, previousPa
   return (
     <div className={`viewer-toolbar${settings.keepToolbarVisible ? " keep-visible" : ""}`} ref={toolbarRef}>
       <FileInfo file={file}/>
+      {outline.hasOutline ? (
+        <button className="btn icon-btn viewer-outline-toggle-btn" onClick={toggleOutline} title="Toggle outline">
+          <Icon name="outline"/>
+        </button>
+      ): null}
       <div className="viewer-toolbar-tools">
         <div className="viewer-toolbar-zoom">
           <button className="btn icon-btn viewer-toolbar-tool-btn" onClick={zoomOut} title="Zoom out"

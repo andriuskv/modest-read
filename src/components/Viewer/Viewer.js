@@ -24,7 +24,9 @@ export default function Viewer() {
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [settings, setSettings] = useState(() => getSettings());
   const [preferences, setPreferences] = useState(() => initPreferences());
+  const [outline, setOutline] = useState({ visible: false });
   const pdfRef = useRef(null);
+  const outlineRef = useRef(null);
   const pageRendering = useRef(false);
   const pendingPages = useRef([]);
   const observer = useRef(null);
@@ -460,22 +462,32 @@ export default function Viewer() {
 
   async function handleClick(event) {
     if (event.target.nodeName === "A") {
-      const url = new URL(event.target.href);
+      goToDestination(event.target.href);
+    }
+  }
 
-      if (url.origin !== window.location.origin) {
-        return;
-      }
-      const arr = url.hash.split("#");
-      const data = unescape(arr[arr.length - 1]);
-      let dest = "";
+  async function goToDestination(link) {
+    const url = new URL(link);
 
-      try {
-        dest = JSON.parse(data);
-      } catch {
-        dest = await state.instance.getDestination(data);
-      }
-      const index = await state.instance.getPageIndex(dest[0]);
+    if (url.origin !== window.location.origin) {
+      return;
+    }
+    const arr = url.hash.split("#");
+    const data = unescape(arr[arr.length - 1]);
+    let dest = "";
+
+    try {
+      dest = JSON.parse(data);
+    } catch {
+      dest = await state.instance.getDestination(data);
+    }
+    const index = await state.instance.getPageIndex(dest[0]);
+
+    if (preferences.viewMode === "single") {
       setPageNumber(index + 1);
+    }
+    else {
+      scrollToPage(index + 1, pdfRef.current.children, settings.keepToolbarVisible);
     }
   }
 
@@ -667,8 +679,9 @@ export default function Viewer() {
     fileMetadata.pageNumber = fileMetadata.pageNumber || 1;
     fileMetadata.rotation = fileMetadata.rotation || 0;
     const pdf = pdfInstance || await getPdfInstance(file, pdfjs);
-    const [pageDimensions] = await Promise.all([
+    const [pageDimensions, hasOutline] = await Promise.all([
       getPageDimensions(pdf, fileMetadata.rotation),
+      pdf.getOutline(),
       preferences.viewMode === "multi" ?
         renderEmptyPages(pdf, fileMetadata) :
         renderSingleEmptyPage(pdf, fileMetadata, true)
@@ -688,6 +701,10 @@ export default function Viewer() {
     window.scrollTo(fileMetadata.scrollLeft, fileMetadata.scrollTop);
     setScale(fileMetadata.scale);
     setPageNumber(fileMetadata.pageNumber);
+    setOutline({
+      ...outline,
+      hasOutline
+    });
 
     if (fileMetadata.status !== "have read") {
       if (fileMetadata.pageCount === 1) {
@@ -784,7 +801,9 @@ export default function Viewer() {
     else {
       initStage.current = true;
       pdfRef.current.innerHTML = "";
+      outlineRef.current.innerHTML = "";
 
+      setOutline({ visible: false });
       loadNewFile({ file });
       window.removeEventListener("scroll", memoizedScrollHandler);
     }
@@ -982,6 +1001,68 @@ export default function Viewer() {
     localStorage.setItem("viewer-preferences", JSON.stringify(preferences));
   }
 
+  function renderOutline(items, container) {
+    const fragment = new DocumentFragment();
+    const linkService = new LinkService(state.instance, pdfRef.current, window.location.href);
+
+    for (const item of items) {
+      const div = document.createElement("div");
+      const a = document.createElement("a");
+
+      div.classList.add("viewer-outline-item");
+      a.classList.add("viewer-outline-link");
+      a.textContent = item.title;
+      a.href = linkService.getDestinationHash(item.dest);
+
+      if (item.items.length) {
+        const button = document.createElement("button");
+
+        button.innerHTML = "&#x25BE";
+        button.classList.add("btn", "icon-btn", "viewer-outline-tree-toggle-btn");
+        div.appendChild(button);
+      }
+      div.appendChild(a);
+
+      if (item.items.length) {
+        const div2 = document.createElement("div");
+
+        div2.classList.add("viewer-outline-inner-tree");
+        renderOutline(item.items, div2);
+        div.appendChild(div2);
+      }
+      fragment.appendChild(div);
+    }
+    container.appendChild(fragment);
+  }
+
+  async function toggleOutline() {
+    if (!outline.rendered) {
+      const items = await state.instance.getOutline();
+
+      if (items) {
+        renderOutline(items, outlineRef.current);
+      }
+      outline.rendered = true;
+    }
+    setOutline({
+      ...outline,
+      visible: !outline.visible
+    });
+  }
+
+  function handleOutlineClick(event) {
+    const { nodeName } = event.target;
+
+    if (nodeName === "A") {
+      event.preventDefault();
+      goToDestination(event.target.href);
+    }
+    else if (nodeName === "BUTTON") {
+      event.target.classList.toggle("rotated");
+      event.target.parentElement.lastElementChild.classList.toggle("visible");
+    }
+  }
+
   if (state?.error) {
     return <NoFileNotice/>;
   }
@@ -997,6 +1078,8 @@ export default function Viewer() {
         <>
           <Toolbar file={state.file}
             preferences={preferences}
+            outline={outline}
+            toggleOutline={toggleOutline}
             zoomOut={zoomOut}
             zoomIn={zoomIn}
             previousPage={previousPage}
@@ -1020,6 +1103,7 @@ export default function Viewer() {
         </>
       )}
       <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
+      <div className={`viewer-outline${outline.visible ? " visible" : ""}`} ref={outlineRef} onClick={handleOutlineClick}></div>
       {preferences.viewMode === "single" && (
         <>
           <button className="btn icon-btn viewer-navigation-btn previous" onClick={previousPage}>
