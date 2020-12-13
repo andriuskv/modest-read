@@ -16,7 +16,7 @@
     "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
-    "uuid": "^8.3.1",
+    "uuid": "^8.3.2",
     "workbox-core": "^5.1.4",
     "workbox-expiration": "^5.1.4",
     "workbox-precaching": "^5.1.4",
@@ -24,8 +24,8 @@
     "workbox-strategies": "^5.1.4"
   },
   "devDependencies": {
-    "sass": "^1.29.0",
-    "worker-loader": "^3.0.5"
+    "sass": "^1.30.0",
+    "worker-loader": "^3.0.6"
   },
   "browserslist": [
     "last 4 chrome versions",

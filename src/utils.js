@@ -6,6 +6,18 @@ function classNames(...classNames) {
   return classNames.join(" ").trimEnd();
 }
 
+function getElementByAttr(attr, element, endElement = null) {
+  while (element && element !== endElement) {
+    if (element.hasAttribute(attr)) {
+      return {
+        elementRef: element,
+        attrValue: element.getAttribute(attr)
+      };
+    }
+    element = element.parentElement;
+  }
+}
+
 async function pageToDataURL(pdf) {
   const DEFAULT_SCALE = 0.4;
   const page = await pdf.getPage(1);
@@ -75,10 +87,10 @@ function getPageElementBox(number, elements) {
   return execFuncOnPageElement(elements, number, element => element.getBoundingClientRect());
 }
 
-function scrollToPage(number, elements, keepToolbarVisible) {
+function scrollToPage(number, elements, { keepToolbarVisible, scrollLeft = document.documentElement.scrollLeft }) {
   execFuncOnPageElement(elements, number, element => {
     const offset = keepToolbarVisible || number === 1 ? 40 : 0;
-    window.scrollTo(document.documentElement.scrollLeft, element.offsetTop - offset);
+    window.scrollTo(scrollLeft, element.offsetTop - offset);
   });
 }
 
@@ -101,6 +113,7 @@ function getScrollbarWidth() {
 export {
   setDocumentTitle,
   classNames,
+  getElementByAttr,
   pageToDataURL,
   getPdfInstance,
   parseMetadata,

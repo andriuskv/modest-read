@@ -3,7 +3,7 @@ import Icon from "../../Icon";
 import Notification from "../../Notification";
 import "./file-load-modal.scss";
 
-export default function FileLoadModal({ message, preferences, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage, dismissNotification }) {
+export default function FileLoadModal({ message, filePreferences, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage }) {
   const [hide, setHide] = useState(false);
   const timeoutId = useRef(0);
 
@@ -36,7 +36,7 @@ export default function FileLoadModal({ message, preferences, saveFileLoadModalF
 
   function changeFileSaveStatus(saveFile) {
     const updatedPreferences = {
-      ...preferences,
+      ...filePreferences,
       hideWarning: hide,
       saveLoadedFile: saveFile
     };
@@ -54,13 +54,13 @@ export default function FileLoadModal({ message, preferences, saveFileLoadModalF
   }
 
   function savePreferences(preferences) {
-    localStorage.setItem("viewer-preferences", JSON.stringify(preferences));
+    localStorage.setItem("file-preferences", JSON.stringify(preferences));
   }
 
   if (message.type === "negative") {
-    return <Notification notification={message} className="viewer-file-load-modal viewer-notification" dismiss={dismissNotification}/>;
+    return <Notification notification={message} className="viewer-file-load-modal viewer-notification" dismiss={hideFileLoadMessage}/>;
   }
-  else if (message.type === "warning" && !preferences.hideWarning) {
+  else if (message.type === "warning" && !filePreferences.hideWarning) {
     return (
       <div className="viewer-file-load-modal viewer-file-load-warning">
         <div className="viewer-file-load-warning-mesasge-container">
