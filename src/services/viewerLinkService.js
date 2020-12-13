@@ -23,7 +23,7 @@ export default class LinkService {
     }
     const index = await this.pdfDocument.getPageIndex(explicitDest[0]);
 
-    scrollToPage(index + 1, this.pdfElement.children, getSetting("keepToolbarVisible"));
+    scrollToPage(index + 1, this.pdfElement.children, { keepToolbarVisible: getSetting("keepToolbarVisible") });
   }
 
   getDestinationHash(dest) {

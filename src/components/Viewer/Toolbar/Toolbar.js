@@ -5,17 +5,18 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, preferences, outline, toggleOutline, zoomOut, zoomIn, previousPage, nextPage, rotatePages, handleSelect, scrollToNewPage, updateSettings, updateSaveFilePreference, changeViewMode, handleFileUpload, exitViewer }) {
-  const [settings, setSettings] = useState(() => getSettings());
-  const [pageNumber, setPageNumber] = useState(file.pageNumber);
+export default function Toolbar({ file, filePreferences, setViewerSettings, updateFileSavePreference, handleFileUpload, exitViewer }) {
+  const [settings, setToolbarSettings] = useState(() => getSettings());
   const keepVisible = useRef(false);
+  const previousScrollTop = useRef(file.scrollTop);
   const hideAfterScroll = useRef(file.scrollTop > 0);
   const toolbarRef = useRef(null);
   const toolbarScrollOffset = useRef(0);
   const scrolling = useRef(false);
   const movingMouse = useRef(false);
-  const memoizedScrollHandler = useCallback(handleScroll, [file]);
-  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [preferences.viewMode]);
+  const pointerOverToolbar = useRef(false);
+  const memoizedScrollHandler = useCallback(handleScroll, [settings.viewMode]);
+  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [settings.viewMode]);
 
   useEffect(() => {
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
@@ -23,6 +24,7 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
     if (media.matches) {
       toolbarRef.current.classList.toggle("hiding", file.scrollTop > 0);
       toolbarRef.current.classList.toggle("hidden", file.scrollTop > 0);
+
       window.addEventListener("pointerup", handleClick);
       window.addEventListener("scroll", memoizedMediaScrollHandler);
 
@@ -41,20 +43,6 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
       };
     }
   }, [memoizedScrollHandler, memoizedMediaScrollHandler]);
-
-  useEffect(() => {
-    setPageNumber(file.pageNumber);
-  }, [file.pageNumber]);
-
-  function localPreviousPage() {
-    keepVisible.current = true;
-    previousPage();
-  }
-
-  function localNextPage() {
-    keepVisible.current = true;
-    nextPage();
-  }
 
   function revealToolbar() {
     if (toolbarRef.current?.classList.contains("hidden")) {
@@ -87,11 +75,11 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
     requestAnimationFrame(() => {
       const { scrollTop } = document.documentElement;
 
-      if (scrollTop > file.scrollTop) {
+      if (scrollTop > previousScrollTop.current) {
         if (keepVisible.current) {
           keepVisible.current = false;
         }
-        else {
+        else if (!pointerOverToolbar.current) {
           hideToolbar();
         }
       }
@@ -99,9 +87,10 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
         revealToolbar();
       }
       else {
-        const scrollDiff = file.scrollTop - scrollTop;
+        const scrollDiff = previousScrollTop.current - scrollTop;
         toolbarScrollOffset.current += scrollDiff;
       }
+      previousScrollTop.current = scrollTop;
       scrolling.current = false;
     });
   }
@@ -116,14 +105,14 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
       const { scrollTop } = document.documentElement;
 
       if (scrollTop < 80) {
-        if (preferences.viewMode === "multi") {
+        if (settings.viewMode === "multi") {
           revealToolbar();
         }
       }
       else if (hideAfterScroll.current) {
         hideToolbar();
       }
-      else if (preferences.viewMode === "multi") {
+      else if (settings.viewMode === "multi") {
         revealToolbar();
       }
       scrolling.current = false;
@@ -137,15 +126,19 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
     movingMouse.current = true;
 
     requestAnimationFrame(() => {
-      if (event.clientY < 80 &&
-        event.clientX < document.documentElement.clientWidth &&
-        toolbarRef.current.classList.contains("hidden")
-      ) {
-        toolbarRef.current.classList.remove("hidden");
+      if (event.clientY < 80 && event.clientX < document.documentElement.clientWidth) {
+        pointerOverToolbar.current = true;
 
-        setTimeout(() => {
-          toolbarRef.current.classList.remove("hiding");
-        }, 200);
+        if (toolbarRef.current.classList.contains("hidden")) {
+          toolbarRef.current.classList.remove("hidden");
+
+          setTimeout(() => {
+            toolbarRef.current.classList.remove("hiding");
+          }, 200);
+        }
+      }
+      else {
+        pointerOverToolbar.current = false;
       }
       movingMouse.current = false;
     });
@@ -157,7 +150,7 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
     if (!target.closest(".viewer-toolbar") && !target.closest(".btn")) {
       keepVisible.current = false;
 
-      if (preferences.viewMode === "multi" && scrollTop < 40) {
+      if (settings.viewMode === "multi" && scrollTop < 40) {
         hideAfterScroll.current = !hideAfterScroll.current;
         return;
       }
@@ -173,54 +166,14 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
     }
   }
 
-  function handleInputChange(event) {
-    setPageNumber(event.target.value);
-  }
-
-  function handleInputBlur(event) {
-    let number = parseInt(event.target.value, 10);
-
-    if (Number.isNaN(number)) {
-      number = file.pageNumber;
-    }
-    else if (number < 1) {
-      number = 1;
-    }
-    else if (number > file.pageCount) {
-      number = file.pageCount;
-    }
-    event.target.style.width = `${number.toString().length}ch`;
-
-    if (number !== file.pageNumber) {
-      keepVisible.current = true;
-      scrollToNewPage(number);
-    }
-    setPageNumber(number);
-  }
-
-  function handleInputKeydown(event) {
-    if (event.key === "Enter") {
-      event.target.blur();
-    }
-  }
-
-  function handleInputClick(event) {
-    if (event.target !== event.currentTarget.firstElementChild) {
-      event.currentTarget.firstElementChild.focus();
-    }
-  }
-
-  function handleInputFocus(event) {
-    const { pageCount } = file;
-    const width = pageCount < 1000 ? 3 : pageCount.toString().length;
-    event.target.style.width = `${width}ch`;
-    event.target.select();
+  function setSettings(name, value) {
+    setViewerSettings(name, value);
+    setToolbarSettings({ ...settings, [name]: value });
+    setSetting(name, value);
   }
 
   function handleSettingChange({ target }) {
-    updateSettings(target.name, target.checked);
-    setSettings({ ...settings, [target.name]: target.checked });
-    setSetting(target.name, target.checked);
+    setSettings(target.name, target.checked);
   }
 
   function localExitViewer() {
@@ -231,20 +184,17 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
 
   return (
     <div className={`viewer-toolbar${settings.keepToolbarVisible ? " keep-visible" : ""}`} ref={toolbarRef}>
-      <FileInfo file={file}/>
-      {outline.hasOutline ? (
-        <button className="btn icon-btn viewer-outline-toggle-btn" onClick={toggleOutline} title="Toggle outline">
+      <div className="view-toolbar-side">
+        <FileInfo file={file}/>
+        <button id="js-viewer-outline-toggle-btn" className="btn icon-btn viewer-outline-toggle-btn" title="Toggle outline">
           <Icon name="outline"/>
         </button>
-      ): null}
-      <div className="viewer-toolbar-tools">
         <div className="viewer-toolbar-zoom">
-          <button className="btn icon-btn viewer-toolbar-tool-btn" onClick={zoomOut} title="Zoom out"
-            disabled={file.scale.currentScale <= file.scale.minScale}>
+          <button id="js-viewer-zoom-out" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom out">
             <Icon name="minus"/>
           </button>
-          <select className="input viewer-toolbar-zoom-select" onChange={handleSelect} value={file.scale.name}>
-            <option value="custom" style={{ display: "none" }}>{file.scale.displayValue}%</option>
+          <select id="js-viewer-scale-select" className="input viewer-toolbar-zoom-select">
+            <option value="custom" style={{ display: "none" }}></option>
             <option value="fit-width">Fit Width</option>
             <option value="fit-page">Fit Page</option>
             <option value="0.5">50%</option>
@@ -255,98 +205,93 @@ export default function Toolbar({ file, preferences, outline, toggleOutline, zoo
             <option value="3">300%</option>
             <option value="4">400%</option>
           </select>
-          <button className="btn icon-btn viewer-toolbar-tool-btn" onClick={zoomIn} title="Zoom in"
-            disabled={file.scale.currentScale >= file.scale.maxScale}>
+          <button id="js-viewer-zoom-in" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom in">
             <Icon name="plus"/>
           </button>
         </div>
+      </div>
+      <div className="view-toolbar-side">
         <div className="viewer-toolbar-page">
-          <button className="btn icon-btn viewer-toolbar-tool-btn"
-            onClick={localPreviousPage} disabled={file.pageNumber <= 1}>
+          <button id="js-viewer-previous-page" className="btn icon-btn viewer-toolbar-tool-btn">
             <Icon name="arrow-up"/>
           </button>
-          <div className="viewer-toolbar-page-input-container" onClick={handleInputClick}>
-            <input type="text" inputMode="numeric" className="input viewer-toolbar-page-input" onChange={handleInputChange} value={pageNumber}
-              onBlur={handleInputBlur} onFocus={handleInputFocus} onKeyDown={handleInputKeydown} style={{ width: `${file.pageNumber.toString().length}ch`}}/>
-            <div>of {file.pageCount}</div>
+          <div id="js-viewer-page-input-container" className="viewer-toolbar-page-input-container">
+            <input id="js-viewer-page-input" type="text" inputMode="numeric" className="input viewer-toolbar-page-input"/>
+            <span></span>
           </div>
-          <button className="btn icon-btn viewer-toolbar-tool-btn"
-            onClick={localNextPage} disabled={file.pageNumber >= file.pageCount}>
+          <button id="js-viewer-next-page" className="btn icon-btn viewer-toolbar-tool-btn">
             <Icon name="arrow-down"/>
           </button>
         </div>
-      </div>
-      <Dropdown
-        container={{ className: "viewer-toolbar-dropdown-container" }}
-        toggle={{
-          content: <Icon name="dots-vertical"/>,
-          title: "More",
-          className: "btn icon-btn icon-btn-alt"
-        }}
-        body={{ className: "viewer-toolbar-dropdown" }}>
-        <div className="viewer-toolbar-dropdown-group">
-          <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
-            <Icon name="upload"/>
-            <span>Load File</span>
-            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
-          </label>
-        </div>
-        <div className="viewer-toolbar-dropdown-group">
-          <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={rotatePages}>
-            <Icon name="rotate"/>
-            <span>Rotate pages</span>
-          </button>
-        </div>
-        <div className="viewer-toolbar-dropdown-group">
-          <button className={`btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn${preferences.viewMode === "multi" ? ` active` : ""}`}
-            onClick={() => changeViewMode("multi")}>
-            <Icon name="pages"/>
-            <span>Multi page</span>
-          </button>
-          <button className={`btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn${preferences.viewMode === "single" ? ` active` : ""}`}
-            onClick={() => changeViewMode("single")}>
-            <Icon name="page"/>
-            <span>Single page</span>
-          </button>
-        </div>
-        <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
-          <label className="viewer-toolbar-settings-item">
-            <input type="checkbox" className="sr-only checkbox-input"
-              name="invertColors"
-              onChange={handleSettingChange}
-              checked={settings.invertColors}/>
-            <div className="checkbox">
-              <div className="checkbox-tick"></div>
-            </div>
-            <span className="checkbox-label">Invert page colors.</span>
-          </label>
-          <label className="viewer-toolbar-settings-item">
-            <input type="checkbox" className="sr-only checkbox-input"
-              name="keepToolbarVisible"
-              onChange={handleSettingChange}
-              checked={settings.keepToolbarVisible}/>
-            <div className="checkbox">
-              <div className="checkbox-tick"></div>
-            </div>
-            <span className="checkbox-label">Keep toolbar visible.</span>
-          </label>
-          {preferences.hideWarning && (
+        <Dropdown
+          toggle={{
+            content: <Icon name="dots-vertical"/>,
+            title: "More",
+            className: "btn icon-btn icon-btn-alt"
+          }}
+          body={{ className: "viewer-toolbar-dropdown" }}>
+          <div className="viewer-toolbar-dropdown-group">
+            <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
+              <Icon name="upload"/>
+              <span>Load File</span>
+              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
+            </label>
+          </div>
+          <div className="viewer-toolbar-dropdown-group">
+            <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
+              <Icon name="rotate"/>
+              <span>Rotate pages</span>
+            </button>
+          </div>
+          <div id="js-viewer-view-modes" className="viewer-toolbar-dropdown-group">
+            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
+              <Icon name="pages"/>
+              <span>Multi page</span>
+            </button>
+            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="single">
+              <Icon name="page"/>
+              <span>Single page</span>
+            </button>
+          </div>
+          <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
             <label className="viewer-toolbar-settings-item">
               <input type="checkbox" className="sr-only checkbox-input"
-                onChange={updateSaveFilePreference}
-                checked={preferences.saveLoadedFile}/>
+                name="invertColors"
+                onChange={handleSettingChange}
+                checked={settings.invertColors}/>
               <div className="checkbox">
                 <div className="checkbox-tick"></div>
               </div>
-              <span className="checkbox-label">Save loaded file.</span>
+              <span className="checkbox-label">Invert page colors.</span>
             </label>
-          )}
-        </div>
-        <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
-          <Icon name="exit"/>
-          <span>Exit Viewer</span>
-        </button>
-      </Dropdown>
+            <label className="viewer-toolbar-settings-item">
+              <input type="checkbox" className="sr-only checkbox-input"
+                name="keepToolbarVisible"
+                onChange={handleSettingChange}
+                checked={settings.keepToolbarVisible}/>
+              <div className="checkbox">
+                <div className="checkbox-tick"></div>
+              </div>
+              <span className="checkbox-label">Keep toolbar visible.</span>
+            </label>
+            {filePreferences.hideWarning && (
+              <label className="viewer-toolbar-settings-item">
+                <input type="checkbox" className="sr-only checkbox-input"
+                  onChange={updateFileSavePreference}
+                  checked={filePreferences.saveLoadedFile}/>
+                <div className="checkbox">
+                  <div className="checkbox-tick"></div>
+                </div>
+                <span className="checkbox-label">Save loaded file.</span>
+              </label>
+            )}
+          </div>
+          <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
+            <Icon name="exit"/>
+            <span>Exit Viewer</span>
+          </button>
+        </Dropdown>
+      </div>
     </div>
   );
 }
