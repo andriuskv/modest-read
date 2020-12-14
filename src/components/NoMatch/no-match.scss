@@ -1,11 +1,12 @@
 .no-match {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
   padding: var(--space-xl);
 }
 
 .no-match-message {
+  margin-bottom: var(--space-xl);
   text-align: center;
   font-size: var(--text-xxl);
 }
