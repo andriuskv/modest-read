@@ -169,7 +169,7 @@ function initOutline(hasOutline) {
   const toggleBtn = document.getElementById("js-viewer-outline-toggle-btn");
 
   container.innerHTML = "";
-  container.classList.remove("visible");
+  container.classList.remove("has-inner-tree", "visible");
   container.removeEventListener("click", handleOutlineClick);
 
   toggleBtn.classList.toggle("visible", !!hasOutline);
@@ -363,6 +363,7 @@ function renderOutline(items, container) {
       div2.appendChild(button);
       div2.appendChild(a);
       div.appendChild(div2);
+      container.classList.add("has-inner-tree");
     }
     else {
       div.appendChild(a);

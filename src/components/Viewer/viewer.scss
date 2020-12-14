@@ -100,13 +100,24 @@
 .viewer-outline {
   z-index: 1;
   position: fixed;
-  top: 40px;
+  top: 0;
   left: 0;
   overflow-y: auto;
   display: none;
   width: 240px;
-  height: calc(100% - 40px);
+  height: 100%;
+  padding-top: 40px;
   background-color: var(--color-grey-60);
+
+  &.has-inner-tree {
+    .viewer-outline-item {
+      padding: var(--space-sm);
+
+      & > .viewer-outline-link {
+        margin-left: 28px;
+      }
+    }
+  }
 
   &.visible {
     display: block;
@@ -118,7 +129,7 @@
   flex-wrap: wrap;
   align-items: center;
   min-height: 32px;
-  padding: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
 }
 
 .viewer-outline-tree-toggle-btn {
@@ -137,7 +148,6 @@
 }
 
 .viewer-outline-link {
-  margin-left: 28px;
   font-size: var(--text-sm);
 
   &:hover, &.focus-visible {
@@ -148,10 +158,6 @@
 .viewer-outline-inner-tree {
   display: none;
   width: 100%;
-
-  .viewer-outline-link {
-    margin-left: 32px;
-  }
 
   &.visible {
     display: block;
