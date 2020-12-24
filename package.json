@@ -8,7 +8,9 @@
     "build": "react-scripts build"
   },
   "dependencies": {
+    "epubjs": "^0.3.88",
     "focus-visible": "^5.2.0",
+    "html2canvas": "^1.0.0-rc.7",
     "idb-keyval": "^3.2.0",
     "normalize.css": "^8.0.1",
     "pdfjs-dist": "^2.6.347",

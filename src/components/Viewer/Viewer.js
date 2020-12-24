@@ -9,7 +9,8 @@ import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import NoFileNotice from "./NoFileNotice";
-import { initViewer, cleanupViewer, reloadViewer, getNewFile, setSaveViewerFile } from "./pdf-viewer";
+import { initPdfViewer, cleanupPdfViewer, getNewPdfFile, setSavePdfFile } from "./pdf-viewer";
+import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile } from "./epub-viewer";
 import "./viewer.scss";
 
 export default function Viewer() {
@@ -19,7 +20,7 @@ export default function Viewer() {
   const [filePreferences, setFilePreferences] = useState(() => initPreferences());
   const [settings, setSettings] = useState(() => getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
-  const pdfRef = useRef(null);
+  const viewerRef = useRef(null);
   const memoizedDropHandler = useCallback(handleDrop, [state, filePreferences, fileLoadMessage]);
 
   useLayoutEffect(() => cleanupViewer(), []);
@@ -39,16 +40,16 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
-    if (settings.viewMode === "single") {
+    if (settings.viewMode === "single" && state.file?.type === "pdf") {
       const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
       if (media.matches && !settings.keepToolbarVisible) {
-        pdfRef.current.classList.remove("offset");
+        viewerRef.current.classList.remove("offset");
         return;
       }
     }
-    pdfRef.current.classList.add("offset");
-  }, [settings.viewMode, settings.keepToolbarVisible]);
+    viewerRef.current.classList.add("offset");
+  }, [settings.viewMode, settings.keepToolbarVisible, state.file]);
 
   async function init() {
     if (history.location.state) {
@@ -58,9 +59,10 @@ export default function Viewer() {
 
     if (file) {
       const currentFile = await fetchCurrentFile();
+      file.type ||= "pdf";
 
       if (currentFile && currentFile.name === file.name) {
-        initViewer(pdfRef.current, {
+        initViewer(viewerRef.current, {
           blob: currentFile,
           metadata: file
         });
@@ -98,17 +100,52 @@ export default function Viewer() {
     event.target.value = "";
   }
 
+  function initViewer(container, file) {
+    file.metadata.type ||= "pdf";
+
+    if (file.metadata.type === "pdf") {
+      initPdfViewer(container, file);
+    }
+    else if (file.metadata.type === "epub") {
+      initEpubViewer(container, file);
+    }
+  }
+
+  function cleanupViewer() {
+    if (!state.file) {
+      return;
+    }
+
+    if (state.file.type === "pdf") {
+      cleanupPdfViewer();
+    }
+    else if (state.file.type === "epub") {
+      cleanupEpubViewer();
+    }
+  }
+
+  function reloadViewer(container, file) {
+    cleanupViewer();
+    initViewer(container, file);
+  }
+
   async function uploadFile(file) {
-    if (!file.name.endsWith(".pdf")) {
+    if (!state.file) {
+      return;
+    }
+
+    if (!["pdf", "epub"].includes(state.file.type)) {
       setFileLoadMessage({
         type: "negative",
         value: "File format is not supported.",
         duration: 4000
       });
+      return;
     }
-    else if (file.name === state.file.name) {
+
+    if (file.name === state.file.name) {
       if (state.filePreviewVisible) {
-        initViewer(pdfRef.current, {
+        initViewer(viewerRef.current, {
           blob: file,
           metadata: state.file,
           save: true
@@ -141,7 +178,14 @@ export default function Viewer() {
     let save = true;
 
     if (!newFile) {
-      newFile = await getNewFile(file);
+      const fileType = file.name.slice(file.name.lastIndexOf(".") + 1);
+
+      if (fileType === "pdf") {
+        newFile = await getNewPdfFile(file);
+      }
+      else if (fileType === "epub") {
+        newFile = await getNewEpubFile(file);
+      }
 
       if (!state.filePreviewVisible) {
         if (filePreferences.hideWarning) {
@@ -159,7 +203,7 @@ export default function Viewer() {
       }
     }
     setSaveViewerFile(save);
-    reloadViewer(pdfRef.current, {
+    reloadViewer(viewerRef.current, {
       metadata: newFile,
       blob: file,
       save
@@ -182,6 +226,15 @@ export default function Viewer() {
   function saveLoadedFile(blob, metadata) {
     saveFile(metadata);
     saveCurrentFile(blob);
+  }
+
+  function setSaveViewerFile(save) {
+    if (state.file.type === "pdf") {
+      setSavePdfFile(save);
+    }
+    else if (state.file.type === "epub") {
+      setSaveEpubFile(save);
+    }
   }
 
   async function findFile(file) {
@@ -249,7 +302,7 @@ export default function Viewer() {
         updateFileSavePreference={updateFileSavePreference}
         handleFileUpload={handleFileUpload}
         exitViewer={exitViewer}/>}
-      <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={pdfRef}></div>
+      <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline"></div>
       <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">
         <Icon name="chevron-left"/>

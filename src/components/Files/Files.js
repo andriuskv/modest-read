@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parseMetadata, getFileSizeString } from "../../utils";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
 import Icon from "../Icon";
@@ -34,15 +34,15 @@ export default function Files() {
   }, [landingPageHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    async function loadFile(file, pdfjs) {
-      const pdf = await getPdfInstance(file.file, pdfjs);
+    async function loadPdfFile(file) {
+      const pdf = await getPdfInstance(file.blob);
       const [metadata, coverImage] = await Promise.all([pdf.getMetadata(), pageToDataURL(pdf)]);
 
       delete file.loading;
-      delete file.file;
+      delete file.blob;
 
       Object.assign(file, {
-        ...parseMetadata(metadata),
+        ...parsePdfMetadata(metadata),
         coverImage,
         pageCount: pdf.numPages
       });
@@ -51,12 +51,49 @@ export default function Files() {
       saveFile(file);
     }
 
-    async function loadFiles() {
-      const pdfjs = await import("pdfjs-dist/webpack");
+    async function loadEpubFile(file) {
+      const { default: epubjs } = await import("epubjs");
+      const book = epubjs(file.blob);
 
+      await book.ready;
+
+      const [metadata, cfiArray, coverImage] = await Promise.all([
+        book.loaded.metadata,
+        book.locations.generate(1650),
+        getEpubCoverUrl(book)
+      ]);
+
+      if (metadata.title) {
+        file.title = metadata.title;
+      }
+
+      if (metadata.creator) {
+        file.author = metadata.creator;
+      }
+      file.storedPosition = JSON.stringify(cfiArray);
+      file.pageCount = book.locations.length();
+      file.coverImage = coverImage;
+
+      delete file.loading;
+      delete file.blob;
+
+      setFiles([...files]);
+      saveFile(file);
+    }
+
+    async function loadFile(file) {
+      if (file.type === "pdf") {
+        loadPdfFile(file);
+      }
+      else if (file.type === "epub") {
+        loadEpubFile(file);
+      }
+    }
+
+    async function loadFiles() {
       for (const file of files) {
         if (file.loading) {
-          loadFile(file, pdfjs);
+          loadFile(file);
         }
       }
     }
@@ -106,7 +143,7 @@ export default function Files() {
   }
 
   function processFiles(importedFiles) {
-    const supportedFiles = Array.from(importedFiles).filter(file => file.name.endsWith(".pdf"));
+    const supportedFiles = Array.from(importedFiles).filter(file => file.name.endsWith(".pdf") || file.name.endsWith(".epub"));
 
     if (importedFiles.length === 1) {
       let message = "";
@@ -140,11 +177,12 @@ export default function Files() {
       }
       else {
         newFiles.push({
-          file,
+          blob: file,
           id: uuidv4(),
           createdAt: Date.now(),
           name: file.name,
           size: file.size,
+          type: file.name.slice(file.name.lastIndexOf(".") + 1),
           sizeString: getFileSizeString(file.size),
           status: "not started",
           pageNumber: 1,
@@ -279,8 +317,10 @@ export default function Files() {
     file.status = "not started";
     file.pageNumber = 1;
 
+    if (file.type === "epub") {
+      delete file.location;
+    }
     delete file.accessedAt;
-    delete file.scale;
     delete file.scrollLeft;
     delete file.scrollTop;
 

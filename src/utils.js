@@ -39,12 +39,13 @@ async function pageToDataURL(pdf) {
   return canvas.toDataURL("image/jpeg", 0.8);
 }
 
-async function getPdfInstance(file, pdfjs) {
+async function getPdfInstance(file) {
+  const pdfjs = await import("pdfjs-dist/webpack");
   const arrayBuffer = await file.arrayBuffer();
   return pdfjs.getDocument(new Uint8Array(arrayBuffer)).promise;
 }
 
-function parseMetadata(metadata) {
+function parsePdfMetadata(metadata) {
   const data = {};
 
   if (metadata.info.Title) {
@@ -55,6 +56,62 @@ function parseMetadata(metadata) {
     data.author = metadata.info.Author;
   }
   return data;
+}
+
+function resizeImageBlob(blob) {
+  return new Promise(resolve => {
+    const img = new Image();
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.width = 162;
+    img.height = 240;
+    img.src = blob;
+  });
+}
+
+async function getEpubCoverUrl(book) {
+  const coverUrl = await book.coverUrl();
+
+  if (coverUrl) {
+    return resizeImageBlob(coverUrl);
+  }
+  else {
+    await book.opened;
+
+    for (const [index, url] of Object.entries(book.resources.urls)) {
+      if (url.toLowerCase().includes("cover")) {
+        return resizeImageBlob(book.resources.replacementUrls[index]);
+      }
+    }
+    return new Promise(resolve => {
+      const div = document.createElement("div");
+      div.id = "area";
+      div.classList.add("files-thumbnail-render-area");
+      document.body.appendChild(div);
+
+      const rendition = book.renderTo("area", { width: 684, height: 980 });
+
+      rendition.display();
+      rendition.hooks.content.register(async contents => {
+        const { default: html2canvas } = await import("html2canvas");
+        const canvas = await html2canvas(contents.content, { width: 684 });
+
+        div.remove();
+        canvas.toBlob(blob => {
+          resolve(resizeImageBlob(URL.createObjectURL(blob)));
+        }, "image/jpeg", 0.8);
+      });
+    });
+  }
 }
 
 function getFileSizeString(bytes) {
@@ -110,15 +167,23 @@ function getScrollbarWidth() {
   return scrollbarWidth;
 }
 
+function dispatchCustomEvent(eventName, data) {
+  const event = new CustomEvent(eventName, { detail: data });
+
+  window.dispatchEvent(event);
+}
+
 export {
   setDocumentTitle,
   classNames,
   getElementByAttr,
   pageToDataURL,
   getPdfInstance,
-  parseMetadata,
+  parsePdfMetadata,
+  getEpubCoverUrl,
   getFileSizeString,
   getPageElementBox,
   scrollToPage,
-  getScrollbarWidth
+  getScrollbarWidth,
+  dispatchCustomEvent
 };
