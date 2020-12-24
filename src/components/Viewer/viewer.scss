@@ -5,8 +5,10 @@
     padding-top: 40px;
   }
 
-  &.invert .viewer-page {
-    filter: invert(100%);
+  &.invert {
+    .viewer-page, .epub-container {
+      filter: invert(100%);
+    }
   }
 
   ::selection {
@@ -90,6 +92,12 @@
     right: var(--space-md);
   }
 
+  @media only screen and (hover: none) and (pointer: coarse) {
+    &.visible {
+      display: block;
+    }
+  }
+
   @include breakpoint-sm {
     &.visible {
       display: block;
@@ -106,7 +114,8 @@
   display: none;
   width: 240px;
   height: 100%;
-  padding-top: 40px;
+  padding-top: calc(40px + var(--space-sm));
+  padding-bottom: var(--space-sm);
   background-color: var(--color-grey-60);
 
   &.has-inner-tree {
@@ -163,4 +172,9 @@
     display: block;
 
   }
+}
+
+.epub-container {
+  margin: 0 auto;
+  background-color: white;
 }

@@ -390,3 +390,10 @@
     font-size: var(--text-lg);
   }
 }
+
+.files-thumbnail-render-area {
+  position: absolute;
+  left: -100%;
+  opacity: 0;
+  visibility: hidden;
+}

@@ -1,6 +1,5 @@
-import * as pdfjs from "pdfjs-dist/webpack";
 import { v4 as uuidv4 } from "uuid";
-import { getPdfInstance, pageToDataURL, parseMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr } from "../../utils";
+import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings, setSetting } from "../../services/settingsService";
@@ -11,6 +10,7 @@ const outline = {};
 const defaultScale = 1.3333;
 const minScale = 0.333325;
 const maxScale = 13.333;
+let pdfjs = null;
 let pdfElement = null;
 let pdfInstance = null;
 let fileMetadata = null;
@@ -26,9 +26,10 @@ let ctrlPressed = false;
 let scrolling = false;
 let scrollTimeout = false;
 
-async function initViewer(container, { metadata, blob, save }) {
+async function initPdfViewer(container, { metadata, blob, save }) {
+  pdfjs = await import("pdfjs-dist/webpack");
   pdfElement = container;
-  pdfInstance = await getPdfInstance(blob, pdfjs);
+  pdfInstance = await getPdfInstance(blob);
   fileMetadata = metadata;
   scale = metadata.scale || getDefaultScale();
   rotation = metadata.rotation || 0;
@@ -111,7 +112,7 @@ function hideSinglePageNavBtn() {
   nextPageElement.removeEventListener("click", nextPage);
 }
 
-function cleanupViewer() {
+function cleanupPdfViewer() {
   unregisterIntersectionObserver();
 
   if (pdfElement) {
@@ -121,14 +122,13 @@ function cleanupViewer() {
   document.body.style.overscrollBehavior = "";
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
+  window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("keyup", handleKeyUp);
+  window.removeEventListener("wheel", handleWheel, { passive: false });
 }
 
-function reloadViewer(container, file) {
-  cleanupViewer();
-  initViewer(container, file);
-}
 
-function setSaveViewerFile(saveFile) {
+function setSavePdfFile(saveFile) {
   save = saveFile;
 }
 
@@ -428,16 +428,20 @@ async function goToDestination(link) {
   setPage(index + 1);
 }
 
-async function getNewFile(file) {
-  pdfInstance = await getPdfInstance(file, pdfjs);
+async function getNewPdfFile(file) {
+  pdfInstance = await getPdfInstance(file);
   const [metadata, coverImage] = await Promise.all([pdfInstance.getMetadata(), pageToDataURL(pdfInstance)]);
 
   return {
-    ...parseMetadata(metadata),
+    ...parsePdfMetadata(metadata),
     id: uuidv4(),
     name: file.name,
+    type: "pdf",
     createdAt: Date.now(),
     scale: getDefaultScale(),
+    size: file.size,
+    sizeString: getFileSizeString(file.size),
+    pageNumber: 1,
     pageCount: pdfInstance.numPages,
     coverImage
   };
@@ -876,6 +880,7 @@ async function getPageViewport(pdf, { pageNumber, scale = { currentScale: 1 }, r
 }
 
 async function getPageDiv(pdf, file) {
+
   const { width, height } = await getPageViewport(pdf, file);
   const div = document.createElement("div");
 
@@ -929,11 +934,8 @@ function getDefaultScale() {
 }
 
 export {
-  initViewer,
-  cleanupViewer,
-  reloadViewer,
-  getNewFile,
-  setSaveViewerFile,
-  previousPage,
-  nextPage
+  initPdfViewer,
+  cleanupPdfViewer,
+  getNewPdfFile,
+  setSavePdfFile
 };

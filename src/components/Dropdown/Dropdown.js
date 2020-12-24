@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./dropdown.scss";
 import { v4 as uuidv4 } from "uuid";
+import { dispatchCustomEvent } from "../../utils";
 
 export default function Dropdown({ container, toggle, body, children }) {
   const [state, setState] = useState({ id: uuidv4() });
@@ -26,6 +27,10 @@ export default function Dropdown({ container, toggle, body, children }) {
         ...state,
         onTop: state.top + height > viewportHeight,
         visible: true
+      });
+      dispatchCustomEvent("dropdown-visible", {
+        id: state.id,
+        hide: () => setState({ id: state.id, visible: false, reveal: false })
       });
     }
   }, [state.reveal]); // eslint-disable-line react-hooks/exhaustive-deps

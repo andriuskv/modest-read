@@ -19,6 +19,9 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
   const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [settings.viewMode]);
 
   useEffect(() => {
+    if (file.type === "epub") {
+      return;
+    }
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
     if (media.matches) {
@@ -195,8 +198,8 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
           </button>
           <select id="js-viewer-scale-select" className="input viewer-toolbar-zoom-select">
             <option value="custom" style={{ display: "none" }}></option>
-            <option value="fit-width">Fit Width</option>
-            <option value="fit-page">Fit Page</option>
+            {file.type === "pdf" && <option value="fit-width">Fit Width</option>}
+            {file.type === "pdf" && <option value="fit-page">Fit Page</option>}
             <option value="0.5">50%</option>
             <option value="0.75">75%</option>
             <option value="1">100%</option>
@@ -237,21 +240,31 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
               <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
             </label>
           </div>
-          <div className="viewer-toolbar-dropdown-group">
-            <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
-              <Icon name="rotate"/>
-              <span>Rotate pages</span>
-            </button>
-          </div>
+          {file.type === "pdf" && (
+            <div className="viewer-toolbar-dropdown-group">
+              <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
+                <Icon name="rotate"/>
+                <span>Rotate pages</span>
+              </button>
+            </div>
+          )}
           <div id="js-viewer-view-modes" className="viewer-toolbar-dropdown-group">
-            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
-              <Icon name="pages"/>
-              <span>Multi page</span>
-            </button>
+            {file.type === "pdf" && (
+              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
+                <Icon name="pages"/>
+                <span>Multi page</span>
+              </button>
+            )}
             <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="single">
               <Icon name="page"/>
               <span>Single page</span>
             </button>
+            {file.type === "epub" && (
+              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="spread">
+                <Icon name="spread"/>
+                <span>Spread page</span>
+              </button>
+            )}
           </div>
           <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
             <label className="viewer-toolbar-settings-item">
