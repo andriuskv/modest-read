@@ -9,6 +9,7 @@ import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import NoFileNotice from "./NoFileNotice";
+import Spinner from "./Spinner";
 import { initPdfViewer, cleanupPdfViewer, getNewPdfFile, setSavePdfFile } from "./pdf-viewer";
 import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile } from "./epub-viewer";
 import "./viewer.scss";
@@ -174,6 +175,8 @@ export default function Viewer() {
   }
 
   async function loadNewFile({ file }) {
+    setState({ ...state, loading: true });
+
     let newFile = await findFile(file);
     let save = true;
 
@@ -285,7 +288,7 @@ export default function Viewer() {
   return (
     <>
       {state.filePreviewVisible ? (
-        <FilePreview file={state.file} notification={fileLoadMessage}
+        <FilePreview file={state.file} loading={state.loading} notification={fileLoadMessage}
           dismissNotification={hideFileLoadMessage}
           handleFileUpload={handleFileUpload}
           loadPreviewFile={loadPreviewFile}/>
@@ -296,12 +299,17 @@ export default function Viewer() {
           hideFileLoadModal={hideFileLoadModal}
           hideFileLoadMessage={hideFileLoadMessage}/>
       ) : null}
-      {state.file && !state.filePreviewVisible && <Toolbar file={state.file}
-        filePreferences={filePreferences}
-        setViewerSettings={setViewerSettings}
-        updateFileSavePreference={updateFileSavePreference}
-        handleFileUpload={handleFileUpload}
-        exitViewer={exitViewer}/>}
+      {state.file && !state.filePreviewVisible && (
+        <>
+          <Toolbar file={state.file}
+            filePreferences={filePreferences}
+            setViewerSettings={setViewerSettings}
+            updateFileSavePreference={updateFileSavePreference}
+            handleFileUpload={handleFileUpload}
+            exitViewer={exitViewer}/>
+          {state.loading && <Spinner/>}
+        </>
+      )}
       <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline"></div>
       <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">

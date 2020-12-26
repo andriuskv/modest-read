@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "sass": "^1.30.0",
-    "worker-loader": "^3.0.6"
+    "worker-loader": "^3.0.7"
   },
   "browserslist": [
     "last 4 chrome versions",

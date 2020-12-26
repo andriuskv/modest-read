@@ -237,7 +237,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
             <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
               <Icon name="upload"/>
               <span>Load File</span>
-              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
+              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
             </label>
           </div>
           {file.type === "pdf" && (
@@ -277,16 +277,18 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
               </div>
               <span className="checkbox-label">Invert page colors.</span>
             </label>
-            <label className="viewer-toolbar-settings-item">
-              <input type="checkbox" className="sr-only checkbox-input"
-                name="keepToolbarVisible"
-                onChange={handleSettingChange}
-                checked={settings.keepToolbarVisible}/>
-              <div className="checkbox">
-                <div className="checkbox-tick"></div>
-              </div>
-              <span className="checkbox-label">Keep toolbar visible.</span>
-            </label>
+            {file.type === "pdf" && (
+              <label className="viewer-toolbar-settings-item">
+                <input type="checkbox" className="sr-only checkbox-input"
+                  name="keepToolbarVisible"
+                  onChange={handleSettingChange}
+                  checked={settings.keepToolbarVisible}/>
+                <div className="checkbox">
+                  <div className="checkbox-tick"></div>
+                </div>
+                <span className="checkbox-label">Keep toolbar visible.</span>
+              </label>
+            )}
             {filePreferences.hideWarning && (
               <label className="viewer-toolbar-settings-item">
                 <input type="checkbox" className="sr-only checkbox-input"
