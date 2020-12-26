@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
-import { getSettings, setSetting } from "../../services/settingsService";
+import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
 
 const settings = getSettings();
@@ -31,7 +31,8 @@ async function initPdfViewer(container, { metadata, blob, save }) {
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
   fileMetadata = metadata;
-  scale = metadata.scale || getDefaultScale();
+  fileMetadata.scale ||= getDefaultScale();
+  scale = fileMetadata.scale;
   rotation = metadata.rotation || 0;
   pageNumber = metadata.pageNumber || 1;
   document.body.style.overscrollBehavior = "none";
@@ -39,7 +40,7 @@ async function initPdfViewer(container, { metadata, blob, save }) {
   const [dimensions, hasOutline] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
     pdfInstance.getOutline(),
-    settings.viewMode === "multi" ?
+    metadata.viewMode === "multi" ?
       renderEmptyPages(pdfElement, pdfInstance, metadata) :
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
   ]);
@@ -51,7 +52,7 @@ async function initPdfViewer(container, { metadata, blob, save }) {
 
   const [multiPageViewElement, singlePageViewElement] = document.getElementById("js-viewer-view-modes").children;
 
-  if (settings.viewMode === "multi") {
+  if (metadata.viewMode === "multi") {
     views = getPageViews();
     multiPageViewElement.classList.add("active");
     window.addEventListener("scroll", handleScroll);
@@ -443,6 +444,7 @@ async function getNewPdfFile(file) {
     sizeString: getFileSizeString(file.size),
     pageNumber: 1,
     pageCount: pdfInstance.numPages,
+    viewMode: "multi",
     coverImage
   };
 }
@@ -548,7 +550,7 @@ async function renderAnnotations(viewport, page, container) {
     linkService: new LinkService(pdfInstance, pdfElement, window.location.href)
   };
 
-  if (annotationLayerDiv && settings.viewMode === "multi") {
+  if (annotationLayerDiv && fileMetadata.viewMode === "multi") {
     pdfjs.AnnotationLayer.update(params);
   }
   else {
@@ -638,7 +640,7 @@ function updatePageBtnElementState(pageNumber) {
 }
 
 function setPage(value, updatePageInput = true) {
-  if (settings.viewMode === "multi") {
+  if (fileMetadata.viewMode === "multi") {
     scrollToPage(value, pdfElement.children, { keepToolbarVisible: settings.keepToolbarVisible });
   }
   else {
@@ -691,7 +693,7 @@ function setScale(value, name = "custom") {
 
   fileMetadata.scale = scale;
 
-  if (settings.viewMode === "multi") {
+  if (fileMetadata.viewMode === "multi") {
     const { top } = getPageElementBox(pageNumber, pdfElement.children);
 
     updatePages(value);
@@ -717,7 +719,7 @@ function setScale(value, name = "custom") {
 }
 
 function getMaxHeight(height) {
-  const singlePageViewMode = settings.viewMode === "single";
+  const singlePageViewMode = fileMetadata.viewMode === "single";
   const { keepToolbarVisible } = settings;
   return height - (keepToolbarVisible || pageNumber === 1 || singlePageViewMode ? 56 : 16);
 }
@@ -738,7 +740,7 @@ async function handleScaleSelect({ target }) {
       const newPageHeight = Math.round(newScale * height);
 
       if (scrollHeight > offsetHeight) {
-        if (settings.viewMode === "multi" && fileMetadata.pageCount * newPageHeight > offsetHeight) {
+        if (fileMetadata.viewMode === "multi" && fileMetadata.pageCount * newPageHeight > offsetHeight) {
           scrollbarWidth = 0;
         }
         else if (newPageHeight < maxHeight) {
@@ -790,7 +792,7 @@ async function setViewMode(event) {
   }
   const { attrValue: mode } = element;
 
-  if (mode === settings.viewMode) {
+  if (mode === fileMetadata.viewMode) {
     return;
   }
   const [multiPageViewElement, singlePageViewElement] = event.currentTarget.children;
@@ -798,7 +800,7 @@ async function setViewMode(event) {
   multiPageViewElement.classList.toggle("active");
   singlePageViewElement.classList.toggle("active");
 
-  settings.viewMode = mode;
+  fileMetadata.viewMode = mode;
   pdfElement.innerHTML = "";
 
   if (mode === "multi") {
@@ -826,7 +828,10 @@ async function setViewMode(event) {
     window.addEventListener("click", handleAnnotationClick);
     window.removeEventListener("scroll", handleScroll);
   }
-  setSetting("viewMode", mode);
+
+  if (save) {
+    saveFile(fileMetadata);
+  }
 }
 
 function rotatePages() {
@@ -836,7 +841,7 @@ function rotatePages() {
   fileMetadata.rotation = rotation;
   swapDimensions = !swapDimensions;
 
-  if (settings.viewMode === "multi") {
+  if (fileMetadata.viewMode === "multi") {
     updatePages(scale.currentScale);
     views = getPageViews();
     registerIntersectionObserver();

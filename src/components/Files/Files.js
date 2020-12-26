@@ -44,6 +44,7 @@ export default function Files() {
       Object.assign(file, {
         ...parsePdfMetadata(metadata),
         coverImage,
+        viewMode: "multi",
         pageCount: pdf.numPages
       });
 
@@ -73,6 +74,7 @@ export default function Files() {
       file.storedPosition = JSON.stringify(cfiArray);
       file.pageCount = book.locations.length();
       file.coverImage = coverImage;
+      file.viewMode = "single";
 
       delete file.loading;
       delete file.blob;

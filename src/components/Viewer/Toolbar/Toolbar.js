@@ -15,8 +15,8 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
   const scrolling = useRef(false);
   const movingMouse = useRef(false);
   const pointerOverToolbar = useRef(false);
-  const memoizedScrollHandler = useCallback(handleScroll, [settings.viewMode]);
-  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [settings.viewMode]);
+  const memoizedScrollHandler = useCallback(handleScroll, [file.viewMode]);
+  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [file.viewMode]);
 
   useEffect(() => {
     if (file.type === "epub") {
@@ -108,14 +108,14 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
       const { scrollTop } = document.documentElement;
 
       if (scrollTop < 80) {
-        if (settings.viewMode === "multi") {
+        if (file.viewMode === "multi") {
           revealToolbar();
         }
       }
       else if (hideAfterScroll.current) {
         hideToolbar();
       }
-      else if (settings.viewMode === "multi") {
+      else if (file.viewMode === "multi") {
         revealToolbar();
       }
       scrolling.current = false;
@@ -153,7 +153,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
     if (!target.closest(".viewer-toolbar") && !target.closest(".btn")) {
       keepVisible.current = false;
 
-      if (settings.viewMode === "multi" && scrollTop < 40) {
+      if (file.viewMode === "multi" && scrollTop < 40) {
         hideAfterScroll.current = !hideAfterScroll.current;
         return;
       }
