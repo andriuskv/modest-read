@@ -4,9 +4,10 @@ import Icon from "../../Icon";
 import Notification from "../../Notification";
 import BannerImage from "../../BannerImage";
 import FileCard from "../../FileCard";
+import Spinner from "../Spinner";
 import "./file-preview.scss";
 
-export default function FilePreview({ file, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
+export default function FilePreview({ file, loading, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
   return (
     <div className="viewer-file-preview-container">
       <BannerImage/>
@@ -19,7 +20,7 @@ export default function FilePreview({ file, notification, dismissNotification, h
             <Icon name="bookshelf" size="24px"/>
           </Link>
           <label className="btn viewer-file-preview-import-btn">
-            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf"/>
+            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
             <span>Select File</span>
           </label>
         </FileCard>
@@ -35,6 +36,7 @@ export default function FilePreview({ file, notification, dismissNotification, h
             </div>
           </div>
         )}
+        {loading && <Spinner/>}
       </div>
     </div>
   );
