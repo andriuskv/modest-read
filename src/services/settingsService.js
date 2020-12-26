@@ -4,8 +4,7 @@ const settings = JSON.parse(localStorage.getItem("modest-read-settings")) || {
   showCategories: false,
   layoutType: "grid",
   invertColors: false,
-  keepToolbarVisible: false,
-  viewMode: "multi"
+  keepToolbarVisible: false
 };
 
 function getSettings() {

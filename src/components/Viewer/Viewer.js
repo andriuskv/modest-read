@@ -41,7 +41,11 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
-    if (settings.viewMode === "single" && state.file?.type === "pdf") {
+    if (!state.file) {
+      return;
+    }
+
+    if (state.file.viewMode === "single" && state.file.type === "pdf") {
       const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
 
       if (media.matches && !settings.keepToolbarVisible) {
@@ -50,7 +54,7 @@ export default function Viewer() {
       }
     }
     viewerRef.current.classList.add("offset");
-  }, [settings.viewMode, settings.keepToolbarVisible, state.file]);
+  }, [settings.keepToolbarVisible, state.file]);
 
   async function init() {
     if (history.location.state) {

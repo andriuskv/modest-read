@@ -2,9 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
-import { getSettings, setSetting } from "../../services/settingsService";
 
-const settings = getSettings();
 const minScale = 0.333325;
 const maxScale = 13.333;
 const outline = {};
@@ -24,7 +22,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
   fileMetadata = metadata;
   scale = metadata.scale || getDefaultScale();
   epubElement = container;
-  rendition = getRendition(settings.viewMode);
+  rendition = getRendition(metadata.viewMode);
 
   await book.ready;
 
@@ -51,7 +49,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
 
   const [singlePageViewElement, spreadPageViewElement] = document.getElementById("js-viewer-view-modes").children;
 
-  if (settings.viewMode === "single") {
+  if (metadata.viewMode === "single") {
     singlePageViewElement.classList.add("active");
   }
   else {
@@ -160,7 +158,7 @@ function updatePageBtnElementState(pageNumber, pageCount, { location, index, atS
   if (atStart || location === 0 && index === 0) {
     previousPageElement.disabled = true;
   }
-  else if (pageNumber === pageCount || settings.viewMode === "spread" && location + 2 === pageCount) {
+  else if (pageNumber === pageCount || fileMetadata.viewMode === "spread" && location + 2 === pageCount) {
     nextPageElement.disabled = true;
   }
   else {
@@ -328,7 +326,7 @@ function setViewMode(event) {
   }
   const { attrValue: mode } = element;
 
-  if (mode === settings.viewMode) {
+  if (mode === fileMetadata.viewMode) {
     return;
   }
   const [singlePageViewElement, spreadPageViewElement] = event.currentTarget.children;
@@ -336,7 +334,7 @@ function setViewMode(event) {
   singlePageViewElement.classList.toggle("active");
   spreadPageViewElement.classList.toggle("active");
 
-  settings.viewMode = mode;
+  fileMetadata.viewMode = mode;
   epubElement.innerHTML = "";
 
   rendition.off("relocated", handleRelocation);
@@ -348,7 +346,9 @@ function setViewMode(event) {
   rendition.on("click", handleClickOnRendition);
   rendition.display(fileMetadata.location);
 
-  setSetting("viewMode", mode);
+  if (save) {
+    saveFile(fileMetadata);
+  }
 }
 
 function getRendition(viewMode) {
