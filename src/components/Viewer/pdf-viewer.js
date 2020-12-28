@@ -882,11 +882,10 @@ function getScaledPageDimensions(index, scale) {
 
 async function getPageViewport(pdf, { pageNumber, scale = { currentScale: 1 }, rotation = 0 }) {
   const page = await pdf.getPage(pageNumber);
-  return page.getViewport({ scale: scale.currentScale, rotation });
+  return page.getViewport({ scale: scale.currentScale, rotation: rotation + page.rotate });
 }
 
 async function getPageDiv(pdf, file) {
-
   const { width, height } = await getPageViewport(pdf, file);
   const div = document.createElement("div");
 
