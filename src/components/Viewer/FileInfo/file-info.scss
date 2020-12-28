@@ -11,34 +11,62 @@
 
   @include breakpoint-sm {
     flex-direction: column;
-    width: 340px;
-    padding: var(--space-md);
+    align-items: center;
+    width: 320px;
   }
 }
 
-.file-info-image {
+.file-info-image-container {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 108px;
   height: 160px;
   margin-right: var(--space-xl);
   border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--color-grey-40);
+  background-color: var(--color-grey-50);
 
   @include breakpoint-sm {
-    margin-bottom: var(--space-md);
+    width: auto;
+    height: auto;
+    margin-right: 0;
+    margin-bottom: var(--space-xl);
   }
 }
 
-.file-info-details-item {
-  display: flex;
-  justify-content: space-between;
+.file-info-image {
+  max-width: 100%;
+}
+
+.file-info-items {
+  width: 100%;
+}
+
+.file-info-item {
   margin-bottom: var(--space-md);
-  font-size: var(--text-sm);
+  text-align: center;
+}
 
-  span:first-of-type {
-    margin-right: var(--space-md);
-    white-space: nowrap;
-  }
-
-  span:last-of-type {
+.file-info-title {
+  &.filename {
     word-break: break-all;
+  }
+}
+
+.file-info-filename {
+  color: var(--color-grey-10);
+  font-size: var(--text-xs);
+  word-break: break-all;
+}
+
+.file-info-secondary {
+  color: var(--color-grey-10);
+  font-size: var(--text-xs);
+
+  span:not(:last-of-type)::after {
+    content: " | ";
   }
 }

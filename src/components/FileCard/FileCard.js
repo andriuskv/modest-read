@@ -7,9 +7,13 @@ export default function FileCard({ file, showLink, children }) {
     <li className="file-card">
       {showLink ? (
         <Link to={`/viewer/${file.id}`} className="file-card-left" title={`Open ${file.name}`}>
-          <img src={file.coverImage} className="file-card-image" width="108px" height="160px" loading="lazy" alt=""/>
+          <img src={file.coverImage} className="file-card-image" alt=""/>
         </Link>
-      ) : <img src={file.coverImage} className="file-card-left file-card-image" width="108px" height="160px" loading="lazy" alt=""/>}
+      ) : (
+        <div className="file-card-left">
+          <img src={file.coverImage} className="file-card-image" alt=""/>
+        </div>
+      )}
       <div className="file-card-info">
         <div className="file-card-title">{file.title || file.name}</div>
         {file.author && <div className="file-card-author">{file.author}</div>}
