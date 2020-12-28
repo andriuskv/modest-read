@@ -49,6 +49,7 @@ async function initPdfViewer(container, { metadata, blob, save }) {
   initScale(scale);
   initPage();
   initOutline(hasOutline);
+  setSavePdfFile(save);
 
   const [multiPageViewElement, singlePageViewElement] = document.getElementById("js-viewer-view-modes").children;
 

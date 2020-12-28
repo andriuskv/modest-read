@@ -4,6 +4,27 @@ import Dropdown from "../../Dropdown";
 import "./file-info.scss";
 
 export default function FileInfo({ file }) {
+  function renderTitle() {
+    let title = "";
+
+    if (file.title) {
+      title = file.title;
+
+      if (file.author) {
+        title += ` by ${file.author}`;
+      }
+    }
+    else {
+      title = file.name;
+    }
+    return (
+      <>
+        <div className={`file-info-item file-info-title${title === file.name ? ` filename` : ""}`}>{title}</div>
+        {title !== file.name && <div className="file-info-item file-info-filename">{file.name}</div>}
+      </>
+    );
+  }
+
   return (
     <Dropdown
       toggle={{
@@ -12,27 +33,15 @@ export default function FileInfo({ file }) {
         className: "btn icon-btn icon-btn-alt"
       }}
       body={{ className: "file-info" }}>
-      <img src={file.coverImage} className="file-info-image" alt=""/>
-      <div>
-        <div className="file-info-details-item">
-          <span>File name:</span>
-          <span>{file.name}</span>
-        </div>
-        <div className="file-info-details-item">
-          <span>File size:</span>
+      <div className="file-info-image-container">
+        <img src={file.coverImage} className="file-info-image" alt=""/>
+      </div>
+      <div className="file-info-items">
+        {renderTitle()}
+        <div className="file-info-item file-info-secondary">
+          <span>{file.pageCount} pages</span>
           <span>{file.sizeString}</span>
-        </div>
-        <div className="file-info-details-item">
-          <span>Title: </span>
-          <span>{file.title || "-"}</span>
-        </div>
-        <div className="file-info-details-item">
-          <span>Author:</span>
-          <span>{file.author || "-"}</span>
-        </div>
-        <div className="file-info-details-item">
-          <span>Page count:</span>
-          <span>{file.pageCount}</span>
+          <span>{file.type}</span>
         </div>
       </div>
     </Dropdown>

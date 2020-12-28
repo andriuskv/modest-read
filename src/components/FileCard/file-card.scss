@@ -13,8 +13,17 @@
 }
 
 .file-card-left {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 108px;
+  height: 160px;
   margin-right: var(--space-xl);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--color-grey-40);
+  background-color: var(--color-grey-50);
 
   &.focus-visible {
     box-shadow: 0 0 0 1px var(--color-primary);
@@ -27,7 +36,7 @@
 
 .file-card-image {
   display: block;
-  border-radius: 8px;
+  max-width: 100%;
 }
 
 .file-card-info {

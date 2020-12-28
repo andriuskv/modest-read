@@ -45,7 +45,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
   initScale(scale);
   initPage(metadata.pageNumber, metadata.pageCount);
   initOutline();
-
+  setSaveEpubFile(save);
 
   const [singlePageViewElement, spreadPageViewElement] = document.getElementById("js-viewer-view-modes").children;
 

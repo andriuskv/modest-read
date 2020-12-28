@@ -22,6 +22,7 @@ export default function Viewer() {
   const [settings, setSettings] = useState(() => getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const viewerRef = useRef(null);
+  const viewerLoaded = useRef(false);
   const memoizedDropHandler = useCallback(handleDrop, [state, filePreferences, fileLoadMessage]);
 
   useLayoutEffect(() => cleanupViewer(), []);
@@ -106,6 +107,7 @@ export default function Viewer() {
   }
 
   function initViewer(container, file) {
+    viewerLoaded.current = true;
     file.metadata.type ||= "pdf";
 
     if (file.metadata.type === "pdf") {
@@ -130,7 +132,9 @@ export default function Viewer() {
   }
 
   function reloadViewer(container, file) {
-    cleanupViewer();
+    if (viewerLoaded.current) {
+      cleanupViewer();
+    }
     initViewer(container, file);
   }
 
@@ -209,7 +213,6 @@ export default function Viewer() {
         }
       }
     }
-    setSaveViewerFile(save);
     reloadViewer(viewerRef.current, {
       metadata: newFile,
       blob: file,
