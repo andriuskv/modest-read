@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
+import "./files.scss";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
@@ -8,11 +9,11 @@ import Dropdown from "../Dropdown";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import NoFilesNotice from "./NoFilesNotice";
+import FileCard from "../FileCard";
+import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
-import FileCardPlaceholder from "./FileCardPlaceholder";
-import FileCard from "../FileCard";
-import "./files.scss";
+import FilesModal from "./FilesModal";
 
 export default function Files() {
   const [state, setState] = useState(null);
@@ -21,6 +22,7 @@ export default function Files() {
   const [categoryMenuVisible, setCategoryMenuVisibility] = useState(null);
   const [filesLoading, setFilesLoading] = useState(false);
   const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
+  const [modal, setModal] = useState(null);
   const memoizedDropHandler = useCallback(handleDrop, [state, files]);
   const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
 
@@ -314,8 +316,9 @@ export default function Files() {
     saveFile(file);
   }
 
-  function resetProgress(id) {
-    const file = files.find(file => file.id === id);
+  function resetProgress() {
+    const file = files.find(file => file.id === modal.id);
+
     file.status = "not started";
     file.pageNumber = 1;
 
@@ -332,9 +335,22 @@ export default function Files() {
       categories: getCategories(files)
     });
     saveFile(file);
+    hideModal();
   }
 
-  function removeFile(id) {
+  function showResetProgressModal(id) {
+    setModal({
+      id,
+      type: "reset",
+      iconId: "reset",
+      title: "Reset Progress?",
+      message: "Are you sure you want to reset reading progress for this file?",
+      action: "Reset"
+    });
+  }
+
+  function removeFile() {
+    const { id } = modal;
     const index = files.findIndex(file => file.id === id);
 
     files.splice(index, 1);
@@ -344,6 +360,22 @@ export default function Files() {
       categories: getCategories(files)
     });
     deleteIDBFile(id);
+    hideModal();
+  }
+
+  function showRemoveFileModal(id) {
+    setModal({
+      id,
+      type: "remove",
+      iconId: "trash",
+      title: "Remove File?",
+      message: "Are you sure you want to remove this file?",
+      action: "Remove"
+    });
+  }
+
+  function hideModal() {
+    setModal(null);
   }
 
   function dismissNotification() {
@@ -511,12 +543,12 @@ export default function Files() {
           </div>
           <div className="files-file-card-dropdown-group">
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
-              onClick={() => resetProgress(file.id)}>
+              onClick={() => showResetProgressModal(file.id)}>
               <Icon name="reset"/>
               <span>Reset Progress</span>
             </button>
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
-              onClick={() => removeFile(file.id)}>
+              onClick={() => showRemoveFileModal(file.id)}>
               <Icon name="trash"/>
               <span>Remove File</span>
             </button>
@@ -585,7 +617,7 @@ export default function Files() {
             </div>
             {notification && (
               <Notification notification={notification} expandable={notification.expandable}
-                dismiss={dismissNotification}>
+                dismiss={dismissNotification} margin="top">
                 {notification.files ? (
                   <ul className="files-duplicate-files">
                     {notification.files.map((file, i) => (
@@ -601,6 +633,7 @@ export default function Files() {
           dismiss={dismissNotification}
           handleFileUpload={handleFileUpload}/>
         }
+        {modal ? <FilesModal {...modal} resetProgress={resetProgress} removeFile={removeFile} hide={hideModal}/> : null}
       </div>
     );
   }
