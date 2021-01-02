@@ -26,7 +26,7 @@ let ctrlPressed = false;
 let scrolling = false;
 let scrollTimeout = false;
 
-async function initPdfViewer(container, { metadata, blob, save }) {
+async function initPdfViewer(container, { metadata, blob, save = true }) {
   pdfjs = await import("pdfjs-dist/webpack");
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
@@ -128,7 +128,6 @@ function cleanupPdfViewer() {
   window.removeEventListener("keyup", handleKeyUp);
   window.removeEventListener("wheel", handleWheel, { passive: false });
 }
-
 
 function setSavePdfFile(saveFile) {
   save = saveFile;
