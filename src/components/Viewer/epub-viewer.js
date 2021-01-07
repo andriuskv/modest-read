@@ -80,6 +80,49 @@ function handleDropdownVisibility({ detail }) {
   hideDropdown = detail.hide;
 }
 
+function resetFontSize(content) {
+  for (const sheet of content.document.styleSheets) {
+    for (const rule of sheet.rules) {
+      if (rule.style?.fontSize && rule.selectorText !== "html") {
+        if (rule.style.fontSize.endsWith("pt")) {
+          const px = Math.round(Number.parseFloat(rule.style.fontSize) * 1.3333);
+          const rem = px / 16;
+
+          rule.style.fontSize = `${rem}rem`;
+        }
+        else if (rule.style.fontSize.endsWith("px")) {
+          const px = Number.parseFloat(rule.style.fontSize);
+          const rem = px / 16;
+          rule.style.fontSize = `${rem}rem`;
+        }
+        else if (rule.style.fontSize.endsWith("%")) {
+          const rem = Number.parseFloat(rule.style.fontSize) / 100;
+          rule.style.fontSize = `${rem}rem`;
+        }
+        else if (rule.style.fontSize.endsWith("em")) {
+          rule.style.fontSize = `${Number.parseFloat(rule.style.fontSize)}rem`;
+        }
+        else {
+          const keywordMap = {
+            "xx-small": "0.5625",
+            "x-small": "0.625",
+            "small": "0.8333",
+            "medium": "1",
+            "large": "1.125",
+            "x-large": "1.5",
+            "xx-large": "2",
+            "xxx-large": "3"
+          };
+
+          if (keywordMap[rule.style.fontSize]) {
+            rule.style.fontSize = `${keywordMap[rule.style.fontSize]}rem`;
+          }
+        }
+      }
+    }
+  }
+}
+
 function handleRelocation(locations) {
   const { cfi, location, index } = locations.start;
   const pageNumber = location + 1;
@@ -311,7 +354,7 @@ function setScale(value, name = "custom") {
   fileMetadata.scale = scale;
 
   updateScaleElement(scale);
-  rendition.themes.default({ "body": { "font-size": `${value * 100}% !important` }});
+  rendition.themes.default({ "html": { "font-size": `${value * 100}% !important` }});
 
   if (save) {
     saveFile(fileMetadata);
@@ -362,8 +405,9 @@ function getRendition(viewMode) {
   }
   const rendition = book.renderTo(epubElement, options);
 
+  rendition.hooks.content.register(resetFontSize);
   rendition.themes.default({
-    "body": { "font-size": `${scale.currentScale * 100}% !important`},
+    "html": { "font-size": `${scale.currentScale * 100}% !important`},
     "::selection": { "background-color": "hsla(260, 48%, 52%, 0.4)" }
   });
 
@@ -392,7 +436,8 @@ async function getNewEpubFile(blob) {
     size: blob.size,
     sizeString: getFileSizeString(blob.size),
     pageNumber: 1,
-    pageCount: book.locations.length()
+    pageCount: book.locations.length(),
+    viewMode: "single"
   };
 
   if (metadata.title) {
