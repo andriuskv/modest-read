@@ -317,7 +317,7 @@ export default function Viewer() {
           {state.loading && <Spinner/>}
         </>
       )}
-      <div className={`viewer-pdf offset${settings.invertColors ? " invert" : ""}`} ref={viewerRef}></div>
+      <div className={`viewer-pdf offset${state.file?.type === "pdf" && settings.invertColors ? " invert" : ""}`} ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline"></div>
       <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">
         <Icon name="chevron-left"/>

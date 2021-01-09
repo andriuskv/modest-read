@@ -177,4 +177,16 @@
 .epub-container {
   margin: 0 auto;
   background-color: white;
+
+  &.theme-black {
+    background-color: black;
+  }
+
+  &.theme-grey {
+    background-color: #1d1c1b;
+  }
+
+  &.theme-orange {
+    background-color: #FBF0D9;
+  }
 }
