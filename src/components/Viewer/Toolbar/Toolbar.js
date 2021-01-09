@@ -267,27 +267,39 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
             )}
           </div>
           <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
-            <label className="viewer-toolbar-settings-item">
-              <input type="checkbox" className="sr-only checkbox-input"
-                name="invertColors"
-                onChange={handleSettingChange}
-                checked={settings.invertColors}/>
-              <div className="checkbox">
-                <div className="checkbox-tick"></div>
-              </div>
-              <span className="checkbox-label">Invert page colors.</span>
-            </label>
-            {file.type === "pdf" && (
-              <label className="viewer-toolbar-settings-item">
-                <input type="checkbox" className="sr-only checkbox-input"
-                  name="keepToolbarVisible"
-                  onChange={handleSettingChange}
-                  checked={settings.keepToolbarVisible}/>
-                <div className="checkbox">
-                  <div className="checkbox-tick"></div>
+            {file.type === "pdf" ? (
+              <>
+                <label className="viewer-toolbar-settings-item">
+                  <input type="checkbox" className="sr-only checkbox-input"
+                    name="invertColors"
+                    onChange={handleSettingChange}
+                    checked={settings.invertColors}/>
+                  <div className="checkbox">
+                    <div className="checkbox-tick"></div>
+                  </div>
+                  <span className="checkbox-label">Invert page colors.</span>
+                </label>
+                <label className="viewer-toolbar-settings-item">
+                  <input type="checkbox" className="sr-only checkbox-input"
+                    name="keepToolbarVisible"
+                    onChange={handleSettingChange}
+                    checked={settings.keepToolbarVisible}/>
+                  <div className="checkbox">
+                    <div className="checkbox-tick"></div>
+                  </div>
+                  <span className="checkbox-label">Keep toolbar visible.</span>
+                </label>
+              </>
+            ) : (
+              <div className="viewer-toolbar-settings-item viewer-theme-setting">
+                <div className="viewer-toolbar-setting-name">Themes</div>
+                <div id="js-viewer-themes" className="viewer-themes">
+                  <button className="btn viewer-theme-btn black" data-theme="black">A</button>
+                  <button className="btn viewer-theme-btn white" data-theme="white">A</button>
+                  <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
+                  <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
                 </div>
-                <span className="checkbox-label">Keep toolbar visible.</span>
-              </label>
+              </div>
             )}
             {filePreferences.hideWarning && (
               <label className="viewer-toolbar-settings-item">

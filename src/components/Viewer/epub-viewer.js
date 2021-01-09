@@ -15,6 +15,7 @@ let scrollTimeout = 0;
 let save = true;
 let dropdownId = "";
 let hideDropdown = null;
+let previousTheme = "";
 
 async function initEpubViewer(container, { metadata, blob, save = true }) {
   const { default: epubjs } = await import("epubjs");
@@ -23,6 +24,12 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
   scale = metadata.scale || getDefaultScale();
   epubElement = container;
   rendition = getRendition(metadata.viewMode);
+
+  initTheme();
+  initScale(scale);
+  initPage(metadata.pageNumber, metadata.pageCount);
+  initViewMode(metadata.viewMode);
+  initOutline();
 
   await book.ready;
 
@@ -42,20 +49,8 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
   rendition.on("click", handleClickOnRendition);
   rendition.display(metadata.location);
 
-  initScale(scale);
-  initPage(metadata.pageNumber, metadata.pageCount);
-  initOutline();
   setSaveEpubFile(save);
 
-  const [singlePageViewElement, spreadPageViewElement] = document.getElementById("js-viewer-view-modes").children;
-
-  if (metadata.viewMode === "single") {
-    singlePageViewElement.classList.add("active");
-  }
-  else {
-    spreadPageViewElement.classList.add("active");
-  }
-  document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
 
@@ -78,6 +73,39 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
 function handleDropdownVisibility({ detail }) {
   dropdownId = detail.id;
   hideDropdown = detail.hide;
+}
+
+function initViewMode(viewMode) {
+  const [singlePageViewElement, spreadPageViewElement] = document.getElementById("js-viewer-view-modes").children;
+
+  if (viewMode === "single") {
+    singlePageViewElement.classList.add("active");
+  }
+  else {
+    spreadPageViewElement.classList.add("active");
+  }
+  document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
+}
+
+function initTheme() {
+  document.getElementById("js-viewer-themes").addEventListener("click", setTheme);
+}
+
+function setTheme(event) {
+  const element = getElementByAttr("data-theme", event.target, event.currentTarget);
+
+  if (!element) {
+    return;
+  }
+  fileMetadata.theme = element.attrValue;
+  applyTheme();
+
+  if (save) {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      saveFile(fileMetadata);
+    }, 1000);
+  }
 }
 
 function resetFontSize(content) {
@@ -121,6 +149,47 @@ function resetFontSize(content) {
       }
     }
   }
+}
+
+function applyTheme() {
+  const { theme } = fileMetadata;
+
+  if (!theme) {
+    return;
+  }
+  const themes = {
+    black: {
+      "body": {
+        "color": "white",
+        "background-color": "black"
+      }
+    },
+    white: {
+      "body": {
+        "color": "black",
+        "background-color": "white"
+      }
+    },
+    grey: {
+      "body": {
+        "color": "white",
+        "background-color": "#1d1c1b"
+      }
+    },
+    orange: {
+      "body": {
+        "color": "black",
+        "background-color": "#FBF0D9"
+      }
+    }
+  };
+  rendition.getContents().forEach(c => c.addStylesheetRules(themes[fileMetadata.theme]));
+
+  if (previousTheme) {
+    epubElement.firstElementChild.classList.remove(`theme-${previousTheme}`);
+  }
+  epubElement.firstElementChild.classList.add(`theme-${fileMetadata.theme}`);
+  previousTheme = fileMetadata.theme;
 }
 
 function handleRelocation(locations) {
@@ -406,6 +475,7 @@ function getRendition(viewMode) {
   const rendition = book.renderTo(epubElement, options);
 
   rendition.hooks.content.register(resetFontSize);
+  rendition.hooks.content.register(applyTheme);
   rendition.themes.default({
     "html": { "font-size": `${scale.currentScale * 100}% !important`},
     "::selection": { "background-color": "hsla(260, 48%, 52%, 0.4)" }

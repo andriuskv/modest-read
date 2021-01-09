@@ -181,3 +181,60 @@
     margin-bottom: var(--space-md);
   }
 }
+
+.viewer-theme-setting {
+  display: block;
+}
+
+.viewer-toolbar-setting-name {
+  margin-bottom: var(--space-lg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-grey-10);
+}
+
+.viewer-themes {
+  display: flex;
+}
+
+.viewer-theme-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color);
+  font-weight: bold;
+  color: var(--color);
+
+  &:not(:last-of-type) {
+    margin-right: var(--space-xl);
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &.focus-visible {
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+
+  &.black {
+    --background-color: black;
+    --color: white;
+  }
+
+  &.white {
+    --background-color: white;
+    --color: black;
+  }
+
+  &.grey {
+    --background-color: #1d1c1b;
+    --color: white;
+  }
+
+  &.orange {
+    --background-color: #FBF0D9;
+    --color: black;
+  }
+}
