@@ -148,24 +148,23 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
   }
 
   function handleClick({ target }) {
-    const { scrollTop } = document.documentElement;
+    if (target.closest(".viewer-toolbar") || target.closest(".btn") || target.closest("#js-viewer-outline")) {
+      return;
+    }
+    keepVisible.current = false;
 
-    if (!target.closest(".viewer-toolbar") && !target.closest(".btn")) {
-      keepVisible.current = false;
+    if (file.viewMode === "multi" && document.documentElement.scrollTop < 40) {
+      hideAfterScroll.current = !hideAfterScroll.current;
+      return;
+    }
 
-      if (file.viewMode === "multi" && scrollTop < 40) {
-        hideAfterScroll.current = !hideAfterScroll.current;
-        return;
-      }
-
-      if (toolbarRef.current.classList.contains("hidden")) {
-        hideAfterScroll.current = false;
-        revealToolbar();
-      }
-      else {
-        hideAfterScroll.current = true;
-        hideToolbar();
-      }
+    if (toolbarRef.current.classList.contains("hidden")) {
+      hideAfterScroll.current = false;
+      revealToolbar();
+    }
+    else {
+      hideAfterScroll.current = true;
+      hideToolbar();
     }
   }
 

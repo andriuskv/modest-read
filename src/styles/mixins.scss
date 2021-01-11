@@ -12,6 +12,17 @@
   white-space: normal;
 }
 
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-grey-30);
+  }
+}
+
 @mixin breakpoint-md {
   @media (max-width: 900px) { @content; }
 }
