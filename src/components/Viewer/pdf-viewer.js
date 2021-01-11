@@ -4,9 +4,9 @@ import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
+import { initOutline } from "./outline";
 
 const settings = getSettings();
-const outline = {};
 const defaultScale = 1.3333;
 const minScale = 0.333325;
 const maxScale = 13.333;
@@ -37,9 +37,8 @@ async function initPdfViewer(container, { metadata, blob, save = true }) {
   pageNumber = metadata.pageNumber || 1;
   document.body.style.overscrollBehavior = "none";
 
-  const [dimensions, hasOutline] = await Promise.all([
+  const [dimensions] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
-    pdfInstance.getOutline(),
     metadata.viewMode === "multi" ?
       renderEmptyPages(pdfElement, pdfInstance, metadata) :
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
@@ -48,7 +47,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }) {
 
   initScale(scale);
   initPage();
-  initOutline(hasOutline);
+  initOutline(getOutline, goToDestination);
   setSavePdfFile(save);
 
   const [multiPageViewElement, singlePageViewElement] = document.getElementById("js-viewer-view-modes").children;
@@ -163,21 +162,6 @@ function initPage() {
   pageInputElement.addEventListener("focus", handlePageInputFocus);
   pageInputElement.addEventListener("blur", handlePageInputBlur);
   pageInputElement.addEventListener("keydown", handlePageInputKeydown);
-}
-
-function initOutline(hasOutline) {
-  const container = document.getElementById("js-viewer-outline");
-  const toggleBtn = document.getElementById("js-viewer-outline-toggle-btn");
-
-  container.innerHTML = "";
-  container.classList.remove("has-inner-tree", "visible");
-  container.removeEventListener("click", handleOutlineClick);
-
-  toggleBtn.classList.toggle("visible", !!hasOutline);
-  toggleBtn.addEventListener("click", toggleOutline);
-
-  outline.rendered = false;
-  outline.visible = false;
 }
 
 function handleScroll() {
@@ -324,75 +308,20 @@ function handleWheel(event) {
   }
 }
 
-async function toggleOutline() {
-  const container = document.getElementById("js-viewer-outline");
-
-  outline.visible = !outline.visible;
-
-  if (!outline.rendered) {
-    const items = await pdfInstance.getOutline();
-
-    if (items) {
-      renderOutline(items, container);
-      container.addEventListener("click", handleOutlineClick);
-    }
-    outline.rendered = true;
-  }
-  container.classList.toggle("visible", outline.visible);
-}
-
-function renderOutline(items, container) {
-  const fragment = new DocumentFragment();
+function getOutlineItem(item) {
   const linkService = new LinkService(pdfInstance, pdfElement, window.location.href);
 
-  for (const item of items) {
-    const div = document.createElement("div");
-    const a = document.createElement("a");
-
-    div.classList.add("viewer-outline-item");
-    a.classList.add("viewer-outline-link");
-    a.textContent = item.title;
-    a.href = linkService.getDestinationHash(item.dest);
-
-    if (item.items.length) {
-      const div2 = document.createElement("div");
-      const button = document.createElement("button");
-
-      button.innerHTML = "&#x25BE";
-      button.classList.add("btn", "icon-btn", "viewer-outline-tree-toggle-btn");
-
-      div2.appendChild(button);
-      div2.appendChild(a);
-      div.appendChild(div2);
-      container.classList.add("has-inner-tree");
-    }
-    else {
-      div.appendChild(a);
-    }
-
-    if (item.items.length) {
-      const div2 = document.createElement("div");
-
-      div2.classList.add("viewer-outline-inner-tree");
-      renderOutline(item.items, div2);
-      div.appendChild(div2);
-    }
-    fragment.appendChild(div);
-  }
-  container.appendChild(fragment);
+  return {
+    title: item.title,
+    href: linkService.getDestinationHash(item.dest),
+    items: item.items.map(getOutlineItem)
+  };
 }
 
-function handleOutlineClick(event) {
-  const { nodeName } = event.target;
+async function getOutline() {
+  const outline = await pdfInstance.getOutline();
 
-  if (nodeName === "A") {
-    event.preventDefault();
-    goToDestination(event.target.href);
-  }
-  else if (nodeName === "BUTTON") {
-    event.target.classList.toggle("rotated");
-    event.target.parentElement.nextElementSibling.classList.toggle("visible");
-  }
+  return outline ? outline.map(getOutlineItem) : [];
 }
 
 function getVisiblePageNumber(views, top) {

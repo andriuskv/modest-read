@@ -1,6 +1,6 @@
 @import "../../styles/mixins.scss";
 
-.viewer-pdf {
+.viewer {
   &.offset {
     padding-top: 40px;
   }
@@ -105,17 +105,34 @@
   }
 }
 
-.viewer-outline {
+.viewer-outline-container {
   z-index: 1;
   position: fixed;
   top: 0;
   left: 0;
-  overflow-y: auto;
+  right: 0;
+  bottom: 0;
   display: none;
+  background-color: var(--color-black-20);
+
+  &.visible {
+    display: block;
+  }
+}
+
+.viewer-outline {
+  @include scrollbar;
+
+  overflow-y: auto;
   width: 240px;
   height: 100%;
-  padding-top: calc(40px + var(--space-sm));
+  padding-top: var(--space-sm);
   padding-bottom: var(--space-sm);
+  border-top: 40px solid var(--color-grey-60);
+  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.16),
+              2px 0 4px 0 rgba(0, 0, 0, 0.08),
+              4px 0 8px 0 rgba(0, 0, 0, 0.04),
+              8px 0 16px 0 rgba(0, 0, 0, 0.02);
   background-color: var(--color-grey-60);
 
   &.has-inner-tree {
@@ -126,10 +143,6 @@
         margin-left: 28px;
       }
     }
-  }
-
-  &.visible {
-    display: block;
   }
 }
 

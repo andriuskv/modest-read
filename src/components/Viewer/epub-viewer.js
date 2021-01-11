@@ -2,10 +2,10 @@ import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
+import { initOutline } from "./outline";
 
 const minScale = 0.333325;
 const maxScale = 13.333;
-const outline = {};
 let book = null;
 let rendition = null;
 let fileMetadata = null;
@@ -29,7 +29,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
   initScale(scale);
   initPage(metadata.pageNumber, metadata.pageCount);
   initViewMode(metadata.viewMode);
-  initOutline();
+  initOutline(getOutline, goToDestination);
 
   await book.ready;
 
@@ -279,91 +279,22 @@ function updatePageBtnElementState(pageNumber, pageCount, { location, index, atS
   }
 }
 
-async function initOutline() {
+function goToDestination(href) {
+  rendition.display(href.split(/viewer\/.*?\//g)[1]);
+}
+
+function getOutlineItem(item) {
+  return {
+    title: item.label,
+    href: `${window.location.href}/${item.href}`,
+    items: item.subitems.map(getOutlineItem)
+  };
+}
+
+async function getOutline() {
   const navigation = await book.loaded.navigation;
-  const hasOutline = navigation.length > 0;
-  const container = document.getElementById("js-viewer-outline");
-  const toggleBtn = document.getElementById("js-viewer-outline-toggle-btn");
 
-  container.innerHTML = "";
-  container.classList.remove("has-inner-tree", "visible");
-  container.removeEventListener("click", handleOutlineClick);
-
-  toggleBtn.classList.toggle("visible", hasOutline);
-
-  if (hasOutline) {
-    toggleBtn.addEventListener("click", toggleOutline);
-  }
-  outline.rendered = false;
-  outline.visible = false;
-}
-
-async function toggleOutline() {
-  const container = document.getElementById("js-viewer-outline");
-
-  outline.visible = !outline.visible;
-
-  if (!outline.rendered) {
-    renderOutline(book.navigation.toc, container);
-    container.addEventListener("click", handleOutlineClick);
-    outline.rendered = true;
-  }
-  container.classList.toggle("visible", outline.visible);
-}
-
-function handleOutlineClick(event) {
-  const { nodeName } = event.target;
-
-  if (nodeName === "A") {
-    const href = event.target.href.split(/viewer\/.*?\//g)[1];
-
-    rendition.display(href);
-    event.preventDefault();
-  }
-  else if (nodeName === "BUTTON") {
-    event.target.classList.toggle("rotated");
-    event.target.parentElement.nextElementSibling.classList.toggle("visible");
-  }
-}
-
-function renderOutline(items, container) {
-  const fragment = new DocumentFragment();
-
-  for (const item of items) {
-    const div = document.createElement("div");
-    const a = document.createElement("a");
-
-    div.classList.add("viewer-outline-item");
-    a.classList.add("viewer-outline-link");
-    a.textContent = item.label;
-    a.href = `${window.location.href}/${item.href}`;
-
-    if (item.subitems.length) {
-      const div2 = document.createElement("div");
-      const button = document.createElement("button");
-
-      button.innerHTML = "&#x25BE";
-      button.classList.add("btn", "icon-btn", "viewer-outline-tree-toggle-btn");
-
-      div2.appendChild(button);
-      div2.appendChild(a);
-      div.appendChild(div2);
-      container.classList.add("has-inner-tree");
-    }
-    else {
-      div.appendChild(a);
-    }
-
-    if (item.subitems.length) {
-      const div2 = document.createElement("div");
-
-      div2.classList.add("viewer-outline-inner-tree");
-      renderOutline(item.subitems, div2);
-      div.appendChild(div2);
-    }
-    fragment.appendChild(div);
-  }
-  container.appendChild(fragment);
+  return Array.isArray(navigation.toc) ? navigation.toc.map(getOutlineItem) : [];
 }
 
 function showMobileNavBtn() {
