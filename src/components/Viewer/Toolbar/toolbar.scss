@@ -182,11 +182,13 @@
   }
 }
 
-.viewer-theme-setting {
+.viewer-themes-container {
   display: block;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
 }
 
-.viewer-toolbar-setting-name {
+.viewer-themes-title {
   margin-bottom: var(--space-lg);
   font-size: var(--text-sm);
   font-weight: 500;
