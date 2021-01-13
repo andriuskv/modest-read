@@ -134,16 +134,6 @@
               4px 0 8px 0 rgba(0, 0, 0, 0.04),
               8px 0 16px 0 rgba(0, 0, 0, 0.02);
   background-color: var(--color-grey-60);
-
-  &.has-inner-tree {
-    .viewer-outline-item {
-      padding: var(--space-sm);
-
-      & > .viewer-outline-link {
-        margin-left: 28px;
-      }
-    }
-  }
 }
 
 .viewer-outline-item {
@@ -151,13 +141,19 @@
   flex-wrap: wrap;
   align-items: center;
   min-height: 32px;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm);
+}
+
+.viewer-outline-item-title {
+  display: flex;
+  align-items: center;
 }
 
 .viewer-outline-tree-toggle-btn {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  padding: 0;
   margin-right: var(--space-sm);
 
   &.rotated {
@@ -170,6 +166,7 @@
 }
 
 .viewer-outline-link {
+  margin-left: var(--space-sm);
   font-size: var(--text-sm);
 
   &:hover, &.focus-visible {
@@ -180,10 +177,10 @@
 .viewer-outline-inner-tree {
   display: none;
   width: 100%;
+  margin-left: 20px;
 
   &.visible {
     display: block;
-
   }
 }
 

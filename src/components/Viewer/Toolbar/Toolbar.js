@@ -265,8 +265,19 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
               </button>
             )}
           </div>
+          {file.type === "epub" && (
+            <div id="js-viewer-themes" className="viewer-toolbar-dropdown-group viewer-themes-container">
+              <div className="viewer-themes-title">Themes</div>
+              <div className="viewer-themes">
+                <button className="btn viewer-theme-btn black" data-theme="black">A</button>
+                <button className="btn viewer-theme-btn white" data-theme="white">A</button>
+                <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
+                <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
+              </div>
+            </div>
+          )}
           <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
-            {file.type === "pdf" ? (
+            {file.type === "pdf" && (
               <>
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" className="sr-only checkbox-input"
@@ -289,16 +300,6 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
                   <span className="checkbox-label">Keep toolbar visible.</span>
                 </label>
               </>
-            ) : (
-              <div className="viewer-toolbar-settings-item viewer-theme-setting">
-                <div className="viewer-toolbar-setting-name">Themes</div>
-                <div id="js-viewer-themes" className="viewer-themes">
-                  <button className="btn viewer-theme-btn black" data-theme="black">A</button>
-                  <button className="btn viewer-theme-btn white" data-theme="white">A</button>
-                  <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
-                  <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
-                </div>
-              </div>
             )}
             {filePreferences.hideWarning && (
               <label className="viewer-toolbar-settings-item">
@@ -314,7 +315,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
           </div>
           <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
             <Icon name="exit"/>
-            <span>Exit Viewer</span>
+            <span>Exit</span>
           </button>
         </Dropdown>
       </div>

@@ -52,10 +52,13 @@ function handleOutlineClick(event) {
   if (nodeName === "A") {
     navigateTo(event.target.href);
     event.preventDefault();
+    return;
   }
-  else if (nodeName === "BUTTON") {
-    event.target.classList.toggle("rotated");
-    event.target.parentElement.nextElementSibling.classList.toggle("visible");
+  const element = event.target.closest(".btn");
+
+  if (element?.nodeName === "BUTTON") {
+    element.classList.toggle("rotated");
+    element.parentElement.nextElementSibling.classList.toggle("visible");
   }
 }
 
@@ -64,27 +67,24 @@ function renderOutline(items, container) {
 
   for (const item of items) {
     const div = document.createElement("div");
-    const a = document.createElement("a");
+    const a = `<a href="${item.href}" class="viewer-outline-link">${item.title}</a>`;
 
     div.classList.add("viewer-outline-item");
-    a.classList.add("viewer-outline-link");
-    a.textContent = item.title;
-    a.href = item.href;
 
     if (item.items.length) {
-      const div2 = document.createElement("div");
-      const button = document.createElement("button");
-
-      button.innerHTML = "&#x25BE";
-      button.classList.add("btn", "icon-btn", "viewer-outline-tree-toggle-btn");
-
-      div2.append(button);
-      div2.append(a);
-      div.append(div2);
-      container.classList.add("has-inner-tree");
+      div.insertAdjacentHTML("beforeend", `
+        <div class="viewer-outline-item-title">
+          <button class="btn icon-btn viewer-outline-tree-toggle-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M7,10L12,15L17,10H7Z"/>
+            </svg>
+          </button>
+          ${a}
+        </div>
+      `);
     }
     else {
-      div.append(a);
+      div.insertAdjacentHTML("beforeend", a);
     }
 
     if (item.items.length) {
