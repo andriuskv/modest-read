@@ -1,6 +1,6 @@
-import { Store, set, get } from "idb-keyval";
+import { createStore, set, get } from "idb-keyval";
 
-const store = new Store("ModestKeep2", "current-file");
+const store = createStore("ModestKeep2", "current-file");
 
 function fetchCurrentFile() {
   return get("file", store);

@@ -1,14 +1,20 @@
-import { Store, set, get, keys, del } from "idb-keyval";
+import { createStore, set, get, getMany, keys, del } from "idb-keyval";
 
-const store = new Store("ModestKeep", "files");
+const store = createStore("ModestKeep", "files");
 
-function fetchIDBFiles(settings) {
-  return keys(store).then(keys => Promise.all(keys.map(fetchIDBFile)))
-    .then(files => settings ? sortFiles(files, settings) : files)
-    .catch(e => {
-      console.log(e);
-      return [];
-    });
+async function fetchIDBFiles(settings) {
+  try {
+    const ids = await keys(store);
+    const files = await getMany(ids, store);
+
+    if (settings) {
+      return sortFiles(files, settings);
+    }
+    return files;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
 }
 
 function fetchIDBFile(id) {
