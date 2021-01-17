@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
+import { startCounting, stopCounting } from "../../services/readingTimeService";
 import { initOutline } from "./outline";
 
 const minScale = 0.333325;
@@ -68,6 +69,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
     saveFile(metadata);
     saveCurrentFile(blob);
   }
+  startCounting();
 }
 
 function handleDropdownVisibility({ detail }) {
@@ -227,6 +229,7 @@ function cleanupEpubViewer() {
   if (epubElement) {
     epubElement.innerHTML = "";
   }
+  stopCounting();
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
 }

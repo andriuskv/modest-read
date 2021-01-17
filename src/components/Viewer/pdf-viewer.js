@@ -4,6 +4,7 @@ import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
+import { startCounting, stopCounting } from "../../services/readingTimeService";
 import { initOutline } from "./outline";
 
 const settings = getSettings();
@@ -91,6 +92,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }) {
     saveFile(metadata);
     saveCurrentFile(blob);
   }
+  startCounting();
 }
 
 function showSinglePageNavBtn() {
@@ -121,6 +123,7 @@ function cleanupPdfViewer() {
   }
   pdfInstance = null;
   document.body.style.overscrollBehavior = "";
+  stopCounting();
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
   window.removeEventListener("keydown", handleKeyDown);
