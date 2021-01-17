@@ -461,7 +461,7 @@ export default function Files() {
     return (
       <>
         <Link to="/statistics" className="btn icon-text-btn files-more-dropdown-btn">
-          <Icon name="sort" size="24px" style={{ transform: "rotateZ(270deg)"}}/>
+          <Icon name="stats" size="24px"/>
           <span>Statistics</span>
         </Link>
         <label className="btn icon-text-btn dropdown-btn files-more-dropdown-btn files-import-btn">
