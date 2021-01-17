@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import "./files.scss";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
+import Header from "../Header";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
 import LandingPage from "../LandingPage";
@@ -14,6 +15,7 @@ import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
 import FilesModal from "./FilesModal";
+import "./files.scss";
 
 export default function Files() {
   const [state, setState] = useState(null);
@@ -245,15 +247,15 @@ export default function Files() {
       files: []
     },
     {
-      name: "Have Read",
-      id: "have read",
-      icon: "book-check-mark",
-      files: []
-    },
-    {
       name: "Not Started",
       id: "not started",
       icon: "book",
+      files: []
+    },
+    {
+      name: "Have Read",
+      id: "have read",
+      icon: "book-check-mark",
       files: []
     }];
 
@@ -455,17 +457,29 @@ export default function Files() {
     setState({ ...state });
   }
 
+  function renderMoreBtns() {
+    return (
+      <>
+        <Link to="/statistics" className="btn icon-text-btn files-more-dropdown-btn">
+          <Icon name="sort" size="24px" style={{ transform: "rotateZ(270deg)"}}/>
+          <span>Statistics</span>
+        </Link>
+        <label className="btn icon-text-btn dropdown-btn files-more-dropdown-btn files-import-btn">
+          <Icon name="upload" size="24px"/>
+          <span>Import Files</span>
+          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf" multiple/>
+        </label>
+      </>
+    );
+  }
+
   function renderCategoryMenu() {
     return (
       <div className="files-header">
-        <div className="files-sidebar-toggle-btn-container">
-          <button className="btn icon-btn" onClick={toggleMenu}>
-            <Icon name="menu" size="24px"/>
-          </button>
-        </div>
-        <div className="files-header-title-container">
-          <h1 className="files-header-title">ModestRead</h1>
-        </div>
+        <button className="btn icon-btn files-sidebar-toggle-btn" onClick={toggleMenu}>
+          <Icon name="menu" size="24px"/>
+        </button>
+        <Header/>
         <div className={`files-categories-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
           <div className="files-sidebar">
             <div className="files-sidebar-title-container">
@@ -483,31 +497,28 @@ export default function Files() {
                 </li>
               ))}
             </ul>
-            <label className="btn icon-text-btn dropdown-btn files-import-btn">
-              <Icon name="upload" size="24px"/>
-              <span>Import Files</span>
-              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf" multiple/>
-            </label>
+            {renderMoreBtns()}
             <Dropdown
               toggle={{
-                content: <Icon name="settings" size="24px"/>,
-                title: "Settings",
-                className: "btn icon-btn icon-btn-alt files-settings-toggle-btn"
+                content: <Icon name="dots-vertical" size="24px"/>,
+                title: "More",
+                className: "btn icon-btn icon-btn-alt files-more-dropdown-toggle-btn"
               }}
-              body={{ className: "files-settings" }}>
-              <div className="files-settings-layout">
-                <button className={`btn icon-text-btn files-settings-layout-item${state.type === "grid" ? " active" : ""}`}
+              body={{ className: "files-more-dropdown" }}>
+              {renderMoreBtns()}
+              <div className="files-layout-setting">
+                <button className={`btn icon-text-btn files-layout-setting-item${state.type === "grid" ? " active" : ""}`}
                   onClick={() => changeLayout("grid")}>
                   <Icon name="grid" size="24px"/>
                   <span>Grid</span>
                 </button>
-                <button className={`btn icon-text-btn files-settings-layout-item${state.type === "list" ? " active" : ""}`}
+                <button className={`btn icon-text-btn files-layout-setting-item${state.type === "list" ? " active" : ""}`}
                   onClick={() => changeLayout("list")}>
                   <Icon name="list" size="24px"/>
                   <span>List</span>
                 </button>
               </div>
-              <label className="checkbox-container files-settings-show-categories-setting">
+              <label className="checkbox-container files-show-categories-setting">
                 <input type="checkbox" className="sr-only checkbox-input" onChange={toggleCategoryNames}
                   checked={state.showCategories}/>
                 <div className="checkbox">
@@ -607,7 +618,7 @@ export default function Files() {
   }
   else if (state) {
     return (
-      <div className="files">
+      <div className="container">
         {files.length ? (
           <>
             {renderCategoryMenu()}

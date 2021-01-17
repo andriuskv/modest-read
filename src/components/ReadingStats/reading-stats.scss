@@ -1,0 +1,124 @@
+@import "../../styles/mixins.scss";
+
+.stats-title {
+  margin-top: var(--space-xxxl);
+  margin-bottom: var(--space-xl);
+  text-align: center;
+  font-size: var(--text-xl);
+}
+
+.stats-graph-container {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+
+  &:not(:last-of-type) {
+    margin-bottom: var(--space-xl);
+  }
+}
+
+.stats-graph-title {
+  margin-bottom: var(--space-md);
+  font-size: var(--text-lg);
+  color: var(--color-grey-10);
+}
+
+.stats-graph {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 240px;
+  padding: var(--space-md);
+  border-radius: 8px;
+  background-color: var(--color-grey-60);
+
+  @include breakpoint-md {
+    height: 200px;
+  }
+}
+
+.stats-graph-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+
+  &:hover .stats-graph-item-duration {
+    display: block;
+  }
+}
+
+.stats-graph-item-bar-container {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.stats-graph-item-duration {
+  z-index: 1;
+  position: absolute;
+  left: 50%;
+  display: none;
+  transform: translate(-50%, calc(-1 * var(--space-sm)));
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--color-grey-10);
+}
+
+.stats-graph-item-bar {
+  width: 16px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  background-color: var(--color-primary);
+  transform-origin: bottom;
+  transform: scaleY(0);
+  animation-name: scale-v;
+  animation-delay: 0.6s;
+  animation-duration: 0.4s;
+  animation-fill-mode: forwards;
+
+  @include breakpoint-md {
+    width: 12px;
+  }
+}
+
+.stats-graph-item-label {
+  width: 100%;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-grey-80);
+  text-align: center;
+  font-size: var(--text-sm);
+
+  @include breakpoint-md {
+    font-size: var(--text-xs);
+  }
+}
+
+.stats-no-data {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.stats-no-data-message {
+  margin-bottom: var(--space-xl);
+  font-size: var(--text-xxl);
+  white-space: nowrap;
+}
+
+@keyframes scale-v {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}

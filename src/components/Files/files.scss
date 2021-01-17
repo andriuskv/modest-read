@@ -1,16 +1,7 @@
 @import "../../styles/mixins.scss";
 
-.files {
-  position: relative;
-  flex-grow: 1;
-  max-width: 1440px;
-  width: 100%;
-  padding: var(--space-xl);
-  margin: 0 auto;
-
-  @include breakpoint-md {
-    padding: var(--space-xl) var(--space-md);
-  }
+@mixin sidebar-breakpoint {
+  @media (max-width: 1024px) { @content; }
 }
 
 .files-header {
@@ -23,35 +14,13 @@
   }
 }
 
-.files-sidebar-toggle-btn-container {
+.files-sidebar-toggle-btn {
   display: none;
 
   @include breakpoint-md {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-}
-
-.files-header-title-container {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-md);
-
-  @include breakpoint-md {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 0;
+    display: flex;
   }
-}
-
-.files-header-title {
-  width: 170px;
-  background-image: url("../../assets/icon-text.svg");
-  background-position: center;
-  background-repeat: no-repeat;
-  text-indent: -9999px;
 }
 
 .files-duplicate-files {
@@ -82,7 +51,7 @@
     bottom: 0;
     display: none;
     margin-bottom: 0;
-    background-color: var(--color-black-20);
+    background-color: var(--color-grey-80-60);
 
     &.visible {
       display: block;
@@ -183,34 +152,43 @@
   }
 }
 
-.files-import-btn {
+.files-more-dropdown-btn {
+  justify-content: flex-start;
+  padding: var(--space-md) var(--space-lg);
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover, &:focus-within {
+  &:hover, &.focus-visible {
     --background-color: transparent;
 
     color: var(--color-white);
   }
 
-  &:focus-within {
-    box-shadow: 0 0 0 1px var(--color-primary);
+  @include sidebar-breakpoint {
+    display: none;
   }
 
   @include breakpoint-md {
-    display: flex;
-    justify-content: flex-start;
-    margin-left: 1px;
-    margin-right: 1px;
-    border-radius: 0;
-
     span {
       margin-left: var(--space-xl);
     }
   }
 }
 
-.files-settings-toggle-btn {
+.files-import-btn {
+  &:focus-within {
+     --background-color: transparent;
+
+    box-shadow: 0 0 0 1px var(--color-primary);
+    color: var(--color-white);
+  }
+
+  @include sidebar-breakpoint {
+    margin: 1px;
+  }
+}
+
+.files-more-dropdown-toggle-btn {
   padding: var(--space-md);
 
   @include breakpoint-md {
@@ -218,9 +196,13 @@
   }
 }
 
-.files-settings {
+.files-more-dropdown {
   min-width: 200px;
   padding-bottom: var(--space-md);
+
+  .files-more-dropdown-btn {
+    display: none;
+  }
 
   @include breakpoint-md {
     display: flex;
@@ -228,10 +210,17 @@
     box-shadow: none;
     background-color: transparent;
   }
+
+  @include sidebar-breakpoint {
+    .files-more-dropdown-btn {
+      display: flex;
+    }
+  }
 }
 
-.files-settings-layout {
+.files-layout-setting {
   display: flex;
+  border-top: 1px solid var(--color-grey-50);
   border-bottom: 1px solid var(--color-grey-50);
   color: var(--color-grey-10);
 
@@ -240,7 +229,7 @@
   }
 }
 
-.files-settings-layout-item {
+.files-layout-setting-item {
   flex-grow: 1;
   border-radius: 0;
   color: var(--color-grey-10);
@@ -266,13 +255,13 @@
   }
 }
 
-.files-settings-show-categories-setting {
+.files-show-categories-setting {
   padding: var(--space-md);
   margin-top: var(--space-md);
   font-size: var(--text-sm);
 
   @include breakpoint-md {
-    margin-top: 0;
+    margin-top: var(--space-xl);
     padding-top: var(--space-xl);
     padding-left: var(--space-xl);
     border-top: 1px solid var(--color-grey-70);

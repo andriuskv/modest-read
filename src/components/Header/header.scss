@@ -1,0 +1,21 @@
+@import "../../styles/mixins.scss";
+
+.header-title-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--space-md);
+
+  @include breakpoint-md {
+    justify-content: center;
+    margin-bottom: 0;
+  }
+}
+
+.header-title {
+  width: 170px;
+  background-image: url("../../assets/icon-text.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  text-indent: -9999px;
+}

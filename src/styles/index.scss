@@ -63,16 +63,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  height: 100%;
-}
-
-main {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
 .js-focus-visible :focus:not(.focus-visible) {
   outline: 0;
 }
@@ -80,6 +70,25 @@ main {
 .js-focus-visible .focus-visible {
   outline: 0;
   box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  height: 100%;
+}
+
+.container {
+  flex-grow: 1;
+  width: 100%;
+  max-width: 1440px;
+  padding: var(--space-xl);
+  margin: 0 auto;
+
+  @include breakpoint-md {
+    padding: var(--space-md);
+  }
 }
 
 .input {
