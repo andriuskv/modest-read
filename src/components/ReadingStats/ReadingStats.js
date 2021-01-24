@@ -23,7 +23,9 @@ export default function ReadingStats() {
       };
       let maxDuration = 0;
 
-      for (const [index, duration] of Object.entries(readingTime[key])) {
+      for (const [index, days] of Object.entries(readingTime[key])) {
+        const duration = days.reduce((duration, day) => duration + day, 0);
+
         if (duration > maxDuration) {
           maxDuration = duration;
         }
@@ -63,7 +65,7 @@ export default function ReadingStats() {
 
   function parseDuration(duration) {
     const hours = Math.floor(duration / 3600);
-    const minutes = Math.round(duration % 3600 / 60);
+    const minutes = Math.ceil(duration % 3600 / 60);
     let str = "";
 
     if (hours) {
@@ -75,7 +77,7 @@ export default function ReadingStats() {
 
   function getBarHeight(duration, maxDuration) {
     if (duration) {
-      return (duration / (maxDuration + Math.round(maxDuration * 0.16))) * 100;
+      return (duration / (maxDuration + maxDuration * 0.33)) * 100;
     }
     return 0;
   }
