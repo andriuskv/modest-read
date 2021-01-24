@@ -476,7 +476,7 @@ export default function Files() {
   function renderCategoryMenu() {
     return (
       <div className="files-header">
-        <button className="btn icon-btn files-sidebar-toggle-btn" onClick={toggleMenu}>
+        <button className="btn icon-btn files-sidebar-toggle-btn" onClick={toggleMenu} title="Toggle sidebar">
           <Icon name="menu" size="24px"/>
         </button>
         <Header/>
