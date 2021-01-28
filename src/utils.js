@@ -173,6 +173,91 @@ function dispatchCustomEvent(eventName, data) {
   window.dispatchEvent(event);
 }
 
+function getMonthName(month, useShortName = false) {
+  const months = {
+    0: "January",
+    1: "February",
+    2: "March",
+    3: "April",
+    4: "May",
+    5: "June",
+    6: "July",
+    7: "August",
+    8: "September",
+    9: "October",
+    10: "November",
+    11: "December"
+  };
+
+  return useShortName ? months[month].slice(0, 3) : months[month];
+}
+
+function getWeekdayName(day, useShortName = false) {
+  const weekdays = {
+    0: "Monday",
+    1: "Tuesday",
+    2: "Wednesday",
+    3: "Thursday",
+    4: "Friday",
+    5: "Saturday",
+    6: "Sunday"
+  };
+
+  return useShortName ? weekdays[day].slice(0, 3) : weekdays[day];
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getCurrentWeek(currentYear, currentMonth, currentDay) {
+  let days = 0;
+  let weeks = 1;
+
+  for (let i = 0; i < 12; i += 1) {
+    const daysInMonth = getDaysInMonth(currentYear, i);
+
+    for (let j = 0; j < daysInMonth; j += 1) {
+      if (i === currentMonth && j === currentDay) {
+        return weeks;
+      }
+      days += 1;
+
+      if (days === 7) {
+        weeks += 1;
+        days = 0;
+      }
+    }
+  }
+  return weeks;
+}
+
+function getCurrentDate() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate() - 1;
+  const weekday = date.getDay();
+
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    week: getCurrentWeek(year, month, day),
+    weekday: weekday === 0 ? 6 : weekday - 1,
+    day
+  };
+}
+
+function getWeekday(year, month, day) {
+  return new Date(`${year}-${month + 1}-${day}`).getDay();
+}
+
+function getFirstDayIndex(year, month) {
+  const day = getWeekday(year, month, 1);
+
+  return day === 0 ? 6 : day - 1;
+}
+
 export {
   setDocumentTitle,
   classNames,
@@ -185,5 +270,10 @@ export {
   getPageElementBox,
   scrollToPage,
   getScrollbarWidth,
-  dispatchCustomEvent
+  dispatchCustomEvent,
+  getMonthName,
+  getWeekdayName,
+  getDaysInMonth,
+  getCurrentDate,
+  getFirstDayIndex
 };
