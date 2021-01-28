@@ -157,6 +157,10 @@ body {
   &:hover, &.focus-visible {
     color: var(--color-white);
   }
+
+  &:disabled:hover {
+    --background-color: transparent;
+  }
 }
 
 .icon-btn-alt {
