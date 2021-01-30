@@ -212,7 +212,7 @@ function getDaysInMonth(year, month) {
 
 function getCurrentWeek(currentYear, currentMonth, currentDay) {
   let days = 0;
-  let weeks = 1;
+  let weeks = 0;
 
   for (let i = 0; i < 12; i += 1) {
     const daysInMonth = getDaysInMonth(currentYear, i);

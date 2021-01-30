@@ -196,7 +196,7 @@ export default function ReadingStats() {
     let month = 0;
     let daysInMonth = getDaysInMonth(activeYear, month);
 
-    while (weekStartDay > daysInMonth) {
+    while (weekStartDay >= daysInMonth) {
       weekStartDay -= daysInMonth;
       month += 1;
       daysInMonth = getDaysInMonth(activeYear, month);
@@ -208,14 +208,30 @@ export default function ReadingStats() {
     return `${getMonthName(month)} ${weekStartDay + 1} - ${weekStartDay + 7}, ${activeYear}`;
   }
 
+  function getRangeDurationString() {
+    let items = [];
+
+    if (activeView === "week") {
+      items = durationCalendar[activeYear].weeks[activeWeek];
+    }
+    else if (activeView === "year") {
+      items = durationCalendar[activeYear].months;
+    }
+    const duration = items.reduce((duration, month) => duration + month.durationInSeconds, 0);
+    return parseDuration(duration);
+  }
+
   function renderWeekGraph() {
     return (
       <div className="stats-graph-container">
-        <div className="stats-graph-title-container">
+        <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousWeek}>
             <Icon name="chevron-left" size="24px"/>
           </button>
-          <h3 className="stats-graph-title">{getWeekRangeString()}</h3>
+          <div className="stats-graph-info">
+            <h3 className="stats-graph-title">{getWeekRangeString()}</h3>
+            <div className="stats-graph-duration">{getRangeDurationString()}</div>
+          </div>
           {activeWeek === currentDate.week && activeYear === currentDate.year ? null : (
             <button className="btn icon-btn" onClick={nextWeek}>
               <Icon name="chevron-right" size="24px"/>
@@ -241,11 +257,14 @@ export default function ReadingStats() {
   function renderYearGraph() {
     return (
       <div className="stats-graph-container">
-        <div className="stats-graph-title-container">
+        <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousYear}>
             <Icon name="chevron-left" size="24px"/>
           </button>
-          <h3 className="stats-graph-title">{durationCalendar[activeYear].name}</h3>
+          <div className="stats-graph-info">
+            <h3 className="stats-graph-title">{durationCalendar[activeYear].name}</h3>
+            <div className="stats-graph-duration">{getRangeDurationString()}</div>
+          </div>
           {activeYear !== currentDate.year && (
             <button className="btn icon-btn" onClick={nextYear}>
               <Icon name="chevron-right" size="24px"/>

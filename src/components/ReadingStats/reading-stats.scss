@@ -50,26 +50,36 @@
   }
 }
 
-.stats-graph-title-container {
+.stats-graph-top {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 40px;
   margin-bottom: var(--space-md);
 }
 
-.stats-graph-title {
+.stats-graph-info {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  color: var(--color-grey-10);
+  text-align: center;
+}
+
+.stats-graph-title {
   white-space: nowrap;
   font-size: var(--text-md);
   font-weight: 500;
-  color: var(--color-grey-10);
 
   @include breakpoint-md {
     font-size: var(--text-sm);
   }
+}
+
+.stats-graph-duration {
+  margin-top: var(--space-sm);
+  font-size: var(--text-xs);
 }
 
 .stats-graph {
