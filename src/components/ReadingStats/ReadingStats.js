@@ -53,7 +53,8 @@ export default function ReadingStats() {
 
   function parseDuration(duration) {
     const hours = Math.floor(duration / 3600);
-    const minutes = Math.ceil(duration % 3600 / 60);
+    let minutes = duration % 3600 / 60;
+    minutes = minutes > 1 ? Math.round(minutes) : Math.ceil(minutes);
     let str = "";
 
     if (hours) {
@@ -92,19 +93,29 @@ export default function ReadingStats() {
       week.push({
         durationInSeconds: duration,
         duration: parseDuration(duration),
-        name: getWeekdayName(week.length, true)
+        name: getWeekdayName(week.length, true),
+        date: {
+          year: year - 1,
+          month: 11,
+          day: 31 - i
+        }
       });
     }
 
-    for (const month of calendarYear) {
-      for (const duration of month) {
+    for (const [monthIndex, month] of Object.entries(calendarYear)) {
+      for (const [dayIndex, duration] of Object.entries(month)) {
         if (duration > maxDuration) {
           maxDuration = duration;
         }
         week.push({
           durationInSeconds: duration,
           duration: parseDuration(duration),
-          name: getWeekdayName(week.length, true)
+          name: getWeekdayName(week.length, true),
+          date: {
+            year,
+            month: Number(monthIndex),
+            day: Number(dayIndex)
+          }
         });
 
         if (week.length === 7) {
@@ -221,6 +232,36 @@ export default function ReadingStats() {
     return parseDuration(duration);
   }
 
+  function renderTimePeriodTable() {
+    let items = [];
+
+    if (activeView === "week") {
+      items = durationCalendar[activeYear].weeks[activeWeek].map((weekday, i) => {
+        let date = `${getWeekdayName(i)}, ${getMonthName(weekday.date.month)} ${weekday.date.day + 1}`;
+        date = weekday.date.year === currentDate.year ? date : `${date}, ${weekday.date.year}`;
+
+        return (
+          <li key={i}>
+            <div className="stats-table-date">{date}</div>
+            <div className="stats-table-duration">{weekday.duration}</div>
+          </li>
+        );
+      });
+    }
+    else if (activeView === "year") {
+      items = durationCalendar[activeYear].months.map((month, i) => {
+        const date = activeYear === currentDate.year ? getMonthName(i) : `${getMonthName(i)}, ${activeYear}`;
+        return (
+          <li key={i}>
+            <div className="stats-table-date">{date}</div>
+            <div className="stats-table-duration">{month.duration}</div>
+          </li>
+        );
+      });
+    }
+    return <ul className={`stats-table ${activeView}`}>{items}</ul>;
+  }
+
   function renderWeekGraph() {
     return (
       <div className="stats-graph-container">
@@ -307,6 +348,7 @@ export default function ReadingStats() {
           onClick={() => selectView("year")}>Year</button>
       </div>
       {renderGraph()}
+      {renderTimePeriodTable()}
     </div>
   );
 }
