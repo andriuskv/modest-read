@@ -211,25 +211,18 @@ function getDaysInMonth(year, month) {
 }
 
 function getCurrentWeek(currentYear, currentMonth, currentDay) {
-  let days = 0;
-  let weeks = 0;
+  let days = 1;
 
   for (let i = 0; i < 12; i += 1) {
     const daysInMonth = getDaysInMonth(currentYear, i);
 
     for (let j = 0; j < daysInMonth; j += 1) {
       if (i === currentMonth && j === currentDay) {
-        return weeks;
+        return Math.ceil(days / 7);
       }
       days += 1;
-
-      if (days === 7) {
-        weeks += 1;
-        days = 0;
-      }
     }
   }
-  return weeks;
 }
 
 function getCurrentDate() {
