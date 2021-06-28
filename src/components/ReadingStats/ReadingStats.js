@@ -7,6 +7,7 @@ import "./reading-stats.scss";
 
 export default function ReadingStats() {
   const currentDate = useMemo(() => getCurrentDate(), []);
+  const calendar = useMemo(() => populateCalendar(), []);
   const [activeYear, setActiveYear] = useState(currentDate.year);
   const [activeWeek, setActiveWeek] = useState(currentDate.week);
   const [activeView, setActiveView] = useState("week");
@@ -27,7 +28,6 @@ export default function ReadingStats() {
   }, []);
 
   function getDurationMonths(year) {
-    const calendar = getReadingTime();
     const calendarYear = calendar[year] || getCalendarYear(year);
     const months = [];
     let maxDuration = 0;
@@ -71,8 +71,23 @@ export default function ReadingStats() {
     return 0;
   }
 
+  function populateCalendar() {
+    const time = getReadingTime();
+    const calendar = {};
+
+    for (const year of Object.keys(time)) {
+      calendar[year] = getCalendarYear(year);
+
+      for (const month of Object.keys(time[year])) {
+        for (const day of Object.keys(time[year][month])) {
+          calendar[year][month][day] = time[year][month][day];
+        }
+      }
+    }
+    return calendar;
+  }
+
   function getDurationWeeks(year) {
-    const calendar = getReadingTime();
     const calendarYear = calendar[year] || getCalendarYear(year);
     const firstDayIndex = getFirstDayIndex(year, 0);
     const shouldGetFullYear = year !== currentDate.year;
@@ -266,7 +281,7 @@ export default function ReadingStats() {
     return (
       <div className="stats-graph-container">
         <div className="stats-graph-top">
-          <button className="btn icon-btn" onClick={previousWeek}>
+          <button className="btn icon-btn" onClick={previousWeek} title="Previous week">
             <Icon name="chevron-left" size="24px"/>
           </button>
           <div className="stats-graph-info">
@@ -274,7 +289,7 @@ export default function ReadingStats() {
             <div className="stats-graph-duration">{getRangeDurationString()}</div>
           </div>
           {activeWeek === currentDate.week && activeYear === currentDate.year ? null : (
-            <button className="btn icon-btn" onClick={nextWeek}>
+            <button className="btn icon-btn" onClick={nextWeek} title="Next week">
               <Icon name="chevron-right" size="24px"/>
             </button>
           )}
@@ -299,7 +314,7 @@ export default function ReadingStats() {
     return (
       <div className="stats-graph-container">
         <div className="stats-graph-top">
-          <button className="btn icon-btn" onClick={previousYear}>
+          <button className="btn icon-btn" onClick={previousYear} title="Previous year">
             <Icon name="chevron-left" size="24px"/>
           </button>
           <div className="stats-graph-info">
@@ -307,7 +322,7 @@ export default function ReadingStats() {
             <div className="stats-graph-duration">{getRangeDurationString()}</div>
           </div>
           {activeYear !== currentDate.year && (
-            <button className="btn icon-btn" onClick={nextYear}>
+            <button className="btn icon-btn" onClick={nextYear} title="Next year">
               <Icon name="chevron-right" size="24px"/>
             </button>
           )}

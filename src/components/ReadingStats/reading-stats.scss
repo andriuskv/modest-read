@@ -27,7 +27,7 @@
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover {
+  &:hover, &.focus-visible {
     --background-color: transparent;
 
     color: var(--white);
@@ -36,6 +36,11 @@
   &.active {
     color: var(--white);
     box-shadow: 0 2px 0 0 var(--color-primary);
+
+    &.focus-visible {
+      box-shadow: 0 0 0 1px var(--color-primary),
+                  0 2px 0 0 var(--color-primary);
+    }
   }
 }
 
