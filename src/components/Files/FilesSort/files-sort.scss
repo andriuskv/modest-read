@@ -48,4 +48,8 @@
   padding: var(--space-md);
   font-size: var(--text-sm);
   color: var(--color-grey-10);
+
+  .radio-input:checked ~ .radio-label {
+    color: var(--color-white);
+  }
 }

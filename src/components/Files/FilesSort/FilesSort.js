@@ -28,7 +28,7 @@ export default function FilesSort({ sortBy, sortOrder, sortFileCatalog }) {
           onClick={() => sortFileCatalog("last-accessed")}>Last accessed</button>
       </div>
       <div className="files-sort-dropdown-group">
-        <label className="dropdown-btn files-sort-dropdown-radio">
+        <label className="files-sort-dropdown-radio">
           <input type="radio" className="sr-only radio-input"
             name="sortOrder" value="1"
             onChange={changeSortOrder}
@@ -36,7 +36,7 @@ export default function FilesSort({ sortBy, sortOrder, sortFileCatalog }) {
           <div className="radio"></div>
           <span className="radio-label">Ascending</span>
         </label>
-        <label className="dropdown-btn files-sort-dropdown-radio">
+        <label className="files-sort-dropdown-radio">
           <input type="radio" className="sr-only radio-input"
             onChange={changeSortOrder}
             name="sortOrder" value="-1"
