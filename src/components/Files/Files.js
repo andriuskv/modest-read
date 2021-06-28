@@ -467,7 +467,7 @@ export default function Files() {
         <label className="btn icon-text-btn dropdown-btn files-more-dropdown-btn files-import-btn">
           <Icon name="upload" size="24px"/>
           <span>Import Files</span>
-          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf" multiple/>
+          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
       </>
     );

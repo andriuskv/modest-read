@@ -16,7 +16,7 @@ export default function NoFilesNotice({ notification, dismiss, handleFileUpload 
       <label className="btn icon-text-btn primary-btn no-files-notice-btn">
         <Icon name="upload" size="24px"/>
         <span>Import Files</span>
-        <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf" multiple/>
+        <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
       </label>
     </div>
   );

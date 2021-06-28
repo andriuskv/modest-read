@@ -14,23 +14,6 @@ function stopCounting() {
   saveTimeStamp();
 }
 
-function migrate() {
-  for (const key of Object.keys(readingTime)) {
-    readingTime[key] = readingTime[key].map((month, i) => {
-      if (typeof month === "number") {
-        const date = new Date();
-        const currentDay = date.getDate();
-        const days = getMonth(key, i);
-
-        days[currentDay] = month;
-        return days;
-      }
-      return month;
-    });
-  }
-  localStorage.setItem("reading-time", JSON.stringify(readingTime));
-}
-
 function getReadingTime() {
   return readingTime;
 }
@@ -48,13 +31,11 @@ function saveTimeStamp() {
   const { year, month, day } = getCurrentDate();
   const diff = Date.now() - timeStamp;
 
-  readingTime[year] ||= getCalendarYear();
+  readingTime[year] = readingTime[year] || getCalendarYear(year);
   readingTime[year][month][day] += Math.round(diff / 1000);
   timeStamp = Date.now();
   localStorage.setItem("reading-time", JSON.stringify(readingTime));
 }
-
-migrate();
 
 export {
   startCounting,

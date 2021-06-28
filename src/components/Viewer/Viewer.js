@@ -65,7 +65,7 @@ export default function Viewer() {
 
     if (file) {
       const currentFile = await fetchCurrentFile();
-      file.type ||= "pdf";
+      file.type = file.type || "pdf";
 
       if (currentFile && currentFile.name === file.name) {
         initViewer(viewerRef.current, {
@@ -108,7 +108,7 @@ export default function Viewer() {
 
   function initViewer(container, file) {
     viewerLoaded.current = true;
-    file.metadata.type ||= "pdf";
+    file.metadata.type = file.metadata.type || "pdf";
 
     if (file.metadata.type === "pdf") {
       initPdfViewer(container, file);
