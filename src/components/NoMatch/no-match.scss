@@ -1,3 +1,5 @@
+@import "../../styles/mixins.scss";
+
 .no-match {
   display: flex;
   flex-direction: column;
@@ -6,7 +8,11 @@
 }
 
 .no-match-message {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-xxxl);
   text-align: center;
   font-size: var(--text-xxl);
+
+  @include breakpoint-md {
+    font-size: var(--text-xl);
+  }
 }

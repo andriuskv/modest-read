@@ -1,6 +1,6 @@
 @import "../../styles/mixins.scss";
 
-.header-title-container {
+.header {
   display: flex;
   align-items: center;
   width: 100%;
@@ -18,4 +18,9 @@
   background-position: center;
   background-repeat: no-repeat;
   text-indent: -9999px;
+}
+
+.header-user {
+  position: absolute;
+  right: 0;
 }
