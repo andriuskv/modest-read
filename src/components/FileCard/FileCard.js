@@ -1,13 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Icon from "../Icon";
 import "./file-card.scss";
 
 export default function FileCard({ file, showLink, children }) {
   return (
     <li className="file-card">
       {showLink ? (
-        <Link to={`/viewer/${file.id}`} className="file-card-left" title={`Open ${file.name}`}>
+        <Link to={`/viewer/${file.id}`} className="file-card-left file-card-link" title={`Open ${file.name}`}>
           <img src={file.coverImage} className="file-card-image" alt=""/>
+          <Icon name="zoom" className="file-card-icon" size="36px"/>
         </Link>
       ) : (
         <div className="file-card-left">
