@@ -25,18 +25,43 @@
   box-shadow: 0 0 0 1px var(--color-grey-40);
   background-color: var(--color-grey-50);
 
-  &.focus-visible {
-    box-shadow: 0 0 0 1px var(--color-primary);
-  }
-
   @include breakpoint-sm {
     margin-right: var(--space-md);
   }
 }
 
+.file-card-link {
+  position: relative;
+
+  &:hover, &.focus-visible {
+    .file-card-image {
+      transform: scale(1.04);
+      opacity: 0.4;
+    }
+
+    .file-card-icon {
+      opacity: 1;
+    }
+  }
+
+  &.focus-visible {
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+}
+
+.file-card-icon {
+  position: absolute;
+  opacity: 0;
+  width: 48px;
+  height: 48px;
+  color: var(--color-white-80);
+  transition: 0.2s opacity;
+}
+
 .file-card-image {
   display: block;
   max-width: 100%;
+  transition: 0.2s transform, 0.2s opacity;
 }
 
 .file-card-info {
