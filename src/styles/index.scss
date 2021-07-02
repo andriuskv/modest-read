@@ -181,7 +181,7 @@ body {
   color: var(--color-grey-10);
 
   &:hover, &.focus-visible {
-     --background-color: transparent;
+    --background-color: transparent;
 
     color: var(--color-white);
   }

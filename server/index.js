@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
+const { getSession } = require("./session.js");
 
 const app = express();
 
@@ -11,6 +12,10 @@ app.use(cors({
   allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json());
+
+app.use(getSession());
+
+app.use("/api/users", require("./routes/users"));
 
 app.use(express.static(path.join(__dirname, "build")));
 

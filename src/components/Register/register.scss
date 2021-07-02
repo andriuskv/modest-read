@@ -1,4 +1,4 @@
-.login-form-container {
+.register-form-container {
   position: relative;
   left: 50%;
   transform: translateX(-50%);
@@ -7,20 +7,20 @@
   padding: var(--space-md);
 }
 
-.login-form {
+.register-form {
   padding: var(--space-xl);
   border-radius: 8px;
   background-color: var(--color-grey-70);
   border: 1px solid var(--color-grey-50);
 }
 
-.login-form-title {
+.register-form-title {
   margin-top: var(--space-md);
   margin-bottom: var(--space-xxl);
   text-align: center;
 }
 
-.login-form-field-group {
+.register-form-field-group {
   display: block;
 
   &:not(:first-of-type) {
@@ -28,7 +28,7 @@
   }
 }
 
-.login-form-field-name {
+.register-form-field-name {
   margin-left: var(--space-sm);
   margin-bottom: var(--space-md);
   font-size: var(--text-sm);
@@ -36,23 +36,23 @@
   color: var(--color-grey-10);
 }
 
-.login-form-field {
+.register-form-field {
   width: 100%;
   background-color: var(--color-grey-50);
 }
 
-.login-form-field-notification {
+.register-form-field-notification {
   margin-top: var(--space-sm);
   margin-left: var(--space-sm);
   color: var(--color-negative-20);
   font-size: var(--text-sm);
 }
 
-.login-form-submit-btn {
+.register-form-submit-btn {
   margin-top: var(--space-xl);
 }
 
-.login-form-bottom {
+.register-form-bottom {
   margin-top: var(--space-xl);
   padding-top: var(--space-xl);
   border-top: 1px solid var(--color-grey-50);
@@ -61,7 +61,7 @@
   color: var(--color-grey-10);
 }
 
-.login-form-bottom-link {
+.register-form-bottom-link {
   font-weight: 500;
   color: var(--color-white);
 }
