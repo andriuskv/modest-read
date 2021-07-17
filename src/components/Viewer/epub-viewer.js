@@ -154,44 +154,66 @@ function resetFontSize(content) {
 }
 
 function applyTheme() {
-  const { theme } = fileMetadata;
+  let { theme } = fileMetadata;
 
   if (!theme) {
-    return;
+    theme = "white";
   }
   const themes = {
     black: {
       "body": {
         "color": "white",
         "background-color": "black"
+      },
+      "a": {
+        "color": "white"
       }
     },
     white: {
       "body": {
         "color": "black",
         "background-color": "white"
+      },
+      "a": {
+        "color": "black"
       }
     },
     grey: {
       "body": {
         "color": "white",
         "background-color": "#1d1c1b"
+      },
+      "a": {
+        "color": "white"
       }
     },
     orange: {
       "body": {
         "color": "black",
         "background-color": "#FBF0D9"
+      },
+      "a": {
+        "color": "black"
       }
     }
   };
-  rendition.getContents().forEach(c => c.addStylesheetRules(themes[fileMetadata.theme]));
+
+  rendition.getContents().forEach(c => {
+    for (const styleSheet of c.document.styleSheets) {
+      for (const rule of styleSheet.rules) {
+        if (rule.style.color) {
+          rule.style.removeProperty("color");
+        }
+      }
+    }
+    c.addStylesheetRules(themes[theme]);
+  });
 
   if (previousTheme) {
     epubElement.firstElementChild.classList.remove(`theme-${previousTheme}`);
   }
-  epubElement.firstElementChild.classList.add(`theme-${fileMetadata.theme}`);
-  previousTheme = fileMetadata.theme;
+  epubElement.firstElementChild.classList.add(`theme-${theme}`);
+  previousTheme = theme;
 }
 
 function handleRelocation(locations) {
