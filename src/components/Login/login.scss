@@ -1,0 +1,67 @@
+.login-form-container {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-md);
+}
+
+.login-form {
+  padding: var(--space-xl);
+  border-radius: 8px;
+  background-color: var(--color-grey-70);
+  border: 1px solid var(--color-grey-50);
+}
+
+.login-form-title {
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-xxl);
+  text-align: center;
+}
+
+.login-form-field-group {
+  display: block;
+
+  &:not(:first-of-type) {
+    margin-top: var(--space-xl);
+  }
+}
+
+.login-form-field-name {
+  margin-left: var(--space-sm);
+  margin-bottom: var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-grey-10);
+}
+
+.login-form-field {
+  width: 100%;
+  background-color: var(--color-grey-50);
+}
+
+.login-form-field-notification {
+  margin-top: var(--space-sm);
+  margin-left: var(--space-sm);
+  color: var(--color-negative-20);
+  font-size: var(--text-sm);
+}
+
+.login-form-submit-btn {
+  margin-top: var(--space-xl);
+}
+
+.login-form-bottom {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-grey-50);
+  text-align: right;
+  font-size: var(--text-sm);
+  color: var(--color-grey-10);
+}
+
+.login-form-bottom-link {
+  font-weight: 500;
+  color: var(--color-white);
+}

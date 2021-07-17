@@ -177,6 +177,16 @@ body {
   }
 }
 
+.text-btn-alt {
+  color: var(--color-grey-10);
+
+  &:hover, &.focus-visible {
+    --background-color: transparent;
+
+    color: var(--color-white);
+  }
+}
+
 .primary-btn {
   --background-color: var(--color-primary);
 

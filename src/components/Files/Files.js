@@ -479,7 +479,7 @@ export default function Files() {
         <button className="btn icon-btn files-sidebar-toggle-btn" onClick={toggleMenu} title="Toggle sidebar">
           <Icon name="menu" size="24px"/>
         </button>
-        <Header/>
+        <Header shouldRenderUser={true}/>
         <div className={`files-categories-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
           <div className="files-sidebar">
             <div className="files-sidebar-title-container">
