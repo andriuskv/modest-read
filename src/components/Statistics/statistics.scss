@@ -44,14 +44,10 @@
   }
 }
 
-.stats-graph-container {
+.stats-container {
   max-width: var(--max-width);
   width: 100%;
   margin: 0 auto;
-
-  &:not(:last-of-type) {
-    margin-bottom: var(--space-xl);
-  }
 }
 
 .stats-graph-top {
@@ -180,9 +176,8 @@
   &.week {
     --max-item-width: 188px;
   }
-
-
 }
+
 .stats-table-date {
   margin-bottom: var(--space-sm);
   color: var(--color-grey-10);

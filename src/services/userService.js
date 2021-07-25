@@ -1,3 +1,5 @@
+import { getResponse } from "../utils";
+
 function fetchSessionUser() {
   return fetch("/api/users/me").then(getResponse);
 }
@@ -24,14 +26,6 @@ function loginUser(data) {
 
 function logoutUser() {
   return fetch("/api/users/logout").then(res => res.status);
-}
-
-async function getResponse(response) {
-  const contentType = response.headers.get("content-type");
-  const isJson = contentType && contentType.includes("application/json");
-  const json = isJson ? await response.json() : {};
-
-  return { code: response.status, ...json };
 }
 
 export {

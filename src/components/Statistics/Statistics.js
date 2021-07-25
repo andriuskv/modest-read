@@ -1,33 +1,77 @@
 import { useState, useEffect, useMemo } from "react";
 import { setDocumentTitle, getMonthName, getWeekdayName, getDaysInMonth, getCurrentDate, getFirstDayIndex } from "../../utils";
+import { useUser } from "../../context/user-context";
+import { fetchStatistics, getCalendarYear } from "../../services/statsService";
 import Header from "../Header";
 import Icon from "../Icon";
-import { getReadingTime, getCalendarYear } from "../../services/readingTimeService";
-import "./reading-stats.scss";
+import Notification from "../Notification";
+import "./statistics.scss";
 
-export default function ReadingStats() {
+export default function Statistics() {
+  const { user } = useUser();
   const currentDate = useMemo(() => getCurrentDate(), []);
-  const calendar = useMemo(() => populateCalendar(), []);
   const [activeYear, setActiveYear] = useState(currentDate.year);
   const [activeWeek, setActiveWeek] = useState(currentDate.week);
   const [activeView, setActiveView] = useState("week");
-  const [durationCalendar, setDurationCalendar] = useState(() => {
-    const { year } = currentDate;
-
-    return {
-      [year]: {
-        name: year,
-        months: getDurationMonths(year),
-        weeks: getDurationWeeks(year)
-      }
-    };
-  });
+  const [calendar, setCalendar] = useState({});
+  const [durationCalendar, setDurationCalendar] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
+    init();
     setDocumentTitle("Reading Statistics");
   }, []);
 
-  function getDurationMonths(year) {
+  async function init() {
+    try {
+      const { data } = await fetchStatistics(user);
+
+      if (!data) {
+        setNotification({ value: "Could not retrieve statistics." });
+      }
+      const calendar = populateCalendar(data || {});
+
+      initCalendar(calendar);
+    } catch (e) {
+      console.log(e);
+      setNotification({ value: "Could not retrieve statistics." });
+      initCalendar();
+    }
+  }
+
+  function hideNotification() {
+    setNotification(null);
+  }
+
+  function initCalendar(calendar = {}) {
+    const { year } = currentDate;
+
+    setCalendar(calendar);
+    setDurationCalendar({
+      [year]: {
+        name: year,
+        months: getDurationMonths(year, calendar),
+        weeks: getDurationWeeks(year, calendar)
+      }
+    });
+  }
+
+  function populateCalendar(data) {
+    const calendar = {};
+
+    for (const year of Object.keys(data)) {
+      calendar[year] = getCalendarYear(year);
+
+      for (const month of Object.keys(data[year])) {
+        for (const day of Object.keys(data[year][month])) {
+          calendar[year][month][day] = data[year][month][day];
+        }
+      }
+    }
+    return calendar;
+  }
+
+  function getDurationMonths(year, calendar) {
     const calendarYear = calendar[year] || getCalendarYear(year);
     const months = [];
     let maxDuration = 0;
@@ -66,28 +110,12 @@ export default function ReadingStats() {
 
   function getBarHeight(duration, maxDuration) {
     if (duration) {
-      return (duration / (maxDuration + maxDuration * 0.33)) * 100;
+      return (duration / (maxDuration + maxDuration * 0.2)) * 100;
     }
     return 0;
   }
 
-  function populateCalendar() {
-    const time = getReadingTime();
-    const calendar = {};
-
-    for (const year of Object.keys(time)) {
-      calendar[year] = getCalendarYear(year);
-
-      for (const month of Object.keys(time[year])) {
-        for (const day of Object.keys(time[year][month])) {
-          calendar[year][month][day] = time[year][month][day];
-        }
-      }
-    }
-    return calendar;
-  }
-
-  function getDurationWeeks(year) {
+  function getDurationWeeks(year, calendar) {
     const calendarYear = calendar[year] || getCalendarYear(year);
     const firstDayIndex = getFirstDayIndex(year, 0);
     const shouldGetFullYear = year !== currentDate.year;
@@ -173,7 +201,7 @@ export default function ReadingStats() {
 
     if (!previousDurationYear?.months) {
       const year = previousDurationYear || { name: previousYear };
-      year.months = getDurationMonths(previousYear);
+      year.months = getDurationMonths(previousYear, calendar);
       setDurationCalendar({ ...durationCalendar, [previousYear]: year });
     }
     setActiveYear(previousYear);
@@ -199,7 +227,7 @@ export default function ReadingStats() {
 
     if (previousWeek === 0 && !previousDurationYear?.weeks) {
       const year = previousDurationYear || { name: previousYear };
-      year.weeks = getDurationWeeks(previousYear);
+      year.weeks = getDurationWeeks(previousYear, calendar);
       setDurationCalendar({ ...durationCalendar, [previousYear]: year });
     }
     else if (previousWeek === -1) {
@@ -279,7 +307,7 @@ export default function ReadingStats() {
 
   function renderWeekGraph() {
     return (
-      <div className="stats-graph-container">
+      <div className="stats-container">
         <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousWeek} title="Previous week">
             <Icon name="chevron-left" size="24px"/>
@@ -312,7 +340,7 @@ export default function ReadingStats() {
 
   function renderYearGraph() {
     return (
-      <div className="stats-graph-container">
+      <div className="stats-container">
         <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousYear} title="Previous year">
             <Icon name="chevron-left" size="24px"/>
@@ -353,6 +381,9 @@ export default function ReadingStats() {
     return null;
   }
 
+  if (!durationCalendar) {
+    return null;
+  }
   return (
     <div className="container">
       <Header className="stats-header"/>
@@ -362,6 +393,11 @@ export default function ReadingStats() {
         <button className={`btn stats-view-selection-btn${activeView === "year" ? " active" : ""}`}
           onClick={() => selectView("year")}>Year</button>
       </div>
+      {notification && (
+        <Notification className="stats-container" margin="bottom"
+          notification={notification}
+          dismiss={hideNotification}/>
+      )}
       {renderGraph()}
       {renderTimePeriodTable()}
     </div>

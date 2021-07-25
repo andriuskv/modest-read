@@ -28,6 +28,13 @@ const db = pgp(process.env.DATABASE_URL);
       CREATE INDEX "IDX_session_expire" ON "session" ("expire");
     `);
   }
+
+  await db.none(`
+    CREATE TABLE IF NOT EXISTS stats(
+      user_id integer UNIQUE NOT NULL,
+      data jsonb NOT NULL
+    );
+  `);
 })();
 
 module.exports = {

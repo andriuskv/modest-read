@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useHistory, useParams } from "react-router-dom";
+import { useUser } from "../../context/user-context";
 import { setDocumentTitle } from "../../utils";
 import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
 import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
@@ -15,6 +16,7 @@ import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile } fr
 import "./viewer.scss";
 
 export default function Viewer() {
+  const { user } = useUser();
   const history = useHistory();
   const { id } = useParams();
   const [state, setState] = useState({});
@@ -111,10 +113,10 @@ export default function Viewer() {
     file.metadata.type = file.metadata.type || "pdf";
 
     if (file.metadata.type === "pdf") {
-      initPdfViewer(container, file);
+      initPdfViewer(container, file, user);
     }
     else if (file.metadata.type === "epub") {
-      initEpubViewer(container, file);
+      initEpubViewer(container, file, user);
     }
   }
 
