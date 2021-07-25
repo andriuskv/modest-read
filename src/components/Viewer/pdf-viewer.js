@@ -4,7 +4,7 @@ import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
-import { startCounting, stopCounting } from "../../services/readingTimeService";
+import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 
 const settings = getSettings();

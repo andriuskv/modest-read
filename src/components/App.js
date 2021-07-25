@@ -4,7 +4,7 @@ import { UserProvider } from "../context/user-context";
 
 const Files = lazy(() => import("./Files"));
 const Viewer = lazy(() => import("./Viewer"));
-const ReadingStats = lazy(() => import("./ReadingStats"));
+const Statistics = lazy(() => import("./Statistics"));
 const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
 const NoMatch = lazy(() => import("./NoMatch"));
@@ -17,7 +17,7 @@ export default function App() {
           <Switch>
             <Route path="/" exact component={Files}/>
             <Route path="/viewer/:id" component={Viewer}/>
-            <Route path="/statistics" component={ReadingStats}/>
+            <Route path="/statistics" component={Statistics}/>
             <Route path="/login" component={Login}/>
             <Route path="/register" component={Register}/>
             <Route component={NoMatch}/>

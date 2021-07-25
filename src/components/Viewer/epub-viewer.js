@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import { saveFile } from "../../services/fileIDBService";
 import { saveCurrentFile } from "../../services/currentFileIDBService";
-import { startCounting, stopCounting } from "../../services/readingTimeService";
+import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 
 const minScale = 0.333325;
@@ -18,7 +18,7 @@ let dropdownId = "";
 let hideDropdown = null;
 let previousTheme = "";
 
-async function initEpubViewer(container, { metadata, blob, save = true }) {
+async function initEpubViewer(container, { metadata, blob, save = true }, user) {
   const { default: epubjs } = await import("epubjs");
   book = epubjs(blob);
   fileMetadata = metadata;
@@ -69,7 +69,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }) {
     saveFile(metadata);
     saveCurrentFile(blob);
   }
-  startCounting();
+  startCounting(user);
 }
 
 function handleDropdownVisibility({ detail }) {
@@ -201,7 +201,7 @@ function applyTheme() {
   rendition.getContents().forEach(c => {
     for (const styleSheet of c.document.styleSheets) {
       for (const rule of styleSheet.rules) {
-        if (rule.style.color) {
+        if (rule.style?.color) {
           rule.style.removeProperty("color");
         }
       }

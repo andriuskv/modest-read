@@ -16,6 +16,7 @@ app.use(express.json());
 app.use(getSession());
 
 app.use("/api/users", require("./routes/users"));
+app.use("/api/stats", require("./routes/stats"));
 
 app.use(express.static(path.join(__dirname, "build")));
 
