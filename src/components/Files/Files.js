@@ -7,6 +7,7 @@ import { getSettings, setSettings, setSetting } from "../../services/settingsSer
 import Header from "../Header";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
+import Modal from "../Modal";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import NoFilesNotice from "./NoFilesNotice";
@@ -14,7 +15,6 @@ import FileCard from "../FileCard";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
-import FilesModal from "./FilesModal";
 import "./files.scss";
 
 export default function Files() {
@@ -343,11 +343,11 @@ export default function Files() {
   function showResetProgressModal(id) {
     setModal({
       id,
-      type: "reset",
       iconId: "reset",
-      title: "Reset Progress?",
+      title: "Reset progress?",
       message: "Are you sure you want to reset reading progress for this file?",
-      action: "Reset"
+      actionName: "Reset",
+      action: resetProgress
     });
   }
 
@@ -368,11 +368,11 @@ export default function Files() {
   function showRemoveFileModal(id) {
     setModal({
       id,
-      type: "remove",
       iconId: "trash",
-      title: "Remove File?",
+      title: "Remove this file?",
       message: "Are you sure you want to remove this file?",
-      action: "Remove"
+      actionName: "Remove",
+      action: removeFile
     });
   }
 
@@ -644,7 +644,7 @@ export default function Files() {
           dismiss={dismissNotification}
           handleFileUpload={handleFileUpload}/>
         }
-        {modal ? <FilesModal {...modal} resetProgress={resetProgress} removeFile={removeFile} hide={hideModal}/> : null}
+        {modal ? <Modal {...modal} hide={hideModal}/> : null}
       </div>
     );
   }

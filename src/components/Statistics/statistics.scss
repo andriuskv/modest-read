@@ -13,6 +13,7 @@
 }
 
 .stats-view-selection {
+  position: relative;
   display: flex;
   justify-content: center;
   max-width: var(--max-width);
@@ -41,6 +42,26 @@
       box-shadow: 0 0 0 1px var(--color-primary),
                   0 2px 0 0 var(--color-primary);
     }
+  }
+}
+
+.stats-dropdown-container {
+  position: absolute;
+  right: 0;
+}
+
+.stats-dropdown {
+  padding: var(--space-md) 0;
+}
+
+.stats-dropdown-btn {
+  border-radius: 0;
+  color: var(--color-grey-10);
+
+  &:hover, &.focus-visible {
+    --background-color: var(--color-grey-50);
+
+    color: var(--color-white);
   }
 }
 

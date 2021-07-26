@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { setDocumentTitle, getMonthName, getWeekdayName, getDaysInMonth, getCurrentDate, getFirstDayIndex } from "../../utils";
 import { useUser } from "../../context/user-context";
-import { fetchStatistics, getCalendarYear } from "../../services/statsService";
+import { getCalendarYear, fetchStatistics, resetStatistics } from "../../services/statsService";
 import Header from "../Header";
 import Icon from "../Icon";
+import Dropdown from "../Dropdown";
 import Notification from "../Notification";
+import Modal from "../Modal";
 import "./statistics.scss";
 
 export default function Statistics() {
@@ -16,11 +18,15 @@ export default function Statistics() {
   const [calendar, setCalendar] = useState({});
   const [durationCalendar, setDurationCalendar] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [modal, setModal] = useState(null);
 
   useEffect(() => {
+    if (user.loading) {
+      return;
+    }
     init();
     setDocumentTitle("Reading Statistics");
-  }, []);
+  }, [user.loading]);
 
   async function init() {
     try {
@@ -275,6 +281,40 @@ export default function Statistics() {
     return parseDuration(duration);
   }
 
+  async function confirmStatsReset() {
+    try {
+      const json = await resetStatistics(user);
+
+      if (json.code === 204) {
+        const calendar = populateCalendar({});
+
+        initCalendar(calendar);
+      }
+      else {
+        setNotification({ value: "Could not reset statistics." });
+      }
+      hideModal();
+    } catch (e) {
+      console.log(e);
+      setNotification({ value: "Could not reset statistics." });
+      hideModal();
+    }
+  }
+
+  function showResetModal() {
+    setModal({
+      iconId: "reset",
+      title: "Reset statistics?",
+      message: "Are you sure you want to reset reading time statistics?",
+      actionName: "Reset",
+      action: confirmStatsReset
+    });
+  }
+
+  function hideModal() {
+    setModal(null);
+  }
+
   function renderTimePeriodTable() {
     let items = [];
 
@@ -392,6 +432,20 @@ export default function Statistics() {
           onClick={() => selectView("week")}>Week</button>
         <button className={`btn stats-view-selection-btn${activeView === "year" ? " active" : ""}`}
           onClick={() => selectView("year")}>Year</button>
+        <Dropdown
+          container={{ className: "stats-dropdown-container" }}
+          toggle={{
+            content: <Icon name="dots-vertical" size="24px"/>,
+            title: "More",
+            className: "btn icon-btn icon-btn-alt"
+          }}
+          body={{ className: "stats-dropdown" }}>
+          <button className="btn icon-text-btn dropdown-btn stats-dropdown-btn"
+            onClick={() => showResetModal()}>
+            <Icon name="reset"/>
+            <span>Reset Statistics</span>
+          </button>
+        </Dropdown>
       </div>
       {notification && (
         <Notification className="stats-container" margin="bottom"
@@ -400,6 +454,7 @@ export default function Statistics() {
       )}
       {renderGraph()}
       {renderTimePeriodTable()}
+      {modal ? <Modal {...modal} hide={hideModal}/> : null}
     </div>
   );
 }

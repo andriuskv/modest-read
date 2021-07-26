@@ -1,6 +1,6 @@
 import { getDaysInMonth, getCurrentDate, getResponse } from "../utils";
 
-const readingTime = JSON.parse(localStorage.getItem("reading-time")) || {};
+let readingTime = JSON.parse(localStorage.getItem("reading-time")) || {};
 let isLocalUser = true;
 let timeStamp = 0;
 let timeStampIntervalId = 0;
@@ -16,13 +16,24 @@ function stopCounting() {
   saveTimeStamp();
 }
 
-async function fetchStatistics(user) {
+function fetchStatistics(user) {
   if (!user.email) {
     return {
       data: readingTime
     };
   }
   return fetchUserStatistics();
+}
+
+function resetStatistics(user) {
+  readingTime = {};
+
+  localStorage.removeItem("reading-time");
+
+  if (user.email) {
+    return resetUserStatistics();
+  }
+  return { code: 204 };
 }
 
 function getCalendarYear(year) {
@@ -68,7 +79,7 @@ function fetchUserStatistics() {
 
 function storeStatistics(data) {
   return fetch("/api/stats", {
-    method: "POST",
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json"
     },
@@ -76,9 +87,16 @@ function storeStatistics(data) {
   }).then(getResponse);
 }
 
+function resetUserStatistics() {
+  return fetch("/api/stats", {
+    method: "DELETE"
+  }).then(getResponse);
+}
+
 export {
   startCounting,
   stopCounting,
   fetchStatistics,
+  resetStatistics,
   getCalendarYear
 };

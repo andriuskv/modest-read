@@ -1,4 +1,4 @@
-.files-modal {
+.modal-mask {
   z-index: 4;
   position: fixed;
   top: 0;
@@ -12,7 +12,7 @@
   background-color: var(--color-grey-80-60);
 }
 
-.files-modal-content {
+.modal {
   width: 100%;
   max-width: 360px;
   padding: var(--space-xl);
@@ -24,13 +24,13 @@
               0 8px 16px 0 rgba(0, 0, 0, 0.02);
 }
 
-.files-modal-title-container {
+.modal-title-container {
   display: flex;
   align-items: center;
   margin-bottom: var(--space-xl);
 }
 
-.files-modal-title-icon {
+.modal-title-icon {
   padding: var(--space-md);
   border-radius: 50%;
   background-color: var(--color-negative-20-10);
@@ -38,13 +38,13 @@
   color: var(--color-negative-20);
 }
 
-.files-modal-title {
+.modal-title {
   margin-left: var(--space-xl);
   font-size: var(--text-lg);
   font-weight: 500;
 }
 
-.files-modal-content-bottom {
+.modal-bottom {
   display: flex;
   justify-content: flex-end;
   margin-top: var(--space-xl);
