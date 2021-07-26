@@ -17,6 +17,10 @@ async function updateStats(userId, stats) {
   }
 }
 
+function resetStats(userId) {
+  return db.none("DELETE FROM stats WHERE user_id = $1", [userId]);
+}
+
 function mergeStats(a, b) {
   for (const year of Object.keys(a)) {
     if (!b[year]) {
@@ -39,5 +43,6 @@ function mergeStats(a, b) {
 
 module.exports = {
   fetchStats,
-  updateStats
+  updateStats,
+  resetStats
 };
