@@ -12,8 +12,11 @@ function startCounting(user) {
 }
 
 function stopCounting() {
-  clearInterval(timeStampIntervalId);
-  saveTimeStamp();
+  if (timeStampIntervalId) {
+    clearInterval(timeStampIntervalId);
+    timeStampIntervalId = 0;
+    saveTimeStamp();
+  }
 }
 
 function fetchStatistics(user) {
@@ -52,9 +55,9 @@ function saveTimeStamp() {
   timeStamp = Date.now();
 
   if (isLocalUser) {
-    readingTime[year] = readingTime[year] || {};
-    readingTime[year][month] = readingTime[year][month] || {};
-    readingTime[year][month][day] = (readingTime[year][month][day] || 0) + Math.round(diff / 1000);
+    readingTime[year] ??= {};
+    readingTime[year][month] ??= {};
+    readingTime[year][month][day] = Number(readingTime[year][month][day] || 0) + Math.round(diff / 1000);
 
     localStorage.setItem("reading-time", JSON.stringify(readingTime));
   }

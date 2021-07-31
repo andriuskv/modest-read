@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
-import { saveFile } from "../../services/fileIDBService";
-import { saveCurrentFile } from "../../services/currentFileIDBService";
+import { saveFile, saveCurrentFile } from "../../services/fileService";
 import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 

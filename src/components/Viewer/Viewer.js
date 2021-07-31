@@ -2,8 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react
 import { useHistory, useParams } from "react-router-dom";
 import { useUser } from "../../context/user-context";
 import { setDocumentTitle } from "../../utils";
-import { fetchIDBFiles, saveFile, fetchIDBFile } from "../../services/fileIDBService";
-import { fetchCurrentFile, saveCurrentFile } from "../../services/currentFileIDBService";
+import { fetchIDBFiles, saveFile, fetchIDBFile, fetchCurrentFile, saveCurrentFile } from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
 import Icon from "../Icon";
 import FilePreview from "./FilePreview";

@@ -1,6 +1,8 @@
 import { createStore, set, get, getMany, keys, del } from "idb-keyval";
 
-const store = createStore("ModestKeep", "files");
+const store = createStore("modest-keep", "files");
+const currentFileStore = createStore("modest-keep-file", "current-file");
+let saveTimeoutId = 0;
 
 async function fetchIDBFiles(settings) {
   try {
@@ -22,11 +24,28 @@ function fetchIDBFile(id) {
 }
 
 function saveFile(file) {
-  set(file.id, file, store);
+  clearTimeout(saveTimeoutId);
+
+  saveTimeoutId = setTimeout(() => {
+    set(file.id, file, store);
+  }, 4000);
 }
 
 function deleteIDBFile(id) {
   return del(id, store).then(() => true);
+}
+
+function fetchCurrentFile() {
+  return get("file", currentFileStore);
+}
+
+async function saveCurrentFile(file) {
+  const currentFile = await fetchCurrentFile();
+
+  if (currentFile?.name === file.name) {
+    return;
+  }
+  set("file", file, currentFileStore);
 }
 
 function getSortingValue(sortBy, file) {
@@ -84,5 +103,7 @@ export {
   fetchIDBFile,
   saveFile,
   deleteIDBFile,
+  fetchCurrentFile,
+  saveCurrentFile,
   sortFiles
 };
