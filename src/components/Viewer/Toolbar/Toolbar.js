@@ -280,10 +280,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
             {file.type === "pdf" && (
               <>
                 <label className="viewer-toolbar-settings-item">
-                  <input type="checkbox" className="sr-only checkbox-input"
-                    name="invertColors"
-                    onChange={handleSettingChange}
-                    checked={settings.invertColors}/>
+                  <input type="checkbox" id="js-viewer-invert-colors" className="sr-only checkbox-input"/>
                   <div className="checkbox">
                     <div className="checkbox-tick"></div>
                   </div>

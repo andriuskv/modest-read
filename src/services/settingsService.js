@@ -3,7 +3,6 @@ const settings = JSON.parse(localStorage.getItem("modest-read-settings")) || {
   sortOrder: 1,
   showCategories: false,
   layoutType: "grid",
-  invertColors: false,
   keepToolbarVisible: false
 };
 

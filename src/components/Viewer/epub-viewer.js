@@ -77,7 +77,8 @@ function handleDropdownVisibility({ detail }) {
 }
 
 function initViewMode(viewMode) {
-  const [singlePageViewElement, spreadPageViewElement] = document.getElementById("js-viewer-view-modes").children;
+  const viewModesElement = document.getElementById("js-viewer-view-modes");
+  const [singlePageViewElement, spreadPageViewElement] = viewModesElement.children;
 
   if (viewMode === "single") {
     singlePageViewElement.classList.add("active");
@@ -85,11 +86,18 @@ function initViewMode(viewMode) {
   else {
     spreadPageViewElement.classList.add("active");
   }
-  document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
+  viewModesElement.addEventListener("click", setViewMode);
 }
 
 function initTheme() {
   document.getElementById("js-viewer-themes").addEventListener("click", setTheme);
+}
+
+function cleanupViewMode(viewMode) {
+  const viewModesElement = document.getElementById("js-viewer-view-modes");
+
+  viewModesElement.querySelector(`[data-mode=${viewMode}]`).classList.remove("active");
+  viewModesElement.removeEventListener("click", setViewMode);
 }
 
 function setTheme(event) {
@@ -251,6 +259,7 @@ function cleanupEpubViewer() {
     epubElement.innerHTML = "";
   }
   stopCounting();
+  cleanupViewMode(fileMetadata.viewMode);
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
 }
