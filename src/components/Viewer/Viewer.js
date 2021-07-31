@@ -26,11 +26,12 @@ export default function Viewer() {
   const viewerLoaded = useRef(false);
   const memoizedDropHandler = useCallback(handleDrop, [state, filePreferences, fileLoadMessage]);
 
-  useLayoutEffect(() => cleanupViewer(), []);
-
   useLayoutEffect(() => {
+    if (user.loading) {
+      return;
+    }
     init();
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     window.addEventListener("drop", memoizedDropHandler);
@@ -120,7 +121,7 @@ export default function Viewer() {
   }
 
   function cleanupViewer() {
-    if (!state.file) {
+    if (!state.file || state.filePreviewVisible) {
       return;
     }
 
@@ -318,7 +319,7 @@ export default function Viewer() {
           {state.loading && <Spinner/>}
         </>
       )}
-      <div className={`viewer offset${state.file?.type === "pdf" && settings.invertColors ? " invert" : ""}`} ref={viewerRef}></div>
+      <div id="js-viewer" className="viewer offset" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
       <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">
         <Icon name="chevron-left"/>

@@ -26,7 +26,7 @@ let ctrlPressed = false;
 let scrolling = false;
 let scrollTimeout = false;
 
-async function initPdfViewer(container, { metadata, blob, save = true }) {
+async function initPdfViewer(container, { metadata, blob, save = true }, user) {
   pdfjs = await import("pdfjs-dist/webpack");
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
@@ -46,6 +46,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }) {
   pageDimensions = dimensions;
 
   initScale(scale);
+  initColorInversion();
   initPage();
   initOutline(getOutline, goToDestination);
   setSavePdfFile(save);
@@ -91,7 +92,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }) {
     saveFile(metadata);
     saveCurrentFile(blob);
   }
-  startCounting();
+  startCounting(user);
 }
 
 function showSinglePageNavBtn() {
@@ -123,11 +124,16 @@ function cleanupPdfViewer() {
   pdfInstance = null;
   document.body.style.overscrollBehavior = "";
   stopCounting();
+  cleanupScale();
+  cleanupViewMode(fileMetadata.viewMode);
+  cleanupPageSelection();
+  cleanupColorInversion();
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("keyup", handleKeyUp);
   window.removeEventListener("wheel", handleWheel, { passive: false });
+  window.removeEventListener("click", handleAnnotationClick);
 }
 
 function setSavePdfFile(saveFile) {
@@ -164,6 +170,45 @@ function initPage() {
   pageInputElement.addEventListener("focus", handlePageInputFocus);
   pageInputElement.addEventListener("blur", handlePageInputBlur);
   pageInputElement.addEventListener("keydown", handlePageInputKeydown);
+}
+
+function initColorInversion() {
+  const invertColorsCheckbox = document.getElementById("js-viewer-invert-colors");
+
+  if (fileMetadata.invertColors) {
+    document.getElementById("js-viewer").classList.add("invert");
+    invertColorsCheckbox.checked = fileMetadata.invertColors;
+  }
+  invertColorsCheckbox.addEventListener("change", handleColorInversion);
+}
+
+function cleanupColorInversion() {
+  document.getElementById("js-viewer").classList.remove("invert");
+  document.getElementById("js-viewer-invert-colors").removeEventListener("change", handleColorInversion);
+}
+
+function cleanupScale() {
+  const zoomOutElement = document.getElementById("js-viewer-zoom-out");
+  const zoomInElement = document.getElementById("js-viewer-zoom-in");
+
+  zoomOutElement.removeEventListener("click", zoomOut);
+  zoomInElement.removeEventListener("click", zoomIn);
+  document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
+}
+
+function cleanupViewMode(viewMode) {
+  const viewModesElement = document.getElementById("js-viewer-view-modes");
+
+  viewModesElement.querySelector(`[data-mode=${viewMode}]`).classList.remove("active");
+  viewModesElement.removeEventListener("click", setViewMode);
+}
+
+function cleanupPageSelection() {
+  const previousPageElement = document.getElementById("js-viewer-previous-page");
+  const nextPageElement = document.getElementById("js-viewer-next-page");
+
+  previousPageElement.removeEventListener("click", previousPage);
+  nextPageElement.removeEventListener("click", nextPage);
 }
 
 function handleScroll() {
@@ -307,6 +352,15 @@ function handleWheel(event) {
     else {
       zoomOut();
     }
+  }
+}
+
+function handleColorInversion(event) {
+  document.getElementById("js-viewer").classList.toggle("invert", event.target.checked);
+
+  if (save) {
+    fileMetadata.invertColors = event.target.checked;
+    saveFile(fileMetadata);
   }
 }
 
