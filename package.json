@@ -17,10 +17,10 @@
     "express-session": "^1.17.2",
     "focus-visible": "^5.2.0",
     "html2canvas": "^1.1.4",
-    "idb-keyval": "^5.0.6",
+    "idb-keyval": "^5.1.1",
     "nodemon": "^2.0.12",
     "normalize.css": "^8.0.1",
-    "pdfjs-dist": "2.6.347",
+    "pdfjs-dist": "2.9.359",
     "pg-promise": "^10.10.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -36,7 +36,7 @@
     "workbox-strategies": "^6.1.5"
   },
   "devDependencies": {
-    "sass": "^1.36.0",
+    "sass": "^1.37.0",
     "worker-loader": "^3.0.8"
   },
   "browserslist": [
@@ -44,7 +44,10 @@
     "last 4 firefox versions",
     "last 1 and_chr versions",
     "last 1 safari versions",
-    "last 1 ios_saf versions"
+    "last 1 ios_saf versions",
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
   ],
   "proxy": "http://localhost:9000",
   "eslintConfig": {

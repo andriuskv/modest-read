@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString } from "../../utils";
-import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileIDBService";
+import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
 import Header from "../Header";
 import Icon from "../Icon";

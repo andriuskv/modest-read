@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
-import { saveFile } from "../../services/fileIDBService";
-import { saveCurrentFile } from "../../services/currentFileIDBService";
+import { saveFile, saveCurrentFile } from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
 import { startCounting, stopCounting } from "../../services/statsService";
