@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
-import { saveFile, saveCurrentFile } from "../../services/fileService";
+import * as fileService from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
 import { startCounting, stopCounting } from "../../services/statsService";
@@ -24,10 +24,13 @@ let save = true;
 let swapDimensions = false;
 let ctrlPressed = false;
 let scrolling = false;
-let scrollTimeout = false;
+let saveTimeoutId = 0;
+let dataToSave = {};
+let user = {};
 
-async function initPdfViewer(container, { metadata, blob, save = true }, user) {
+async function initPdfViewer(container, { metadata, blob, save = true }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack");
+  user = loggedUser;
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
   fileMetadata = metadata;
@@ -79,20 +82,37 @@ async function initPdfViewer(container, { metadata, blob, save = true }, user) {
   window.scrollTo(metadata.scrollLeft, metadata.scrollTop);
 
   if (save) {
+    const params = {};
+
     if (metadata.status !== "have read") {
       if (metadata.pageCount === 1) {
-        metadata.status = "have read";
+        params.status = "have read";
       }
       else {
-        metadata.status = "reading";
+        params.status = "reading";
       }
     }
-    metadata.accessedAt = Date.now();
+    params.accessedAt = Date.now();
 
-    saveFile(metadata);
-    saveCurrentFile(blob);
+    updateFile(metadata, params);
+    fileService.saveCurrentFile(blob);
   }
   startCounting(user);
+}
+
+function updateFile(file, data, skipWaiting = false) {
+  Object.assign(file, data);
+  Object.assign(dataToSave, data);
+
+  clearTimeout(saveTimeoutId);
+  saveTimeoutId = setTimeout(() => {
+    fileService.updateFile(dataToSave, {
+      id: file.id,
+      local: file.local,
+      userId: user.id
+    });
+    dataToSave = {};
+  }, skipWaiting ? 1 : 10000);
 }
 
 function showSinglePageNavBtn() {
@@ -115,19 +135,25 @@ function hideSinglePageNavBtn() {
   nextPageElement.removeEventListener("click", nextPage);
 }
 
-function cleanupPdfViewer() {
+function cleanupPdfViewer(reloading) {
+  if (reloading) {
+    if (pdfElement) {
+      pdfElement.innerHTML = "";
+    }
+    pdfInstance = null;
+    document.body.style.overscrollBehavior = "";
+
+    stopCounting();
+    cleanupScale();
+    cleanupViewMode(fileMetadata.viewMode);
+    cleanupPageSelection();
+    cleanupColorInversion();
+  }
   unregisterIntersectionObserver();
 
-  if (pdfElement) {
-    pdfElement.innerHTML = "";
+  if (save) {
+    updateFile(fileMetadata, dataToSave, true);
   }
-  pdfInstance = null;
-  document.body.style.overscrollBehavior = "";
-  stopCounting();
-  cleanupScale();
-  cleanupViewMode(fileMetadata.viewMode);
-  cleanupPageSelection();
-  cleanupColorInversion();
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
   window.removeEventListener("keydown", handleKeyDown);
@@ -220,17 +246,16 @@ function handleScroll() {
   requestAnimationFrame(() => {
     const { scrollTop, scrollLeft } = document.documentElement;
     const oldPageNumber = pageNumber;
+    const newScrollTop = scrollTop < 0 ? 0 : scrollTop;
 
-    fileMetadata.scrollTop = scrollTop < 0 ? 0 : scrollTop;
-    fileMetadata.scrollLeft = scrollLeft;
-    pageNumber = getVisiblePageNumber(views, fileMetadata.scrollTop);
-    fileMetadata.pageNumber = pageNumber;
+    pageNumber = getVisiblePageNumber(views, newScrollTop);
 
     if (save) {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        saveFile(fileMetadata);
-      }, 1000);
+      updateFile(fileMetadata, {
+        scrollTop: newScrollTop,
+        scrollLeft,
+        pageNumber
+      });
     }
 
     if (pageNumber !== oldPageNumber) {
@@ -250,14 +275,11 @@ function handleSinglePageScroll() {
   requestAnimationFrame(() => {
     const { scrollTop, scrollLeft } = document.documentElement;
 
-    fileMetadata.scrollTop = scrollTop < 0 ? 0 : scrollTop;
-    fileMetadata.scrollLeft = scrollLeft;
-
     if (save) {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        saveFile(fileMetadata);
-      }, 1000);
+      updateFile(fileMetadata, {
+        scrollTop: scrollTop < 0 ? 0 : scrollTop,
+        scrollLeft
+      });
     }
     scrolling = false;
   });
@@ -359,8 +381,7 @@ function handleColorInversion(event) {
   document.getElementById("js-viewer").classList.toggle("invert", event.target.checked);
 
   if (save) {
-    fileMetadata.invertColors = event.target.checked;
-    saveFile(fileMetadata);
+    updateFile(fileMetadata, { invertColors: event.target.checked });
   }
 }
 
@@ -414,9 +435,17 @@ async function goToDestination(link) {
   setPage(index + 1);
 }
 
-async function getNewPdfFile(file) {
+async function getNewPdfFile(file, user) {
   pdfInstance = await getPdfInstance(file);
-  const [metadata, coverImage] = await Promise.all([pdfInstance.getMetadata(), pageToDataURL(pdfInstance)]);
+  const [metadata, coverImage] = await Promise.all([
+    pdfInstance.getMetadata(),
+    pageToDataURL(pdfInstance)
+  ]);
+  const params = {};
+
+  if (!user.email) {
+    params.local = true;
+  }
 
   return {
     ...parsePdfMetadata(metadata),
@@ -604,8 +633,10 @@ function updatePageInSingleMode(pageNumber) {
 function updatePageInputElement(pageNumber) {
   const pageInputElement = document.getElementById("js-viewer-page-input");
 
-  pageInputElement.value = pageNumber;
-  pageInputElement.style.width = `${pageNumber.toString().length}ch`;
+  if (pageInputElement) {
+    pageInputElement.value = pageNumber;
+    pageInputElement.style.width = `${pageNumber.toString().length}ch`;
+  }
 }
 
 function updatePageBtnElementState(pageNumber) {
@@ -630,8 +661,10 @@ function setPage(value, updatePageInput = true) {
   }
   else {
     pageNumber = value;
-    fileMetadata.pageNumber = pageNumber;
 
+    if (save) {
+      updateFile(fileMetadata, { pageNumber });
+    }
     renderSinglePage(value);
     window.scrollTo(0, 0);
 
@@ -639,10 +672,6 @@ function setPage(value, updatePageInput = true) {
       updatePageInputElement(value);
     }
     updatePageBtnElementState(value);
-
-    if (save) {
-      saveFile(fileMetadata);
-    }
   }
 }
 
@@ -671,12 +700,12 @@ function updateScaleElement(scale) {
 
 function setScale(value, name = "custom") {
   const oldScaleValue = scale.currentScale;
+  let scrollTop = 0;
+  let scrollLeft = 0;
 
   scale.name = name;
   scale.currentScale = value;
   scale.displayValue = Math.round(value * 100 / defaultScale);
-
-  fileMetadata.scale = scale;
 
   if (fileMetadata.viewMode === "multi") {
     const { top } = getPageElementBox(pageNumber, pdfElement.children);
@@ -684,23 +713,23 @@ function setScale(value, name = "custom") {
     updatePages(value);
     views = getPageViews();
 
-    fileMetadata.scrollTop = views[pageNumber - 1].top - (top / oldScaleValue * value);
-    fileMetadata.scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
+    scrollTop = views[pageNumber - 1].top - (top / oldScaleValue * value);
+    scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
 
     registerIntersectionObserver();
   }
   else {
     renderSinglePage(pageNumber);
 
-    fileMetadata.scrollTop = fileMetadata.scrollTop / oldScaleValue * value;
-    fileMetadata.scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
+    scrollTop = fileMetadata.scrollTop / oldScaleValue * value;
+    scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
   }
-  updateScaleElement(scale);
-  window.scrollTo(fileMetadata.scrollLeft, fileMetadata.scrollTop);
 
   if (save) {
-    saveFile(fileMetadata);
+    updateFile(fileMetadata, { scale, scrollTop, scrollLeft });
   }
+  updateScaleElement(scale);
+  window.scrollTo(scrollLeft, scrollTop);
 }
 
 function getMaxHeight(height) {
@@ -785,8 +814,11 @@ async function setViewMode(event) {
   multiPageViewElement.classList.toggle("active");
   singlePageViewElement.classList.toggle("active");
 
-  fileMetadata.viewMode = mode;
   pdfElement.innerHTML = "";
+
+  if (save) {
+    updateFile(fileMetadata, { viewMode: mode });
+  }
 
   if (mode === "multi") {
     await renderEmptyPages(pdfElement, pdfInstance, fileMetadata);
@@ -813,18 +845,17 @@ async function setViewMode(event) {
     window.addEventListener("click", handleAnnotationClick);
     window.removeEventListener("scroll", handleScroll);
   }
-
-  if (save) {
-    saveFile(fileMetadata);
-  }
 }
 
 function rotatePages() {
   const nextRotation = rotation + 90;
 
   rotation = nextRotation === 360 ? 0 : nextRotation;
-  fileMetadata.rotation = rotation;
   swapDimensions = !swapDimensions;
+
+  if (save) {
+    updateFile(fileMetadata, { rotation });
+  }
 
   if (fileMetadata.viewMode === "multi") {
     updatePages(scale.currentScale);
@@ -835,10 +866,6 @@ function rotatePages() {
   else {
     renderSinglePage(pageNumber);
     window.scrollTo(0, 0);
-  }
-
-  if (save) {
-    saveFile(fileMetadata);
   }
 }
 

@@ -1,42 +1,106 @@
-import { createStore, set, get, getMany, keys, del } from "idb-keyval";
+import { createStore, set, setMany, values, get, update, del } from "idb-keyval";
+import { getResponse } from "../utils";
 
 const store = createStore("modest-keep", "files");
 const currentFileStore = createStore("modest-keep-file", "current-file");
-let saveTimeoutId = 0;
 
-async function fetchIDBFiles(settings) {
-  try {
-    const ids = await keys(store);
-    const files = await getMany(ids, store);
+async function fetchFiles(settings, user) {
+  const [idbFiles, response] = await Promise.all([values(store), user.id ? fetchServerFiles(user.id) : {}]);
 
-    if (settings) {
-      return sortFiles(files, settings);
-    }
-    return files;
-  } catch (e) {
-    console.log(e);
-    return [];
+  if (response.code === 200) {
+    const files = response.files.concat(idbFiles);
+
+    return {
+      code: response.code,
+      files: settings ? sortFiles(files, settings) : files
+    };
   }
+  return {
+    message:  user.id ? "Could not retrieve user files." : "",
+    files: settings ? sortFiles(idbFiles, settings) : idbFiles
+  };
 }
 
-function fetchIDBFile(id) {
-  return get(id, store);
+function fetchServerFiles(userId) {
+  return fetch(`/api/files/${userId}`).then(getResponse);
 }
 
-function saveFile(file) {
-  clearTimeout(saveTimeoutId);
-
-  saveTimeoutId = setTimeout(() => {
-    set(file.id, file, store);
-  }, 4000);
+function fetchFile(id, userId, type) {
+  if (type === "local") {
+    return get(id, store);
+  }
+  return fetchServerFile(id, userId);
 }
 
-function deleteIDBFile(id) {
-  return del(id, store).then(() => true);
+function fetchServerFile(id, userId) {
+  return fetch(`/api/files/${userId}/${id}`).then(getResponse);
 }
 
 function fetchCurrentFile() {
   return get("file", currentFileStore);
+}
+
+async function updateFile(data, { id, userId, local }) {
+  if (local) {
+    await update(id, file => ({ ...file, ...data }), store);
+    return true;
+  }
+  const response = await updateServerFile(data, id, userId);
+
+  return response.code === 204;
+}
+
+function updateServerFile(data, fileId, userId) {
+  return fetch(`/api/files/${userId}/${fileId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  }).then(getResponse);
+}
+
+async function deleteFile(id, local, userId) {
+  if (local) {
+    return del(id, store).then(() => true);
+  }
+  const response = await deleteServerFile(id, userId);
+  return response.code === 204;
+}
+
+function deleteServerFile(id, userId) {
+  return fetch(`/api/files/${userId}/${id}`, {
+    method: "DELETE"
+  }).then(getResponse);
+}
+
+async function saveFiles(files, user) {
+  if (user.email) {
+    const response = await saveServerFiles(files, user.id);
+    return response.code === 204;
+  }
+  else {
+    return setMany(files.map(file => [file.id, file]), store).then(() => true);
+  }
+}
+
+function saveServerFiles(data, userId) {
+  return fetch(`/api/files/${userId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  }).then(getResponse);
+}
+
+function saveFile(file, userId) {
+  if (file.local) {
+    return set(file.id, file, store);
+  }
+  else {
+    return saveServerFiles([file], userId);
+  }
 }
 
 async function saveCurrentFile(file) {
@@ -46,6 +110,26 @@ async function saveCurrentFile(file) {
     return;
   }
   set("file", file, currentFileStore);
+}
+
+async function findFile(hash, userId) {
+  const files = await values(store);
+  const file = files.find(file => file.hash === hash);
+
+  if (file) {
+    return file;
+  }
+  else if (userId) {
+    const response = await findServerFile(hash, userId);
+
+    if (response.code === 200) {
+      return response;
+    }
+  }
+}
+
+function findServerFile(hash, userId) {
+  return fetch(`/api/files/${userId}?hash=${hash}`).then(getResponse);
 }
 
 function getSortingValue(sortBy, file) {
@@ -99,11 +183,14 @@ function sortByLastAccessed(files, sortBy, sortOrder) {
 }
 
 export {
-  fetchIDBFiles,
-  fetchIDBFile,
+  fetchFiles,
+  fetchFile,
+  updateFile,
+  deleteFile,
+  saveFiles,
   saveFile,
-  deleteIDBFile,
   fetchCurrentFile,
   saveCurrentFile,
+  findFile,
   sortFiles
 };

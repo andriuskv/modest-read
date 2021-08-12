@@ -1,20 +1,18 @@
 const { db } = require("./index.js");
 
-async function fetchStats(userId) {
-  return db.oneOrNone("SELECT * FROM stats WHERE user_id = $1", [userId]);
+function fetchStats(userId) {
+  return db.oneOrNone("SELECT * FROM stats WHERE user_id = $1 LIMIT 1", userId);
 }
 
-async function updateStats(userId, stats) {
-  const item = await db.oneOrNone("SELECT * FROM stats WHERE user_id = $1", userId);
+async function updateStats(stats, userId) {
+  const row = await fetchStats(userId);
 
-  if (item) {
-    const mergedStats = mergeStats(stats, item.data);
+  if (row) {
+    const mergedStats = mergeStats(stats, row.data);
 
     return db.none("UPDATE stats SET data = $2 WHERE user_id = $1", [userId, mergedStats]);
   }
-  else {
-    return db.none("INSERT INTO stats (user_id, data) VALUES($1, $2)", [userId, stats]);
-  }
+  return db.none("INSERT INTO stats (user_id, data) VALUES($1, $2)", [userId, stats]);
 }
 
 function resetStats(userId) {

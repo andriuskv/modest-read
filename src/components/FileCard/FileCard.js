@@ -1,13 +1,14 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import Icon from "../Icon";
 import "./file-card.scss";
 
-export default function FileCard({ file, showLink, children }) {
+export default function FileCard({ file, user, showLink, children }) {
   return (
     <li className="file-card">
       {showLink ? (
-        <Link to={`/viewer/${file.id}`} className="file-card-left file-card-link" title={`Open ${file.name}`}>
+        <Link to={`/viewer/${file.id}${file.local ? "?type=local" : ""}`}
+          className="file-card-left file-card-link"
+          title={`Open ${file.name}`}>
           <img src={file.coverImage} className="file-card-image" alt=""/>
           <Icon name="zoom" className="file-card-icon" size="36px"/>
         </Link>
@@ -17,7 +18,10 @@ export default function FileCard({ file, showLink, children }) {
         </div>
       )}
       <div className="file-card-info">
-        <div className="file-card-title">{file.title || file.name}</div>
+        <div className="file-card-title">
+          {file.local && user.email ? <Icon name="home" size="16px" className="file-card-local-icon"/> : null}
+          <span className="file-card-title-inner">{file.title || file.name}</span>
+        </div>
         {file.author && <div className="file-card-author">{file.author}</div>}
         <div className="file-card-secondary-info">
           {file.title && <div className="file-card-secondary-info-item file-card-filename">{file.name}</div>}

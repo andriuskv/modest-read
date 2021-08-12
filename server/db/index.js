@@ -30,6 +30,13 @@ const db = pgp(process.env.DATABASE_URL);
   }
 
   await db.none(`
+    CREATE TABLE IF NOT EXISTS files(
+      id integer UNIQUE NOT NULL,
+      data jsonb NOT NULL
+    );
+  `);
+
+  await db.none(`
     CREATE TABLE IF NOT EXISTS stats(
       user_id integer UNIQUE NOT NULL,
       data jsonb NOT NULL

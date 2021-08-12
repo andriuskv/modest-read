@@ -8,7 +8,7 @@ router.patch("/", async (req, res) => {
     return res.sendStatus(401);
   }
   try {
-    await updateStats(req.session.user.id, req.body);
+    await updateStats(req.body, req.session.user.id);
     res.sendStatus(204);
   } catch (e) {
     console.log(e);

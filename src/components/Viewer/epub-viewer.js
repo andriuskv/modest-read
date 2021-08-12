@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
-import { saveFile, saveCurrentFile } from "../../services/fileService";
+import * as fileService from "../../services/fileService";
 import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 
@@ -11,14 +11,17 @@ let rendition = null;
 let fileMetadata = null;
 let scale = null;
 let epubElement = null;
-let scrollTimeout = 0;
 let save = true;
 let dropdownId = "";
 let hideDropdown = null;
 let previousTheme = "";
+let saveTimeoutId = 0;
+let dataToSave = {};
+let user = {};
 
-async function initEpubViewer(container, { metadata, blob, save = true }, user) {
+async function initEpubViewer(container, { metadata, blob, save = true }, loggedUser) {
   const { default: epubjs } = await import("epubjs");
+  user = loggedUser;
   book = epubjs(blob);
   fileMetadata = metadata;
   scale = metadata.scale || getDefaultScale();
@@ -32,16 +35,9 @@ async function initEpubViewer(container, { metadata, blob, save = true }, user) 
   initOutline(getOutline, goToDestination);
 
   await book.ready;
+  await book.locations.generate(1650);
 
-  if (metadata.storedPosition) {
-    await book.locations.load(metadata.storedPosition);
-  }
-  else {
-    await book.locations.generate(1650);
-
-    metadata.storedPosition = book.locations.save();
-    metadata.pageCount = book.locations.length();
-  }
+  metadata.pageCount = book.locations.length();
   metadata.pageNumber = metadata.location ? book.locations.locationFromCfi(metadata.location) + 1 : 1;
 
   rendition.on("relocated", handleRelocation);
@@ -55,20 +51,37 @@ async function initEpubViewer(container, { metadata, blob, save = true }, user) 
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
 
   if (save) {
+    const params = {};
+
     if (metadata.status !== "have read") {
       if (metadata.pageCount === 1) {
-        metadata.status = "have read";
+        params.status = "have read";
       }
       else {
-        metadata.status = "reading";
+        params.status = "reading";
       }
     }
-    metadata.accessedAt = Date.now();
+    params.accessedAt = Date.now();
 
-    saveFile(metadata);
-    saveCurrentFile(blob);
+    updateFile(metadata, params);
+    fileService.saveCurrentFile(blob);
   }
   startCounting(user);
+}
+
+function updateFile(file, data, skipWaiting = false) {
+  Object.assign(file, data);
+  Object.assign(dataToSave, data);
+
+  clearTimeout(saveTimeoutId);
+  saveTimeoutId = setTimeout(() => {
+    fileService.updateFile(dataToSave, {
+      id: file.id,
+      local: file.local,
+      userId: user.id
+    });
+    dataToSave = {};
+  }, skipWaiting ? 1 : 10000);
 }
 
 function handleDropdownVisibility({ detail }) {
@@ -106,15 +119,11 @@ function setTheme(event) {
   if (!element) {
     return;
   }
-  fileMetadata.theme = element.attrValue;
-  applyTheme();
 
   if (save) {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      saveFile(fileMetadata);
-    }, 1000);
+    updateFile(fileMetadata, { theme: element.attrValue });
   }
+  applyTheme();
 }
 
 function resetFontSize(content) {
@@ -227,18 +236,14 @@ function handleRelocation(locations) {
   const { cfi, location, index } = locations.start;
   const pageNumber = location + 1;
 
-  fileMetadata.location = cfi;
-  fileMetadata.pageNumber = book.locations.locationFromCfi(cfi) + 1;
-
+  if (save) {
+    updateFile(fileMetadata, {
+      location: cfi,
+      pageNumber: book.locations.locationFromCfi(cfi) + 1
+    });
+  }
   updatePageInputElement(pageNumber);
   updatePageBtnElementState(pageNumber, book.locations.length(), { location, index, atStart: locations.atStart });
-
-  if (save) {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      saveFile(fileMetadata);
-    }, 1000);
-  }
 }
 
 function handleKeyDownOnRendition(event) {
@@ -254,12 +259,18 @@ function handleClickOnRendition() {
   }
 }
 
-function cleanupEpubViewer() {
-  if (epubElement) {
-    epubElement.innerHTML = "";
+function cleanupEpubViewer(reloading) {
+  if (reloading) {
+    if (epubElement) {
+      epubElement.innerHTML = "";
+    }
+    cleanupViewMode(fileMetadata.viewMode);
+  }
+
+  if (save) {
+    updateFile(fileMetadata, dataToSave, true);
   }
   stopCounting();
-  cleanupViewMode(fileMetadata.viewMode);
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
 }
@@ -384,14 +395,12 @@ function setScale(value, name = "custom") {
   scale.name = name;
   scale.currentScale = value;
   scale.displayValue = Math.round(value * 100);
-  fileMetadata.scale = scale;
-
-  updateScaleElement(scale);
-  rendition.themes.default({ "html": { "font-size": `${value * 100}% !important` }});
 
   if (save) {
-    saveFile(fileMetadata);
+    updateFile(fileMetadata, { scale });
   }
+  updateScaleElement(scale);
+  rendition.themes.default({ "html": { "font-size": `${value * 100}% !important` }});
 }
 
 function setViewMode(event) {
@@ -410,7 +419,9 @@ function setViewMode(event) {
   singlePageViewElement.classList.toggle("active");
   spreadPageViewElement.classList.toggle("active");
 
-  fileMetadata.viewMode = mode;
+  if (save) {
+    updateFile(fileMetadata, { viewMode: mode });
+  }
   epubElement.innerHTML = "";
 
   rendition.off("relocated", handleRelocation);
@@ -421,10 +432,6 @@ function setViewMode(event) {
   rendition.on("keydown", handleKeyDownOnRendition);
   rendition.on("click", handleClickOnRendition);
   rendition.display(fileMetadata.location);
-
-  if (save) {
-    saveFile(fileMetadata);
-  }
 }
 
 function getRendition(viewMode) {
@@ -448,19 +455,32 @@ function getRendition(viewMode) {
   return rendition;
 }
 
-async function getNewEpubFile(blob) {
+async function getNewEpubFile(blob, user) {
   const { default: epubjs } = await import("epubjs");
   book = epubjs(blob);
 
   await book.ready;
 
-  const [metadata, cfiArray, coverImage] = await Promise.all([
+  const [metadata, coverImage] = await Promise.all([
     book.loaded.metadata,
-    book.locations.generate(1650),
-    getEpubCoverUrl(book)
+    getEpubCoverUrl(book),
+    book.locations.generate(1650)
   ]);
-  const newFile = {
-    storedPosition: JSON.stringify(cfiArray),
+  const params = {};
+
+  if (!user.email) {
+    params.local = true;
+  }
+
+  if (metadata.title) {
+    params.title = metadata.title;
+  }
+
+  if (metadata.creator) {
+    params.author = metadata.creator;
+  }
+
+  return {
     coverImage,
     id: uuidv4(),
     name: blob.name,
@@ -471,17 +491,9 @@ async function getNewEpubFile(blob) {
     sizeString: getFileSizeString(blob.size),
     pageNumber: 1,
     pageCount: book.locations.length(),
+    ...params,
     viewMode: "single"
   };
-
-  if (metadata.title) {
-    newFile.title = metadata.title;
-  }
-
-  if (metadata.creator) {
-    newFile.author = metadata.creator;
-  }
-  return newFile;
 }
 
 function getDefaultScale() {

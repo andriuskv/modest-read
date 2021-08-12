@@ -11,11 +11,12 @@ app.use(cors({
   origin: ["https://modest-read.herokuapp.com"],
   allowedHeaders: ["Content-Type"]
 }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use(getSession());
 
 app.use("/api/users", require("./routes/users"));
+app.use("/api/files", require("./routes/files"));
 app.use("/api/stats", require("./routes/stats"));
 
 app.use(express.static(path.join(__dirname, "build")));

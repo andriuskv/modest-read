@@ -1,14 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { useUser } from "../../context/user-context";
-import { setDocumentTitle } from "../../utils";
-import { fetchIDBFiles, saveFile, fetchIDBFile, fetchCurrentFile, saveCurrentFile } from "../../services/fileService";
+import { computeHash, setDocumentTitle } from "../../utils";
+import { saveFile, fetchFile, fetchCurrentFile, saveCurrentFile, findFile } from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
 import Icon from "../Icon";
+import ErrorPage from "../ErrorPage";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
-import NoFileNotice from "./NoFileNotice";
 import Spinner from "./Spinner";
 import { initPdfViewer, cleanupPdfViewer, getNewPdfFile, setSavePdfFile } from "./pdf-viewer";
 import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile } from "./epub-viewer";
@@ -32,6 +32,17 @@ export default function Viewer() {
     }
     init();
   }, [id, user]);
+
+  useEffect(() => {
+    if (!state.file) {
+      return;
+    }
+    return () => {
+      if (history.location.pathname === "/") {
+        cleanupViewer();
+      }
+    };
+  }, [state.file, history.location.pathname]);
 
   useEffect(() => {
     window.addEventListener("drop", memoizedDropHandler);
@@ -63,9 +74,10 @@ export default function Viewer() {
     if (history.location.state) {
       return;
     }
-    const file = await fetchIDBFile(id);
+    const type = new URLSearchParams(history.location.search).get("type") || "";
+    const file = await fetchFile(id, user.id, type);
 
-    if (file) {
+    if (file?.id) {
       const currentFile = await fetchCurrentFile();
       file.type = file.type || "pdf";
 
@@ -120,22 +132,22 @@ export default function Viewer() {
     }
   }
 
-  function cleanupViewer() {
+  function cleanupViewer(reloading = false) {
     if (!state.file || state.filePreviewVisible) {
       return;
     }
 
     if (state.file.type === "pdf") {
-      cleanupPdfViewer();
+      cleanupPdfViewer(reloading);
     }
     else if (state.file.type === "epub") {
-      cleanupEpubViewer();
+      cleanupEpubViewer(reloading);
     }
   }
 
   function reloadViewer(container, file) {
     if (viewerLoaded.current) {
-      cleanupViewer();
+      cleanupViewer(true);
     }
     initViewer(container, file);
   }
@@ -153,8 +165,9 @@ export default function Viewer() {
       });
       return;
     }
+    const hash = await computeHash(await file.arrayBuffer());
 
-    if (file.name === state.file.name) {
+    if (hash === state.file.hash) {
       if (state.filePreviewVisible) {
         initViewer(viewerRef.current, {
           blob: file,
@@ -187,18 +200,20 @@ export default function Viewer() {
   async function loadNewFile({ file }) {
     setState({ ...state, loading: true });
 
-    let newFile = await findFile(file);
+    const hash = await computeHash(await file.arrayBuffer());
+    let newFile = await findFile(hash, user.id);
     let save = true;
 
     if (!newFile) {
       const fileType = file.name.slice(file.name.lastIndexOf(".") + 1);
 
       if (fileType === "pdf") {
-        newFile = await getNewPdfFile(file);
+        newFile = await getNewPdfFile(file, user);
       }
       else if (fileType === "epub") {
-        newFile = await getNewEpubFile(file);
+        newFile = await getNewEpubFile(file, user);
       }
+      newFile.hash = hash;
 
       if (!state.filePreviewVisible) {
         if (filePreferences.hideWarning) {
@@ -236,7 +251,7 @@ export default function Viewer() {
   }
 
   function saveLoadedFile(blob, metadata) {
-    saveFile(metadata);
+    saveFile(metadata, user.id);
     saveCurrentFile(blob);
   }
 
@@ -247,11 +262,6 @@ export default function Viewer() {
     else if (state.file.type === "epub") {
       setSaveEpubFile(save);
     }
-  }
-
-  async function findFile(file) {
-    const files = await fetchIDBFiles();
-    return files.find(({ name }) => name === file.name);
   }
 
   function hideFileLoadMessage() {
@@ -292,12 +302,12 @@ export default function Viewer() {
   }
 
   if (state.error) {
-    return <NoFileNotice/>;
+    return <ErrorPage message={"File not found."} link={{ path: "/", iconId: "bookshelf", text: "Back to files" }}/>;
   }
   return (
     <>
       {state.filePreviewVisible ? (
-        <FilePreview file={state.file} loading={state.loading} notification={fileLoadMessage}
+        <FilePreview file={state.file} user={user} loading={state.loading} notification={fileLoadMessage}
           dismissNotification={hideFileLoadMessage}
           handleFileUpload={handleFileUpload}
           loadPreviewFile={loadPreviewFile}/>

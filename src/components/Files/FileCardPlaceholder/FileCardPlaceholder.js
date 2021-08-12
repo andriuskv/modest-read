@@ -1,4 +1,3 @@
-import React from "react";
 import "./file-card-placeholder.scss";
 
 export default function FileCardPlaceholder() {
