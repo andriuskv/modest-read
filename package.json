@@ -46,7 +46,7 @@
     "last 1 and_chr versions",
     "last 1 safari versions",
     "last 1 ios_saf versions",
-    ">0.8%",
+    ">0.5%",
     "not dead",
     "not op_mini all"
   ],
