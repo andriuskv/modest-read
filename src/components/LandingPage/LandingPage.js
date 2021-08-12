@@ -1,4 +1,3 @@
-import React from "react";
 import bgImg from "./background-image.png";
 import icon from "./icon.svg";
 import "./landing-page.scss";

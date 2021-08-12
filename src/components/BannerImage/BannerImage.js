@@ -1,4 +1,3 @@
-import React from "react";
 import iconFull from "../../assets/icon-text.svg";
 import "./banner-image.scss";
 

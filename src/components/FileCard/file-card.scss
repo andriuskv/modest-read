@@ -71,12 +71,22 @@
   flex-grow: 1;
 }
 
+.file-card-local-icon {
+  display: inline;
+  margin-right: var(--space-sm);
+  transform: translateY(var(--space-xs));
+}
+
 .file-card-title {
   @include truncate-second-line;
 
   word-break: break-word;
   font-size: var(--text-sm);
   font-weight: 500;
+}
+
+.file-card-title-inner {
+  word-break: break-all;
 }
 
 .file-card-author {
@@ -128,6 +138,6 @@
 
 .file-card-bottom {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: var(--space-sm);
 }

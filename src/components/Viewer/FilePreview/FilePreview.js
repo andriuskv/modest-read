@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../Icon";
 import Notification from "../../Notification";
@@ -7,7 +6,7 @@ import FileCard from "../../FileCard";
 import Spinner from "../Spinner";
 import "./file-preview.scss";
 
-export default function FilePreview({ file, loading, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
+export default function FilePreview({ file, user, loading, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
   return (
     <div className="viewer-file-preview-container">
       <BannerImage/>
@@ -15,9 +14,9 @@ export default function FilePreview({ file, loading, notification, dismissNotifi
         {notification?.type === "negative" && (
           <Notification notification={notification} margin="bottom" dismiss={dismissNotification}/>
         )}
-        <FileCard file={file}>
+        <FileCard file={file} user={user}>
           <Link to="/" className="btn icon-btn" title="Back to files">
-            <Icon name="bookshelf" size="24px"/>
+            <Icon name="home" size="24px"/>
           </Link>
           <label className="btn viewer-file-preview-import-btn">
             <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>

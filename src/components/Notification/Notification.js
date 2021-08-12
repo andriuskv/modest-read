@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./notification.scss";
 import { classNames } from "../../utils";
 import Icon from "../Icon";

@@ -260,6 +260,18 @@ async function getResponse(response) {
   return { code: response.status, ...json };
 }
 
+function delay(milliseconds) {
+  return new Promise(resolve => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+async function computeHash(buffer) {
+  const { default: CryptoJS } = await import("crypto-js");
+  const wordArray = CryptoJS.lib.WordArray.create(buffer);
+  return CryptoJS.MD5(wordArray).toString();
+}
+
 export {
   setDocumentTitle,
   classNames,
@@ -278,5 +290,7 @@ export {
   getDaysInMonth,
   getCurrentDate,
   getFirstDayIndex,
-  getResponse
+  getResponse,
+  delay,
+  computeHash
 };

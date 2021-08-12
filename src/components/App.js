@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { HashRouter, Route, Switch } from "react-router-dom";
 import { UserProvider } from "../context/user-context";
 

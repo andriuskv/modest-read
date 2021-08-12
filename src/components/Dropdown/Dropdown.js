@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import "./dropdown.scss";
 import { v4 as uuidv4 } from "uuid";
 import { dispatchCustomEvent } from "../../utils";
@@ -18,7 +18,7 @@ export default function Dropdown({ container, toggle, body, children }) {
     };
   }, [memoizedWindowClickHandler]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (state.reveal) {
       const viewportHeight = document.documentElement.offsetHeight;
       const height = drop.current.getBoundingClientRect().height;

@@ -1,4 +1,3 @@
-import React from "react";
 import Icon from "../../Icon";
 import Dropdown from "../../Dropdown";
 import "./file-info.scss";

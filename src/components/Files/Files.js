@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString } from "../../utils";
-import { fetchIDBFiles, saveFile, deleteIDBFile, sortFiles } from "../../services/fileService";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "../../utils";
+import { useUser } from "../../context/user-context";
+import * as fileService from "../../services/fileService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
 import Header from "../Header";
 import Icon from "../Icon";
@@ -10,7 +11,7 @@ import Dropdown from "../Dropdown";
 import Modal from "../Modal";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
-import NoFilesNotice from "./NoFilesNotice";
+import ErrorPage from "../ErrorPage";
 import FileCard from "../FileCard";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
@@ -18,29 +19,50 @@ import FilesSort from "./FilesSort";
 import "./files.scss";
 
 export default function Files() {
+  const { user } = useUser();
   const [state, setState] = useState(null);
   const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [categoryMenuVisible, setCategoryMenuVisibility] = useState(null);
   const [filesLoading, setFilesLoading] = useState(false);
+  const [importMessage, setImportMessage] = useState("");
   const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
   const [modal, setModal] = useState(null);
   const memoizedDropHandler = useCallback(handleDrop, [state, files]);
   const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
 
   useEffect(() => {
-    if (landingPageHidden) {
+    if (user.loading) {
+      return;
+    }
+
+    if (landingPageHidden || user.email) {
       init();
     }
     else {
       window.title = "ModestRead";
+      setLoading(false);
     }
-  }, [landingPageHidden]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, landingPageHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    const filesToSave = [];
+    let intervalId = 0;
+    let loadingCount = 0;
+
     async function loadPdfFile(file) {
-      const pdf = await getPdfInstance(file.blob);
-      const [metadata, coverImage] = await Promise.all([pdf.getMetadata(), pageToDataURL(pdf)]);
+      const [{ default: CryptoJS }, pdf] = await Promise.all([
+        import("crypto-js"),
+        getPdfInstance(file.blob)
+      ]);
+      const [metadata, coverImage, buffer] = await Promise.all([
+        pdf.getMetadata(),
+        pageToDataURL(pdf),
+        file.blob.arrayBuffer()
+      ]);
+      const wordArray = CryptoJS.lib.WordArray.create(buffer);
+      const hash = CryptoJS.MD5(wordArray).toString();
 
       delete file.loading;
       delete file.blob;
@@ -48,25 +70,34 @@ export default function Files() {
       Object.assign(file, {
         ...parsePdfMetadata(metadata),
         coverImage,
+        hash,
         viewMode: "multi",
         pageCount: pdf.numPages
       });
 
       setFiles([...files]);
-      saveFile(file);
+
+      loadingCount -= 1;
+      filesToSave.push(file);
     }
 
     async function loadEpubFile(file) {
-      const { default: epubjs } = await import("epubjs");
+      const [{ default: CryptoJS }, { default: epubjs }] = await Promise.all([
+        import("crypto-js"),
+        import("epubjs")
+      ]);
       const book = epubjs(file.blob);
 
       await book.ready;
 
-      const [metadata, cfiArray, coverImage] = await Promise.all([
+      const [metadata, coverImage, buffer] = await Promise.all([
         book.loaded.metadata,
-        book.locations.generate(1650),
-        getEpubCoverUrl(book)
+        getEpubCoverUrl(book),
+        file.blob.arrayBuffer(),
+        book.locations.generate(1650)
       ]);
+      const wordArray = CryptoJS.lib.WordArray.create(buffer);
+      const hash = CryptoJS.MD5(wordArray).toString();
 
       if (metadata.title) {
         file.title = metadata.title;
@@ -75,19 +106,23 @@ export default function Files() {
       if (metadata.creator) {
         file.author = metadata.creator;
       }
-      file.storedPosition = JSON.stringify(cfiArray);
       file.pageCount = book.locations.length();
       file.coverImage = coverImage;
       file.viewMode = "single";
+      file.hash = hash;
 
       delete file.loading;
       delete file.blob;
 
       setFiles([...files]);
-      saveFile(file);
+
+      loadingCount -= 1;
+      filesToSave.push(file);
     }
 
     async function loadFile(file) {
+      loadingCount += 1;
+
       if (file.type === "pdf") {
         loadPdfFile(file);
       }
@@ -97,11 +132,35 @@ export default function Files() {
     }
 
     async function loadFiles() {
+      setImportMessage("Importing...");
+
       for (const file of files) {
         if (file.loading) {
           loadFile(file);
         }
       }
+
+      intervalId = setInterval(async () => {
+        if (loadingCount <= 0) {
+          const files = [...filesToSave];
+
+          loadingCount = 0;
+          filesToSave.length = 0;
+
+          clearInterval(intervalId);
+          setImportMessage("Saving...");
+
+          try {
+            await fileService.saveFiles(files, user);
+          } catch (e) {
+            console.log(e);
+            setNotification({ value: "Something went wrong. Try again later." });
+          } finally {
+            await delay(2000);
+            setImportMessage("");
+          }
+        }
+      }, 1000);
     }
 
     if (filesLoading) {
@@ -121,19 +180,35 @@ export default function Files() {
   }, [memoizedDropHandler, memoizedDragoverHandler]);
 
   async function init() {
-    const settings = getSettings();
-    const files = await fetchIDBFiles(settings);
+    try {
+      const settings = getSettings();
+      const data = await fileService.fetchFiles(settings, user);
 
-    setFiles(files);
-    setState({
-      visibleCategory: "all",
-      categories: getCategories(files),
-      sortBy: settings.sortBy,
-      sortOrder: settings.sortOrder,
-      type: settings.layoutType,
-      showCategories: settings.showCategories
-    });
-    setDocumentTitle("Files");
+      if (data.message) {
+        setNotification({ value: data.message });
+      }
+
+      if (data.files) {
+        setFiles(data.files);
+        setState({
+          visibleCategory: "all",
+          categories: getCategories(data.files),
+          sortBy: settings.sortBy,
+          sortOrder: settings.sortOrder,
+          type: settings.layoutType,
+          showCategories: settings.showCategories
+        });
+        setLoading(false);
+        setDocumentTitle("Files");
+
+        if (!landingPageHidden) {
+          localStorage.setItem("hide-landing-page", true);
+        }
+      }
+    } catch (e) {
+      setState({ error: true, message: "Something went wrong. Try again later." });
+      console.log(e);
+    }
   }
 
   function handleDrop(event) {
@@ -182,6 +257,11 @@ export default function Files() {
         duplicateFiles.push(file.name);
       }
       else {
+        const params = {};
+
+        if (!user.email) {
+          params.local = true;
+        }
         newFiles.push({
           blob: file,
           id: uuidv4(),
@@ -190,6 +270,7 @@ export default function Files() {
           size: file.size,
           type: file.name.slice(file.name.lastIndexOf(".") + 1),
           sizeString: getFileSizeString(file.size),
+          ...params,
           status: "not started",
           pageNumber: 1,
           loading: true
@@ -211,7 +292,7 @@ export default function Files() {
         });
       }
     }
-    const newSortedFiles = sortFiles(newFiles.concat(files), { sortBy: state.sortBy, sortOrder: state.sortOrder });
+    const newSortedFiles = fileService.sortFiles(newFiles.concat(files), { sortBy: state.sortBy, sortOrder: state.sortOrder });
 
     setFiles(newSortedFiles);
     setFilesLoading(true);
@@ -291,88 +372,168 @@ export default function Files() {
   }
 
   function changeReadingStatus(id, status) {
-    const index = files.findIndex(file => file.id === id);
-    const file = files[index];
+    const file = files.find(file => file.id === id);
 
     if (status === file.status) {
       return;
     }
+    const params = { status };
 
-    if (status === "reset") {
-      delete file.status;
+    if (status === "reading") {
+      params.accessedAt = Date.now();
     }
-    else {
-      file.status = status;
-
-      if (status === "reading") {
-        file.accessedAt = Date.now();
-        files.splice(index, 1);
-        files.unshift(file);
-      }
-    }
-    setFiles([...files]);
-    setState({
-      ...state,
-      categories: getCategories(files)
-    });
-    saveFile(file);
+    updateFile(file, params);
   }
 
-  function resetProgress() {
-    const file = files.find(file => file.id === modal.id);
+  function resetProgress(id) {
+    const file = files.find(file => file.id === id);
+    const params = {
+      status: "not started",
+      accessedAt: 0,
+      pageNumber: 1
+    };
 
-    file.status = "not started";
-    file.pageNumber = 1;
-
-    if (file.type === "epub") {
-      delete file.location;
+    if (file.type === "pdf") {
+      params.scrollLeft = 0;
+      params.scrollTop = 0;
     }
-    delete file.accessedAt;
-    delete file.scrollLeft;
-    delete file.scrollTop;
-
-    setFiles([...files]);
-    setState({
-      ...state,
-      categories: getCategories(files)
-    });
-    saveFile(file);
+    else if (file.type === "epub") {
+      params.location = "";
+    }
+    updateFile(file, params);
     hideModal();
+  }
+
+  async function updateFile(file, params) {
+    try {
+      const success = await fileService.updateFile(params, {
+        id: file.id,
+        local: file.local,
+        userId: user.id
+      });
+
+      if (success) {
+        Object.assign(file, params);
+
+        const sortedFiles = fileService.sortFiles(files, { sortBy: state.sortBy, sortOrder: state.sortOrder });
+
+        setFiles(sortedFiles);
+        setState({
+          ...state,
+          categories: getCategories(sortedFiles)
+        });
+      }
+      else {
+        setNotification({ value: "Could not update file. Try again later." });
+      }
+    } catch (e) {
+      console.log(e);
+      setNotification({ value: "Could not update file. Try again later." });
+    }
   }
 
   function showResetProgressModal(id) {
     setModal({
-      id,
       iconId: "reset",
       title: "Reset progress?",
       message: "Are you sure you want to reset reading progress for this file?",
       actionName: "Reset",
-      action: resetProgress
+      action: () => resetProgress(id)
     });
   }
 
-  function removeFile() {
-    const { id } = modal;
-    const index = files.findIndex(file => file.id === id);
+  async function removeFile(id) {
+    try {
+      const index = files.findIndex(file => file.id === id);
+      const file = files[index];
+      const success = await fileService.deleteFile(id, file.local, user.id);
 
-    files.splice(index, 1);
-    setFiles([...files]);
-    setState({
-      ...state,
-      categories: getCategories(files)
-    });
-    deleteIDBFile(id);
-    hideModal();
+      if (success) {
+        files.splice(index, 1);
+        setFiles([...files]);
+        setState({
+          ...state,
+          categories: getCategories(files)
+        });
+      }
+      else {
+        setNotification({ value: "Could not remove file. Try again later." });
+      }
+      hideModal();
+    } catch (e) {
+      console.log(e);
+      setNotification({ value: "Could not remove file. Try again later." });
+    }
   }
 
   function showRemoveFileModal(id) {
     setModal({
-      id,
       iconId: "trash",
       title: "Remove this file?",
       message: "Are you sure you want to remove this file?",
       actionName: "Remove",
-      action: removeFile
+      action: () => removeFile(id)
+    });
+  }
+
+  async function transferFile(file) {
+    const local = file.local;
+
+    if (local) {
+      delete file.local;
+    }
+    else {
+      file.local = true;
+    }
+
+    try {
+      const saved = await fileService.saveFiles([file], local ? user : {});
+
+      if (saved) {
+        const deleted = await fileService.deleteFile(file.id, !file.local, user.id);
+
+        if (deleted) {
+          setFiles([...files]);
+          setState({
+            ...state,
+            categories: getCategories(files)
+          });
+          return;
+        }
+        return;
+      }
+      setNotification({ value: "Something went wrong. Try again later." });
+    } catch (e) {
+      console.log(e);
+      setNotification({ value: "Something went wrong. Try again later." });
+    } finally {
+      hideModal();
+    }
+  }
+
+  function showFileTransferModal(file) {
+    let action = null;
+
+    if (file.local) {
+      action = {
+        iconId: "cloud",
+        name: "Upload",
+        message: "Are you sure you want to upload this file? It will become inaccessible without internet connection."
+      };
+    }
+    else {
+      action = {
+        iconId: "home",
+        name: "Download",
+        message: "Are you sure you want to download this file? It will become inaccessible to other devices."
+      };
+    }
+    setModal({
+      iconId: action.iconId,
+      title: `${action.name} this file?`,
+      message: action.message,
+      actionName: action.name,
+      action: () => transferFile(file)
     });
   }
 
@@ -413,13 +574,14 @@ export default function Files() {
 
   function hideLandingPage() {
     setLandingPageHidden(true);
+    localStorage.setItem("hide-landing-page", true);
   }
 
   function sortFileCatalog(sortBy, sortOrder = 1) {
     if (sortBy === state.sortBy && sortOrder === state.sortOrder) {
       return;
     }
-    const sortedFiles = sortFiles(files, { sortBy, sortOrder });
+    const sortedFiles = fileService.sortFiles(files, { sortBy, sortOrder });
 
     setFiles(sortedFiles);
     setState({
@@ -535,15 +697,15 @@ export default function Files() {
 
   function renderFile(file) {
     return (
-      <FileCard file={file} showLink={true} key={file.id}>
+      <FileCard file={file} showLink={true} user={user} key={file.id}>
         <Dropdown
           toggle={{
-            content: <Icon name="dots-vertical"/>,
-            title: "More",
+            content: <Icon name="bookshelf"/>,
+            title: "Set reading status",
             className: "btn icon-btn"
           }}>
           <div className="files-file-card-dropdown-group">
-            <div className="files-file-card-dropdown-group-title">Reading Status</div>
+            <div className="files-file-card-dropdown-group-title">Set Reading Status</div>
             {state.categories.slice(1).map((category, i) => (
               <button className={`btn icon-text-btn dropdown-btn files-file-card-dropdown-btn${file.status === category.id ? " active" : ""}`} key={i}
                 onClick={() => changeReadingStatus(file.id, category.id)}>
@@ -552,7 +714,27 @@ export default function Files() {
               </button>
             ))}
           </div>
+        </Dropdown>
+        <Dropdown
+          toggle={{
+            content: <Icon name="dots-vertical"/>,
+            title: "More",
+            className: "btn icon-btn"
+          }}>
           <div className="files-file-card-dropdown-group">
+            {file.local ? (
+              <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
+                onClick={() => showFileTransferModal(file)}>
+                <Icon name="cloud"/>
+                <span>Upload</span>
+              </button>
+            ) : (
+              <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
+                onClick={() => showFileTransferModal(file)}>
+                <Icon name="home"/>
+                <span>Download</span>
+              </button>
+            )}
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
               onClick={() => showResetProgressModal(file.id)}>
               <Icon name="reset"/>
@@ -605,48 +787,58 @@ export default function Files() {
     if (files.length) {
       return renderFiles(files);
     }
-    const { files: originalFiles } = state.categories.find(({ id }) => id === state.visibleCategory);
-    const message = state.searchCategories && originalFiles.length ?
-      "Your search term doesn't match any files in this category." :
-      "You have no files in this category.";
+    const { files: originalFiles, id } = state.categories.find(({ id }) => id === state.visibleCategory);
 
-    return <p className="files-category-notice">{message}</p>;
+    if (state.searchCategories && originalFiles.length) {
+      return <p className="files-category-notice">Your search term doesn't match any files in this category.</p>;
+    }
+    else if (id === "all") {
+      return (
+        <div className="files-category-notice">
+          <p className="files-category-notice-message">You don't have any files.</p>
+          <label className="btn icon-text-btn primary-btn no-files-notice-btn">
+            <Icon name="upload" size="24px"/>
+            <span>Import Files</span>
+            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
+          </label>
+        </div>
+      );
+    }
+    return <p className="files-category-notice">You have no files in this category.</p>;
   }
 
-  if (!landingPageHidden) {
-    return <LandingPage hide={hideLandingPage}/>;
+  if (loading || user.loading) {
+    return null;
   }
-  else if (state) {
+
+  if (state) {
+    if (state.error) {
+      return <ErrorPage message={state.message}/>;
+    }
     return (
       <div className="container">
-        {files.length ? (
-          <>
-            {renderCategoryMenu()}
-            <div className="files-top-bar">
-              <FileSearch searchFiles={searchFiles} resetSearch={resetSearch}/>
-              <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
-            </div>
-            {notification && (
-              <Notification notification={notification} expandable={notification.expandable}
-                dismiss={dismissNotification} margin="top">
-                {notification.files ? (
-                  <ul className="files-duplicate-files">
-                    {notification.files.map((file, i) => (
-                      <li className="files-duplicate-file" key={i}>{file}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </Notification>
-            )}
-            {renderFileCategory()}
-          </>
-        ) : <NoFilesNotice notification={notification}
-          dismiss={dismissNotification}
-          handleFileUpload={handleFileUpload}/>
-        }
+        {renderCategoryMenu()}
+        <div className="files-top-bar">
+          <FileSearch searchFiles={searchFiles} resetSearch={resetSearch}/>
+          <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
+        </div>
+        {notification && (
+          <Notification notification={notification} expandable={notification.expandable}
+            dismiss={dismissNotification} margin="top">
+            {notification.files ? (
+              <ul className="files-duplicate-files">
+                {notification.files.map((file, i) => (
+                  <li className="files-duplicate-file" key={i}>{file}</li>
+                ))}
+              </ul>
+            ) : null}
+          </Notification>
+        )}
+        {renderFileCategory()}
         {modal ? <Modal {...modal} hide={hideModal}/> : null}
+        {importMessage ? <div className="files-import-message">{importMessage}</div> : null}
       </div>
     );
   }
-  return null;
+  return <LandingPage hide={hideLandingPage}/>;
 }
