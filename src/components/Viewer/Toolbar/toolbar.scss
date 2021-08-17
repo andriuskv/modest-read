@@ -151,6 +151,10 @@
   padding-bottom: var(--space-md);
   margin-bottom: var(--space-md);
   border-bottom: 1px solid var(--color-grey-50);
+
+  &.hidden {
+    display: none;
+  }
 }
 
 .viewer-toolbar-dropdown-btn {
@@ -170,12 +174,10 @@
   color: var(--color-white);
 }
 
-.viewer-toolbar-settings {
-  padding: 0 var(--space-xl) var(--space-md) var(--space-xl);
-}
-
 .viewer-toolbar-settings-item {
   display: flex;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
 
   &:not(:last-of-type) {
     margin-bottom: var(--space-md);

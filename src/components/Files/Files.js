@@ -8,7 +8,7 @@ import { getSettings, setSettings, setSetting } from "../../services/settingsSer
 import Header from "../Header";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
-import Modal from "../Modal";
+import ConfirmationModal from "../ConfirmationModal";
 import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import ErrorPage from "../ErrorPage";
@@ -835,7 +835,7 @@ export default function Files() {
           </Notification>
         )}
         {renderFileCategory()}
-        {modal ? <Modal {...modal} hide={hideModal}/> : null}
+        {modal ? <ConfirmationModal {...modal} hide={hideModal}/> : null}
         {importMessage ? <div className="files-import-message">{importMessage}</div> : null}
       </div>
     );

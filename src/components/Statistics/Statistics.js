@@ -6,7 +6,7 @@ import Header from "../Header";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
 import Notification from "../Notification";
-import Modal from "../Modal";
+import ConfirmationModal from "../ConfirmationModal";
 import "./statistics.scss";
 
 export default function Statistics() {
@@ -454,7 +454,7 @@ export default function Statistics() {
       )}
       {renderGraph()}
       {renderTimePeriodTable()}
-      {modal ? <Modal {...modal} hide={hideModal}/> : null}
+      {modal ? <ConfirmationModal {...modal} hide={hideModal}/> : null}
     </div>
   );
 }

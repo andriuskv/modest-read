@@ -6,7 +6,7 @@
   }
 
   &.invert {
-    .viewer-page, .epub-container {
+    .viewer-page {
       filter: invert(100%);
     }
   }
@@ -14,6 +14,22 @@
   ::selection {
     color: transparent;
     background-color: var(--color-primary);
+  }
+
+  &.theme-white {
+    background-color: white;
+  }
+
+  &.theme-black {
+    background-color: black;
+  }
+
+  &.theme-grey {
+    background-color: #1d1c1b;
+  }
+
+  &.theme-orange {
+    background-color: #FBF0D9;
   }
 }
 
@@ -184,19 +200,25 @@
   }
 }
 
-.epub-container {
-  margin: 0 auto;
-  background-color: white;
+.viewer-margin-modal-icon {
+  background-color: var(--color-white-20);
+  box-shadow: 0 0 0 1px var(--color-white);
+  color: var(--color-white);
+}
 
-  &.theme-black {
-    background-color: black;
-  }
+.viewer-margin-modal-body {
+  display: flex;
+  justify-content: space-between;
+}
 
-  &.theme-grey {
-    background-color: #1d1c1b;
-  }
+.viewer-margin-modal-label {
+  margin-left: var(--space-sm);
+  margin-bottom: var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-grey-10);
+}
 
-  &.theme-orange {
-    background-color: #FBF0D9;
-  }
+.viewer-margin-modal-input {
+  width: 100px;
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { savePreferences } from "../../../services/fileService";
 import Icon from "../../Icon";
 import Notification from "../../Notification";
 import "./file-load-modal.scss";
@@ -51,10 +52,6 @@ export default function FileLoadModal({ message, filePreferences, saveFileLoadMo
     if (hide) {
       savePreferences(updatedPreferences);
     }
-  }
-
-  function savePreferences(preferences) {
-    localStorage.setItem("file-preferences", JSON.stringify(preferences));
   }
 
   if (message.type === "negative") {

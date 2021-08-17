@@ -2,16 +2,17 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react
 import { useHistory, useParams } from "react-router-dom";
 import { useUser } from "../../context/user-context";
 import { computeHash, setDocumentTitle } from "../../utils";
-import { saveFile, fetchFile, fetchCurrentFile, saveCurrentFile, findFile } from "../../services/fileService";
+import * as fileService from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
-import Icon from "../Icon";
 import ErrorPage from "../ErrorPage";
+import Modal from "../Modal";
+import Icon from "../Icon";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import Spinner from "./Spinner";
 import { initPdfViewer, cleanupPdfViewer, getNewPdfFile, setSavePdfFile } from "./pdf-viewer";
-import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile } from "./epub-viewer";
+import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile, updateEpubMargin } from "./epub-viewer";
 import "./viewer.scss";
 
 export default function Viewer() {
@@ -19,9 +20,10 @@ export default function Viewer() {
   const history = useHistory();
   const { id } = useParams();
   const [state, setState] = useState({});
-  const [filePreferences, setFilePreferences] = useState(() => initPreferences());
+  const [filePreferences, setFilePreferences] = useState(() => fileService.getPreferences());
   const [settings, setSettings] = useState(() => getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
+  const [marginModal, setMarginModal] = useState(null);
   const viewerRef = useRef(null);
   const viewerLoaded = useRef(false);
   const memoizedDropHandler = useCallback(handleDrop, [state, filePreferences, fileLoadMessage]);
@@ -75,10 +77,10 @@ export default function Viewer() {
       return;
     }
     const type = new URLSearchParams(history.location.search).get("type") || "";
-    const file = await fetchFile(id, user.id, type);
+    const file = await fileService.fetchFile(id, user.id, type);
 
     if (file?.id) {
-      const currentFile = await fetchCurrentFile();
+      const currentFile = await fileService.fetchCurrentFile();
       file.type = file.type || "pdf";
 
       if (currentFile && currentFile.name === file.name) {
@@ -201,7 +203,7 @@ export default function Viewer() {
     setState({ ...state, loading: true });
 
     const hash = await computeHash(await file.arrayBuffer());
-    let newFile = await findFile(hash, user.id);
+    let newFile = await fileService.findFile(hash, user.id);
     let save = true;
 
     if (!newFile) {
@@ -251,8 +253,8 @@ export default function Viewer() {
   }
 
   function saveLoadedFile(blob, metadata) {
-    saveFile(metadata, user.id);
-    saveCurrentFile(blob);
+    fileService.saveFile(metadata, user.id);
+    fileService.saveCurrentFile(blob);
   }
 
   function setSaveViewerFile(save) {
@@ -274,14 +276,6 @@ export default function Viewer() {
     hideFileLoadMessage();
   }
 
-  function initPreferences() {
-    return JSON.parse(localStorage.getItem("file-preferences")) || {};
-  }
-
-  function savePreferences(preferences) {
-    localStorage.setItem("file-preferences", JSON.stringify(preferences));
-  }
-
   function updateFileSavePreference({ target }) {
     const updatedPreferences = {
       ...filePreferences,
@@ -289,11 +283,35 @@ export default function Viewer() {
     };
 
     setFilePreferences(updatedPreferences);
-    savePreferences(updatedPreferences);
+    fileService.savePreferences(updatedPreferences);
   }
 
   function setViewerSettings(name, value) {
     setSettings({ ...settings, [name]: value });
+  }
+
+  function showMarginModal() {
+    setMarginModal(filePreferences.epub.margin);
+  }
+
+  function hideMarginModal() {
+    setMarginModal(null);
+  }
+
+  function handleMarginFormSubmit(event) {
+    const { horizontal, top, bottom } = event.target.elements;
+    const margin = {
+      horizontal: horizontal.value < 0 ? 0 : horizontal.value,
+      top: top.value < 0 ? 0 : top.value,
+      bottom: bottom.value < 0 ? 0 : bottom.value
+    };
+
+    filePreferences.epub.margin = margin;
+
+    event.preventDefault();
+    setFilePreferences({ ...filePreferences });
+    updateEpubMargin(margin);
+    hideMarginModal();
   }
 
   function exitViewer() {
@@ -325,6 +343,7 @@ export default function Viewer() {
             setViewerSettings={setViewerSettings}
             updateFileSavePreference={updateFileSavePreference}
             handleFileUpload={handleFileUpload}
+            showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>
           {state.loading && <Spinner/>}
         </>
@@ -337,6 +356,34 @@ export default function Viewer() {
       <button id="js-viewer-nav-next-btn" className="btn icon-btn viewer-navigation-btn next">
         <Icon name="chevron-right"/>
       </button>
+      {marginModal && (
+        <Modal hide={hideMarginModal}>
+          <form onSubmit={handleMarginFormSubmit}>
+            <div className="modal-title-container">
+              <Icon name="margin" className="modal-title-icon viewer-margin-modal-icon"/>
+              <h3 className="modal-title">Margin</h3>
+            </div>
+            <div className="viewer-margin-modal-body">
+              <label>
+                <div className="viewer-margin-modal-label">Horizontal</div>
+                <input type="number" className="input viewer-margin-modal-input" name="horizontal" defaultValue={marginModal.horizontal}/>
+              </label>
+              <label>
+                <div className="viewer-margin-modal-label">Top</div>
+                <input type="number" className="input viewer-margin-modal-input" name="top" defaultValue={marginModal.top}/>
+              </label>
+              <label>
+                <div className="viewer-margin-modal-label">Bottom</div>
+                <input type="number" className="input viewer-margin-modal-input" name="bottom" defaultValue={marginModal.bottom}/>
+              </label>
+            </div>
+            <div className="modal-bottom">
+              <button type="button" className="btn btn-text" onClick={hideMarginModal}>Cancel</button>
+              <button className="btn">Done</button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }
