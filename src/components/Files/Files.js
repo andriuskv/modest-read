@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "../../utils";
@@ -6,6 +6,7 @@ import { useUser } from "../../context/user-context";
 import * as fileService from "../../services/fileService";
 import { getSettings, setSettings, setSetting } from "../../services/settingsService";
 import Header from "../Header";
+import BannerImage from "../BannerImage";
 import Icon from "../Icon";
 import Dropdown from "../Dropdown";
 import ConfirmationModal from "../ConfirmationModal";
@@ -29,8 +30,10 @@ export default function Files() {
   const [importMessage, setImportMessage] = useState("");
   const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
   const [modal, setModal] = useState(null);
+  const [indicatorVisible, setIndicatorVisible] = useState(false);
   const memoizedDropHandler = useCallback(handleDrop, [state, files]);
   const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
+  const initTimeoutId = useRef(0);
 
   useEffect(() => {
     if (user.loading) {
@@ -181,8 +184,15 @@ export default function Files() {
 
   async function init() {
     try {
+      initTimeoutId.current = setTimeout(() => {
+        setIndicatorVisible(true);
+      }, 2000);
+
       const settings = getSettings();
       const data = await fileService.fetchFiles(settings, user);
+
+      clearTimeout(initTimeoutId.current);
+      setIndicatorVisible(false);
 
       if (data.message) {
         setNotification({ value: data.message });
@@ -805,6 +815,15 @@ export default function Files() {
       );
     }
     return <p className="files-category-notice">You have no files in this category.</p>;
+  }
+
+  if (indicatorVisible) {
+    return (
+      <div className="files-loading-indicator">
+        <BannerImage/>
+        <div className="files-loading-indicator-text">Loading...</div>
+      </div>
+    );
   }
 
   if (loading || user.loading) {
