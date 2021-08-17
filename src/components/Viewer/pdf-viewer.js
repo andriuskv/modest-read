@@ -54,7 +54,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   initOutline(getOutline, goToDestination);
   setSavePdfFile(save);
 
-  const [multiPageViewElement, singlePageViewElement] = document.getElementById("js-viewer-view-modes").children;
+  const [singlePageViewElement, multiPageViewElement] = document.getElementById("js-viewer-view-modes").children;
 
   if (metadata.viewMode === "multi") {
     views = getPageViews();
@@ -809,10 +809,10 @@ async function setViewMode(event) {
   if (mode === fileMetadata.viewMode) {
     return;
   }
-  const [multiPageViewElement, singlePageViewElement] = event.currentTarget.children;
+  const [singlePageViewElement, multiPageViewElement] = event.currentTarget.children;
 
-  multiPageViewElement.classList.toggle("active");
   singlePageViewElement.classList.toggle("active");
+  multiPageViewElement.classList.toggle("active");
 
   pdfElement.innerHTML = "";
 

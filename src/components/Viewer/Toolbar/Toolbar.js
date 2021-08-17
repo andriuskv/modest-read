@@ -5,7 +5,7 @@ import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
-export default function Toolbar({ file, filePreferences, setViewerSettings, updateFileSavePreference, handleFileUpload, exitViewer }) {
+export default function Toolbar({ file, filePreferences, setViewerSettings, updateFileSavePreference, handleFileUpload, exitViewer, showMarginModal }) {
   const [settings, setToolbarSettings] = useState(() => getSettings());
   const keepVisible = useRef(false);
   const previousScrollTop = useRef(file.scrollTop);
@@ -248,35 +248,45 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
             </div>
           )}
           <div id="js-viewer-view-modes" className="viewer-toolbar-dropdown-group">
-            {file.type === "pdf" && (
-              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
-                <Icon name="pages"/>
-                <span>Multi page</span>
-              </button>
-            )}
             <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="single">
               <Icon name="page"/>
               <span>Single page</span>
             </button>
-            {file.type === "epub" && (
-              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="spread">
-                <Icon name="spread"/>
-                <span>Spread page</span>
-              </button>
-            )}
+            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
+              <Icon name="pages"/>
+              <span>Multi page</span>
+            </button>
+          </div>
+          <div className="viewer-toolbar-dropdown-group">
+            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
+              <Icon name="margin"/>
+              <span>Set margin</span>
+            </button>
           </div>
           {file.type === "epub" && (
-            <div id="js-viewer-themes" className="viewer-toolbar-dropdown-group viewer-themes-container">
-              <div className="viewer-themes-title">Themes</div>
-              <div className="viewer-themes">
-                <button className="btn viewer-theme-btn black" data-theme="black">A</button>
-                <button className="btn viewer-theme-btn white" data-theme="white">A</button>
-                <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
-                <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
+            <>
+              <div id="js-viewer-spread-pages-setting"
+                className={`viewer-toolbar-dropdown-group${file.viewMode === "multi" ? " hidden" : ""}`}>
+                <label className="viewer-toolbar-settings-item">
+                  <input type="checkbox" id="js-viewer-spread-pages" className="sr-only checkbox-input"/>
+                  <div className="checkbox">
+                    <div className="checkbox-tick"></div>
+                  </div>
+                  <span className="checkbox-label">Spread pages</span>
+                </label>
               </div>
-            </div>
+              <div className="viewer-toolbar-dropdown-group viewer-themes-container">
+                <div className="viewer-themes-title">Themes</div>
+                <div id="js-viewer-themes" className="viewer-themes">
+                  <button className="btn viewer-theme-btn black" data-theme="black">A</button>
+                  <button className="btn viewer-theme-btn white" data-theme="white">A</button>
+                  <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
+                  <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
+                </div>
+              </div>
+            </>
           )}
-          <div className="viewer-toolbar-dropdown-group viewer-toolbar-settings">
+          <div className={`viewer-toolbar-dropdown-group${file.type === "epub" && filePreferences.hideWarning ? " hidden" : ""}`}>
             {file.type === "pdf" && (
               <>
                 <label className="viewer-toolbar-settings-item">
@@ -284,7 +294,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
                   <div className="checkbox">
                     <div className="checkbox-tick"></div>
                   </div>
-                  <span className="checkbox-label">Invert page colors.</span>
+                  <span className="checkbox-label">Invert page colors</span>
                 </label>
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" className="sr-only checkbox-input"
@@ -294,11 +304,11 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
                   <div className="checkbox">
                     <div className="checkbox-tick"></div>
                   </div>
-                  <span className="checkbox-label">Keep toolbar visible.</span>
+                  <span className="checkbox-label">Keep toolbar visible</span>
                 </label>
               </>
             )}
-            {filePreferences.hideWarning && (
+            {!filePreferences.hideWarning && (
               <label className="viewer-toolbar-settings-item">
                 <input type="checkbox" className="sr-only checkbox-input"
                   onChange={updateFileSavePreference}
@@ -306,7 +316,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
                 <div className="checkbox">
                   <div className="checkbox-tick"></div>
                 </div>
-                <span className="checkbox-label">Save loaded file.</span>
+                <span className="checkbox-label">Save loaded file</span>
               </label>
             )}
           </div>

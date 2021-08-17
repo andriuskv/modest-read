@@ -4,6 +4,7 @@ import * as fileService from "../../services/fileService";
 import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 
+const preferences = fileService.getPreferences();
 const minScale = 0.333325;
 const maxScale = 13.333;
 let book = null;
@@ -26,12 +27,12 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
   fileMetadata = metadata;
   scale = metadata.scale || getDefaultScale();
   epubElement = container;
-  rendition = getRendition(metadata.viewMode);
+  rendition = getRendition(metadata.viewMode, metadata.spreadPages, preferences.epub.margin);
 
   initTheme();
   initScale(scale);
   initPage(metadata.pageNumber, metadata.pageCount);
-  initViewMode(metadata.viewMode);
+  initViewMode(metadata.viewMode, metadata.spreadPages);
   initOutline(getOutline, goToDestination);
 
   await book.ready;
@@ -89,16 +90,20 @@ function handleDropdownVisibility({ detail }) {
   hideDropdown = detail.hide;
 }
 
-function initViewMode(viewMode) {
+function initViewMode(viewMode, spreadPages) {
   const viewModesElement = document.getElementById("js-viewer-view-modes");
-  const [singlePageViewElement, spreadPageViewElement] = viewModesElement.children;
+  const [singlePageViewElement, multiPageViewElement] = viewModesElement.children;
+  const spreadPagesElement = document.getElementById("js-viewer-spread-pages");
+
+  spreadPagesElement.checked = spreadPages;
 
   if (viewMode === "single") {
     singlePageViewElement.classList.add("active");
   }
   else {
-    spreadPageViewElement.classList.add("active");
+    multiPageViewElement.classList.add("active");
   }
+  spreadPagesElement.addEventListener("click", handleSpreadPagesSetting);
   viewModesElement.addEventListener("click", setViewMode);
 }
 
@@ -108,9 +113,11 @@ function initTheme() {
 
 function cleanupViewMode(viewMode) {
   const viewModesElement = document.getElementById("js-viewer-view-modes");
+  const spreadPagesElement = document.getElementById("js-viewer-spread-pages");
 
   viewModesElement.querySelector(`[data-mode=${viewMode}]`).classList.remove("active");
   viewModesElement.removeEventListener("click", setViewMode);
+  spreadPagesElement.removeEventListener("click", handleSpreadPagesSetting);
 }
 
 function setTheme(event) {
@@ -226,9 +233,9 @@ function applyTheme() {
   });
 
   if (previousTheme) {
-    epubElement.firstElementChild.classList.remove(`theme-${previousTheme}`);
+    epubElement.classList.remove(`theme-${previousTheme}`);
   }
-  epubElement.firstElementChild.classList.add(`theme-${theme}`);
+  epubElement.classList.add(`theme-${theme}`);
   previousTheme = theme;
 }
 
@@ -259,12 +266,22 @@ function handleClickOnRendition() {
   }
 }
 
+function handleSpreadPagesSetting({ target }) {
+  resetRendition(fileMetadata.viewMode, target.checked, preferences.epub.margin);
+
+  if (save) {
+    updateFile(fileMetadata, { spreadPages: target.checked });
+  }
+}
+
 function cleanupEpubViewer(reloading) {
   if (reloading) {
     if (epubElement) {
       epubElement.innerHTML = "";
+      epubElement.classList.remove(`theme-${fileMetadata.theme}`);
     }
     cleanupViewMode(fileMetadata.viewMode);
+    cleanupScale();
   }
 
   if (save) {
@@ -273,6 +290,15 @@ function cleanupEpubViewer(reloading) {
   stopCounting();
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
+}
+
+function cleanupScale() {
+  const zoomOutElement = document.getElementById("js-viewer-zoom-out");
+  const zoomInElement = document.getElementById("js-viewer-zoom-in");
+
+  zoomOutElement.removeEventListener("click", zoomOut);
+  zoomInElement.removeEventListener("click", zoomIn);
+  document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
 }
 
 function setSaveEpubFile(saveFile) {
@@ -403,7 +429,7 @@ function setScale(value, name = "custom") {
   rendition.themes.default({ "html": { "font-size": `${value * 100}% !important` }});
 }
 
-function setViewMode(event) {
+async function setViewMode(event) {
   const element = getElementByAttr("data-mode", event.target, event.currentTarget);
 
   if (!element) {
@@ -414,19 +440,61 @@ function setViewMode(event) {
   if (mode === fileMetadata.viewMode) {
     return;
   }
-  const [singlePageViewElement, spreadPageViewElement] = event.currentTarget.children;
+  const [singlePageViewElement, multiPageViewElement] = event.currentTarget.children;
 
   singlePageViewElement.classList.toggle("active");
-  spreadPageViewElement.classList.toggle("active");
+  multiPageViewElement.classList.toggle("active");
+  document.getElementById("js-viewer-spread-pages-setting").classList.toggle("hidden");
 
   if (save) {
     updateFile(fileMetadata, { viewMode: mode });
   }
+  resetRendition(mode, fileMetadata.spreadPages, preferences.epub.margin);
+}
+
+function getRendition(viewMode, spreadPages, margin) {
+  const options = {
+    height: document.documentElement.offsetHeight - 40,
+    // Only half of gap is visible in single page mode, in multi page mode it is ignored.
+    gap: margin.horizontal * 2 || 0.1
+  };
+
+  if (viewMode === "single") {
+    options.flow = "paginated";
+    options.manager = "default";
+    options.spread = spreadPages ? "always" : "none";
+  }
+  else if (viewMode === "multi") {
+    options.flow = "scrolled";
+    options.manager = "continuous";
+  }
+  const rendition = book.renderTo(epubElement, options);
+
+  rendition.hooks.content.register(resetFontSize);
+  rendition.hooks.content.register(applyTheme);
+  rendition.themes.default({
+    "html": { "font-size": `${scale.currentScale * 100}% !important` },
+    "body": {
+      "padding-top": `${margin.top}px !important`,
+      "padding-bottom": `${margin.bottom}px !important`,
+      // Padding left/right doesn't have an effect in single page view mode
+      "padding-left": `${margin.horizontal}px !important`,
+      "padding-right": `${margin.horizontal}px !important`
+    },
+    "::selection": { "background-color": "hsla(260, 48%, 52%, 0.4)" }
+  });
+
+  return rendition;
+}
+
+function resetRendition(viewMode, spreadPages, margin) {
   epubElement.innerHTML = "";
 
   rendition.off("relocated", handleRelocation);
+  rendition.off("keydown", handleKeyDownOnRendition);
+  rendition.off("click", handleClickOnRendition);
 
-  rendition = getRendition(mode);
+  rendition = getRendition(viewMode, spreadPages, margin);
 
   rendition.on("relocated", handleRelocation);
   rendition.on("keydown", handleKeyDownOnRendition);
@@ -434,25 +502,11 @@ function setViewMode(event) {
   rendition.display(fileMetadata.location);
 }
 
-function getRendition(viewMode) {
-  const options = {
-    flow: "paginated",
-    height: document.documentElement.offsetHeight - 40
-  };
+function updateEpubMargin(newMargin) {
+  preferences.epub.margin = newMargin;
 
-  if (viewMode === "single") {
-    options.spread = "none";
-  }
-  const rendition = book.renderTo(epubElement, options);
-
-  rendition.hooks.content.register(resetFontSize);
-  rendition.hooks.content.register(applyTheme);
-  rendition.themes.default({
-    "html": { "font-size": `${scale.currentScale * 100}% !important`},
-    "::selection": { "background-color": "hsla(260, 48%, 52%, 0.4)" }
-  });
-
-  return rendition;
+  resetRendition(fileMetadata.viewMode, fileMetadata.spreadPages, newMargin);
+  fileService.savePreferences(preferences);
 }
 
 async function getNewEpubFile(blob, user) {
@@ -574,5 +628,6 @@ export {
   initEpubViewer,
   cleanupEpubViewer,
   setSaveEpubFile,
+  updateEpubMargin,
   getNewEpubFile
 };

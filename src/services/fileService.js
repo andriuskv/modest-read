@@ -3,6 +3,17 @@ import { getResponse } from "../utils";
 
 const store = createStore("modest-keep", "files");
 const currentFileStore = createStore("modest-keep-file", "current-file");
+const preferences = JSON.parse(localStorage.getItem("file-preferences")) || {
+  hideWarning: false,
+  saveLoadedFile: false,
+  epub: {
+    margin: {
+      horizontal: 100,
+      top: 20,
+      bottom: 20
+    }
+  }
+};
 
 async function fetchFiles(settings, user) {
   const [idbFiles, response] = await Promise.all([values(store), user.id ? fetchServerFiles(user.id) : {}]);
@@ -182,6 +193,14 @@ function sortByLastAccessed(files, sortBy, sortOrder) {
   return sortBySortingValue(reading, sortBy, sortOrder).concat(sortBySortingValue(rest, sortBy, sortOrder));
 }
 
+function getPreferences() {
+  return preferences;
+}
+
+function savePreferences(preferences) {
+  localStorage.setItem("file-preferences", JSON.stringify(preferences));
+}
+
 export {
   fetchFiles,
   fetchFile,
@@ -192,5 +211,7 @@ export {
   fetchCurrentFile,
   saveCurrentFile,
   findFile,
-  sortFiles
+  sortFiles,
+  getPreferences,
+  savePreferences
 };
