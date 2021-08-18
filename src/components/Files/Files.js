@@ -36,6 +36,11 @@ export default function Files() {
   const initTimeoutId = useRef(0);
 
   useEffect(() => {
+    clearTimeout(initTimeoutId.current);
+    initTimeoutId.current = setTimeout(() => {
+      setIndicatorVisible(true);
+    }, 1500);
+
     if (user.loading) {
       return;
     }
@@ -45,7 +50,9 @@ export default function Files() {
     }
     else {
       window.title = "ModestRead";
+      clearTimeout(initTimeoutId.current);
       setLoading(false);
+      setIndicatorVisible(false);
     }
   }, [user, landingPageHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -184,10 +191,6 @@ export default function Files() {
 
   async function init() {
     try {
-      initTimeoutId.current = setTimeout(() => {
-        setIndicatorVisible(true);
-      }, 2000);
-
       const settings = getSettings();
       const data = await fileService.fetchFiles(settings, user);
 
