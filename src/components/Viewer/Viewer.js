@@ -4,6 +4,7 @@ import { useUser } from "../../context/user-context";
 import { computeHash, setDocumentTitle } from "../../utils";
 import * as fileService from "../../services/fileService";
 import { getSettings } from "../../services/settingsService";
+import "./viewer.scss";
 import ErrorPage from "../ErrorPage";
 import Modal from "../Modal";
 import Icon from "../Icon";
@@ -11,9 +12,6 @@ import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import Spinner from "./Spinner";
-import { initPdfViewer, cleanupPdfViewer, getNewPdfFile, setSavePdfFile } from "./pdf-viewer";
-import { initEpubViewer, cleanupEpubViewer, setSaveEpubFile, getNewEpubFile, updateEpubMargin } from "./epub-viewer";
-import "./viewer.scss";
 
 export default function Viewer() {
   const { user } = useUser();
@@ -122,27 +120,35 @@ export default function Viewer() {
     event.target.value = "";
   }
 
-  function initViewer(container, file) {
+  async function initViewer(container, file) {
     viewerLoaded.current = true;
     file.metadata.type = file.metadata.type || "pdf";
 
     if (file.metadata.type === "pdf") {
+      const { initPdfViewer } = await import("./pdf-viewer");
+
       initPdfViewer(container, file, user);
     }
     else if (file.metadata.type === "epub") {
+      const { initEpubViewer } = await import("./epub-viewer");
+
       initEpubViewer(container, file, user);
     }
   }
 
-  function cleanupViewer(reloading = false) {
+  async function cleanupViewer(reloading = false) {
     if (!state.file || state.filePreviewVisible) {
       return;
     }
 
     if (state.file.type === "pdf") {
+      const { cleanupPdfViewer } = await import("./pdf-viewer");
+
       cleanupPdfViewer(reloading);
     }
     else if (state.file.type === "epub") {
+      const { cleanupEpubViewer } = await import("./epub-viewer");
+
       cleanupEpubViewer(reloading);
     }
   }
@@ -210,9 +216,11 @@ export default function Viewer() {
       const fileType = file.name.slice(file.name.lastIndexOf(".") + 1);
 
       if (fileType === "pdf") {
+        const { getNewPdfFile } = await import("./pdf-viewer");
         newFile = await getNewPdfFile(file, user);
       }
       else if (fileType === "epub") {
+        const { getNewEpubFile } = await import("./epub-viewer");
         newFile = await getNewEpubFile(file, user);
       }
       newFile.hash = hash;
@@ -257,11 +265,15 @@ export default function Viewer() {
     fileService.saveCurrentFile(blob);
   }
 
-  function setSaveViewerFile(save) {
+  async function setSaveViewerFile(save) {
     if (state.file.type === "pdf") {
+      const { setSavePdfFile } = await import("./pdf-viewer");
+
       setSavePdfFile(save);
     }
     else if (state.file.type === "epub") {
+      const { setSaveEpubFile } = await import("./epub-viewer");
+
       setSaveEpubFile(save);
     }
   }
@@ -298,7 +310,8 @@ export default function Viewer() {
     setMarginModal(null);
   }
 
-  function handleMarginFormSubmit(event) {
+  async function handleMarginFormSubmit(event) {
+    const { updateEpubMargin } = await import("./epub-viewer");
     const { horizontal, top, bottom } = event.target.elements;
     const margin = {
       horizontal: horizontal.value < 0 ? 0 : horizontal.value,
