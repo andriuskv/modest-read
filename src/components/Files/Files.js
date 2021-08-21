@@ -39,7 +39,7 @@ export default function Files() {
     clearTimeout(initTimeoutId.current);
     initTimeoutId.current = setTimeout(() => {
       setIndicatorVisible(true);
-    }, 1500);
+    }, 2000);
 
     if (user.loading) {
       return;

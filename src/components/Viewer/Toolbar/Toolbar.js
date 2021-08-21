@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { getSettings, setSetting } from "../../../services/settingsService";
+import { useEffect, useRef, useCallback } from "react";
+import { setSetting } from "../../../services/settingsService";
+import "./toolbar.scss";
 import Icon from "../../Icon";
 import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
-import "./toolbar.scss";
 
-export default function Toolbar({ file, filePreferences, setViewerSettings, updateFileSavePreference, handleFileUpload, exitViewer, showMarginModal }) {
-  const [settings, setToolbarSettings] = useState(() => getSettings());
+export default function Toolbar({ file, settings, fileWarning, setViewerSettings, updateFileSaveSetting, handleFileUpload, exitViewer, showMarginModal }) {
   const keepVisible = useRef(false);
   const previousScrollTop = useRef(file.scrollTop);
   const hideAfterScroll = useRef(file.scrollTop > 0);
@@ -15,8 +14,8 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
   const scrolling = useRef(false);
   const movingMouse = useRef(false);
   const pointerOverToolbar = useRef(false);
-  const memoizedScrollHandler = useCallback(handleScroll, [file.viewMode]);
-  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [file.viewMode]);
+  const memoizedScrollHandler = useCallback(handleScroll, [settings.pdf.viewMode]);
+  const memoizedMediaScrollHandler = useCallback(handleMatchedMediaScroll, [settings.pdf.viewMode]);
 
   useEffect(() => {
     if (file.type === "epub") {
@@ -108,14 +107,14 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
       const { scrollTop } = document.documentElement;
 
       if (scrollTop < 80) {
-        if (file.viewMode === "multi") {
+        if (settings.pdf.viewMode === "multi") {
           revealToolbar();
         }
       }
       else if (hideAfterScroll.current) {
         hideToolbar();
       }
-      else if (file.viewMode === "multi") {
+      else if (settings.pdf.viewMode === "multi") {
         revealToolbar();
       }
       scrolling.current = false;
@@ -153,7 +152,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
     }
     keepVisible.current = false;
 
-    if (file.viewMode === "multi" && document.documentElement.scrollTop < 40) {
+    if (settings.pdf.viewMode === "multi" && document.documentElement.scrollTop < 40) {
       hideAfterScroll.current = !hideAfterScroll.current;
       return;
     }
@@ -170,7 +169,6 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
 
   function setSettings(name, value) {
     setViewerSettings(name, value);
-    setToolbarSettings({ ...settings, [name]: value });
     setSetting(name, value);
   }
 
@@ -257,16 +255,16 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
               <span>Multi page</span>
             </button>
           </div>
-          <div className="viewer-toolbar-dropdown-group">
-            <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
-              <Icon name="margin"/>
-              <span>Set margin</span>
-            </button>
-          </div>
           {file.type === "epub" && (
             <>
+              <div className="viewer-toolbar-dropdown-group">
+                <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
+                  <Icon name="margin"/>
+                  <span>Set margin</span>
+                </button>
+              </div>
               <div id="js-viewer-spread-pages-setting"
-                className={`viewer-toolbar-dropdown-group${file.viewMode === "multi" ? " hidden" : ""}`}>
+                className={`viewer-toolbar-dropdown-group${settings.epub.viewMode === "multi" ? " hidden" : ""}`}>
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" id="js-viewer-spread-pages" className="sr-only checkbox-input"/>
                   <div className="checkbox">
@@ -286,7 +284,7 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
               </div>
             </>
           )}
-          <div className={`viewer-toolbar-dropdown-group${file.type === "epub" && filePreferences.hideWarning ? " hidden" : ""}`}>
+          <div className={`viewer-toolbar-dropdown-group${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
             {file.type === "pdf" && (
               <>
                 <label className="viewer-toolbar-settings-item">
@@ -308,11 +306,11 @@ export default function Toolbar({ file, filePreferences, setViewerSettings, upda
                 </label>
               </>
             )}
-            {!filePreferences.hideWarning && (
+            {!fileWarning.hide && (
               <label className="viewer-toolbar-settings-item">
                 <input type="checkbox" className="sr-only checkbox-input"
-                  onChange={updateFileSavePreference}
-                  checked={filePreferences.saveLoadedFile}/>
+                  onChange={updateFileSaveSetting}
+                  checked={fileWarning.saveFile}/>
                 <div className="checkbox">
                   <div className="checkbox-tick"></div>
                 </div>

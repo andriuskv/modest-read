@@ -1,10 +1,40 @@
-const settings = JSON.parse(localStorage.getItem("modest-read-settings")) || {
-  sortBy: "last-accessed",
-  sortOrder: 1,
-  showCategories: false,
-  layoutType: "grid",
-  keepToolbarVisible: false
-};
+import { copyObject } from "../utils";
+
+const settings = initSettings();
+
+function initSettings() {
+  const settings = JSON.parse(localStorage.getItem("modest-read-settings")) || {};
+
+  return copyObject(settings, {
+    sortBy: "last-accessed",
+    sortOrder: 1,
+    showCategories: false,
+    layoutType: "grid",
+    keepToolbarVisible: false,
+    epub: {
+      viewMode: "single",
+      spreadPages: false,
+      theme: "white",
+      scale: {
+        name: "1",
+        currentScale: 1
+      },
+      margin: {
+        horizontal: 100,
+        top: 20,
+        bottom: 20
+      }
+    },
+    pdf: {
+      viewMode: "multi",
+      invertColors: false,
+      scale: {
+        name: "1",
+        currentScale: 1.3333
+      }
+    }
+  });
+}
 
 function getSettings() {
   return settings;

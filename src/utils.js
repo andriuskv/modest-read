@@ -272,6 +272,18 @@ async function computeHash(buffer) {
   return CryptoJS.MD5(wordArray).toString();
 }
 
+function copyObject(obj, mainObj) {
+  for (const key of Object.keys(mainObj)) {
+    if (typeof obj[key] === "undefined") {
+      obj[key] = mainObj[key];
+    }
+    else if (typeof obj[key] === "object") {
+      obj[key] = copyObject(obj[key], mainObj[key]);
+    }
+  }
+  return obj;
+}
+
 export {
   setDocumentTitle,
   classNames,
@@ -292,5 +304,6 @@ export {
   getFirstDayIndex,
   getResponse,
   delay,
-  computeHash
+  computeHash,
+  copyObject
 };
