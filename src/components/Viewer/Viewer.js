@@ -3,7 +3,8 @@ import { useHistory, useParams } from "react-router-dom";
 import { useUser } from "../../context/user-context";
 import { computeHash, setDocumentTitle } from "../../utils";
 import * as fileService from "../../services/fileService";
-import { getSettings } from "../../services/settingsService";
+import * as settingsService from "../../services/settingsService";
+import * as fileWarningService from "../../services/fileWarningService";
 import "./viewer.scss";
 import ErrorPage from "../ErrorPage";
 import Modal from "../Modal";
@@ -18,13 +19,13 @@ export default function Viewer() {
   const history = useHistory();
   const { id } = useParams();
   const [state, setState] = useState({});
-  const [filePreferences, setFilePreferences] = useState(() => fileService.getPreferences());
-  const [settings, setSettings] = useState(() => getSettings());
+  const [fileWarning, setFileWarning] = useState(() => fileWarningService.getSettings());
+  const [settings, setSettings] = useState(() => settingsService.getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [marginModal, setMarginModal] = useState(null);
   const viewerRef = useRef(null);
   const viewerLoaded = useRef(false);
-  const memoizedDropHandler = useCallback(handleDrop, [state, filePreferences, fileLoadMessage]);
+  const memoizedDropHandler = useCallback(handleDrop, [state, fileWarning, fileLoadMessage]);
 
   useLayoutEffect(() => {
     if (user.loading) {
@@ -55,20 +56,10 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
-    if (!state.file) {
-      return;
+    if (state.file) {
+      viewerRef.current.classList.add("offset");
     }
-
-    if (state.file.viewMode === "single" && state.file.type === "pdf") {
-      const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
-
-      if (media.matches && !settings.keepToolbarVisible) {
-        viewerRef.current.classList.remove("offset");
-        return;
-      }
-    }
-    viewerRef.current.classList.add("offset");
-  }, [settings.keepToolbarVisible, state.file]);
+  }, [state.file]);
 
   async function init() {
     if (history.location.state) {
@@ -226,8 +217,8 @@ export default function Viewer() {
       newFile.hash = hash;
 
       if (!state.filePreviewVisible) {
-        if (filePreferences.hideWarning) {
-          save = filePreferences.saveLoadedFile;
+        if (fileWarning.hide) {
+          save = fileWarning.saveFile;
         }
         else {
           save = false;
@@ -238,6 +229,10 @@ export default function Viewer() {
             value: "Do you want to save this file?"
           });
         }
+      }
+
+      if (save) {
+        fileService.saveFile(newFile, user.id);
       }
     }
     reloadViewer(viewerRef.current, {
@@ -282,20 +277,20 @@ export default function Viewer() {
     setFileLoadMessage(null);
   }
 
-  function hideFileLoadModal(preferences) {
-    setSaveViewerFile(preferences.saveLoadedFile);
-    setFilePreferences(preferences);
+  function hideFileLoadModal(settings) {
+    setSaveViewerFile(settings.saveFile);
+    setFileWarning(settings);
     hideFileLoadMessage();
   }
 
-  function updateFileSavePreference({ target }) {
-    const updatedPreferences = {
-      ...filePreferences,
-      saveLoadedFile: target.checked
+  function updateFileSaveSetting({ target }) {
+    const settings = {
+      ...fileWarning,
+      saveFile: target.checked
     };
 
-    setFilePreferences(updatedPreferences);
-    fileService.savePreferences(updatedPreferences);
+    setFileWarning(settings);
+    fileWarningService.setSettings(settings);
   }
 
   function setViewerSettings(name, value) {
@@ -303,7 +298,7 @@ export default function Viewer() {
   }
 
   function showMarginModal() {
-    setMarginModal(filePreferences.epub.margin);
+    setMarginModal(settings.epub.margin);
   }
 
   function hideMarginModal() {
@@ -319,12 +314,14 @@ export default function Viewer() {
       bottom: bottom.value < 0 ? 0 : bottom.value
     };
 
-    filePreferences.epub.margin = margin;
+    settings.epub.margin = margin;
 
     event.preventDefault();
-    setFilePreferences({ ...filePreferences });
+
+    setSettings({ ...settings });
     updateEpubMargin(margin);
     hideMarginModal();
+    settingsService.setSettings(settings);
   }
 
   function exitViewer() {
@@ -344,7 +341,7 @@ export default function Viewer() {
           loadPreviewFile={loadPreviewFile}/>
       ) : fileLoadMessage ? (
         <FileLoadModal message={fileLoadMessage}
-          filePreferences={filePreferences}
+          fileWarning={fileWarning}
           saveFileLoadModalFile={saveFileLoadModalFile}
           hideFileLoadModal={hideFileLoadModal}
           hideFileLoadMessage={hideFileLoadMessage}/>
@@ -352,9 +349,10 @@ export default function Viewer() {
       {state.file && !state.filePreviewVisible && (
         <>
           <Toolbar file={state.file}
-            filePreferences={filePreferences}
+            settings={settings}
+            fileWarning={fileWarning}
             setViewerSettings={setViewerSettings}
-            updateFileSavePreference={updateFileSavePreference}
+            updateFileSaveSetting={updateFileSaveSetting}
             handleFileUpload={handleFileUpload}
             showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>

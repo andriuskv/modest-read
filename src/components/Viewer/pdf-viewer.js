@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
 import * as fileService from "../../services/fileService";
-import { getSettings } from "../../services/settingsService";
+import { getSettings, setSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
 import { startCounting, stopCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
@@ -34,19 +34,44 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
   fileMetadata = metadata;
-  fileMetadata.scale = fileMetadata.scale || getDefaultScale();
-  scale = fileMetadata.scale;
+  scale = settings.pdf.scale;
   rotation = metadata.rotation || 0;
   pageNumber = metadata.pageNumber || 1;
   document.body.style.overscrollBehavior = "none";
 
-  const [dimensions] = await Promise.all([
+  ([pageDimensions] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
-    metadata.viewMode === "multi" ?
+    settings.pdf.viewMode === "multi" ?
       renderEmptyPages(pdfElement, pdfInstance, metadata) :
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
-  ]);
-  pageDimensions = dimensions;
+  ]));
+
+  const params = {
+    scrollLeft: metadata.scrollLeft,
+    scrollTop: metadata.scrollTop,
+    scale: metadata.scale
+  };
+
+  if (metadata.viewMode === settings.pdf.viewMode) {
+    params.scrollTop = params.scrollTop / params.scale * scale.currentScale;
+    params.scrollLeft = params.scrollLeft / params.scale * scale.currentScale;
+  }
+  else if (metadata.viewMode === "single" && settings.pdf.viewMode === "multi") {
+    const { top } = getPageElementBox(pageNumber, pdfElement.children);
+
+    params.viewMode = settings.pdf.viewMode;
+    params.scrollTop = top + (params.scrollTop / params.scale * scale.currentScale);
+  }
+  else if (metadata.viewMode === "multi" && settings.pdf.viewMode === "single") {
+    params.viewMode = settings.pdf.viewMode;
+    params.scrollTop = 0;
+    params.scrollLeft = 0;
+  }
+
+  if (params.scale !== scale.currentScale) {
+    params.scale = scale.currentScale;
+  }
+  window.scrollTo(params.scrollLeft, params.scrollTop);
 
   initScale(scale);
   initColorInversion();
@@ -56,14 +81,19 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
 
   const [singlePageViewElement, multiPageViewElement] = document.getElementById("js-viewer-view-modes").children;
 
-  if (metadata.viewMode === "multi") {
-    views = getPageViews();
+  if (settings.pdf.viewMode === "multi") {
+    views = views.length ? views: getPageViews();
     multiPageViewElement.classList.add("active");
     window.addEventListener("scroll", handleScroll);
 
     registerIntersectionObserver();
   }
   else {
+    const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
+
+    if (media.matches && !settings.keepToolbarVisible) {
+      pdfElement.classList.remove("offset");
+    }
     renderSinglePage(pageNumber);
     showSinglePageNavBtn();
 
@@ -79,16 +109,12 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePages);
   document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
 
-  window.scrollTo(metadata.scrollLeft, metadata.scrollTop);
-
   if (save) {
-    const params = {};
-
     if (metadata.status !== "have read") {
       if (metadata.pageCount === 1) {
         params.status = "have read";
       }
-      else {
+      else if (params.status !== "reading") {
         params.status = "reading";
       }
     }
@@ -141,14 +167,14 @@ function cleanupPdfViewer(reloading) {
       pdfElement.innerHTML = "";
     }
     pdfInstance = null;
-    document.body.style.overscrollBehavior = "";
 
     stopCounting();
     cleanupScale();
-    cleanupViewMode(fileMetadata.viewMode);
+    cleanupViewMode();
     cleanupPageSelection();
     cleanupColorInversion();
   }
+  document.body.style.overscrollBehavior = "";
   unregisterIntersectionObserver();
 
   if (save) {
@@ -201,16 +227,21 @@ function initPage() {
 function initColorInversion() {
   const invertColorsCheckbox = document.getElementById("js-viewer-invert-colors");
 
-  if (fileMetadata.invertColors) {
+  if (settings.pdf.invertColors) {
     document.getElementById("js-viewer").classList.add("invert");
-    invertColorsCheckbox.checked = fileMetadata.invertColors;
+    invertColorsCheckbox.checked = settings.pdf.invertColors;
   }
   invertColorsCheckbox.addEventListener("change", handleColorInversion);
 }
 
 function cleanupColorInversion() {
+  const element = document.getElementById("js-viewer-invert-colors");
+
   document.getElementById("js-viewer").classList.remove("invert");
-  document.getElementById("js-viewer-invert-colors").removeEventListener("change", handleColorInversion);
+
+  if (element) {
+    element.removeEventListener("change", handleColorInversion);
+  }
 }
 
 function cleanupScale() {
@@ -222,10 +253,10 @@ function cleanupScale() {
   document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
 }
 
-function cleanupViewMode(viewMode) {
+function cleanupViewMode() {
   const viewModesElement = document.getElementById("js-viewer-view-modes");
 
-  viewModesElement.querySelector(`[data-mode=${viewMode}]`).classList.remove("active");
+  viewModesElement.querySelector(`[data-mode=${settings.pdf.viewMode}]`).classList.remove("active");
   viewModesElement.removeEventListener("click", setViewMode);
 }
 
@@ -377,12 +408,11 @@ function handleWheel(event) {
   }
 }
 
-function handleColorInversion(event) {
-  document.getElementById("js-viewer").classList.toggle("invert", event.target.checked);
+function handleColorInversion({ target }) {
+  settings.pdf.invertColors = target.checked;
 
-  if (save) {
-    updateFile(fileMetadata, { invertColors: event.target.checked });
-  }
+  document.getElementById("js-viewer").classList.toggle("invert", target.checked);
+  setSettings(settings);
 }
 
 function getOutlineItem(item) {
@@ -453,7 +483,6 @@ async function getNewPdfFile(file, user) {
     name: file.name,
     type: "pdf",
     createdAt: Date.now(),
-    scale: getDefaultScale(),
     size: file.size,
     sizeString: getFileSizeString(file.size),
     pageNumber: 1,
@@ -564,7 +593,7 @@ async function renderAnnotations(viewport, page, container) {
     linkService: new LinkService(pdfInstance, pdfElement, window.location.href)
   };
 
-  if (annotationLayerDiv && fileMetadata.viewMode === "multi") {
+  if (annotationLayerDiv && settings.pdf.viewMode === "multi") {
     pdfjs.AnnotationLayer.update(params);
   }
   else {
@@ -656,7 +685,7 @@ function updatePageBtnElementState(pageNumber) {
 }
 
 function setPage(value, updatePageInput = true) {
-  if (fileMetadata.viewMode === "multi") {
+  if (settings.pdf.viewMode === "multi") {
     scrollToPage(value, pdfElement.children, { keepToolbarVisible: settings.keepToolbarVisible });
   }
   else {
@@ -707,7 +736,7 @@ function setScale(value, name = "custom") {
   scale.currentScale = value;
   scale.displayValue = Math.round(value * 100 / defaultScale);
 
-  if (fileMetadata.viewMode === "multi") {
+  if (settings.pdf.viewMode === "multi") {
     const { top } = getPageElementBox(pageNumber, pdfElement.children);
 
     updatePages(value);
@@ -724,16 +753,18 @@ function setScale(value, name = "custom") {
     scrollTop = fileMetadata.scrollTop / oldScaleValue * value;
     scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
   }
+  settings.pdf.scale = scale;
 
   if (save) {
-    updateFile(fileMetadata, { scale, scrollTop, scrollLeft });
+    updateFile(fileMetadata, { scale: scale.currentScale, scrollTop, scrollLeft });
   }
   updateScaleElement(scale);
   window.scrollTo(scrollLeft, scrollTop);
+  setSettings(settings);
 }
 
 function getMaxHeight(height) {
-  const singlePageViewMode = fileMetadata.viewMode === "single";
+  const singlePageViewMode = settings.pdf.viewMode === "single";
   const { keepToolbarVisible } = settings;
   return height - (keepToolbarVisible || pageNumber === 1 || singlePageViewMode ? 56 : 16);
 }
@@ -744,7 +775,7 @@ async function handleScaleSelect({ target }) {
 
   if (value === "fit-width") {
     const { offsetWidth, scrollHeight, offsetHeight } = document.documentElement;
-    const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation });
+    const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation }, true);
     const maxHeight = getMaxHeight(offsetHeight);
     let maxWidth = offsetWidth - 16;
     let scrollbarWidth = 0;
@@ -754,7 +785,7 @@ async function handleScaleSelect({ target }) {
       const newPageHeight = Math.round(newScale * height);
 
       if (scrollHeight > offsetHeight) {
-        if (fileMetadata.viewMode === "multi" && fileMetadata.pageCount * newPageHeight > offsetHeight) {
+        if (settings.pdf.viewMode === "multi" && fileMetadata.pageCount * newPageHeight > offsetHeight) {
           scrollbarWidth = 0;
         }
         else if (newPageHeight < maxHeight) {
@@ -771,7 +802,7 @@ async function handleScaleSelect({ target }) {
   }
   else if (value === "fit-page") {
     const { scrollWidth, offsetWidth, offsetHeight } = document.documentElement;
-    const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation });
+    const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation }, true);
     const maxWidth = offsetWidth - 16;
     let maxHeight = getMaxHeight(offsetHeight);
     let scrollbarWidth = 0;
@@ -806,7 +837,7 @@ async function setViewMode(event) {
   }
   const { attrValue: mode } = element;
 
-  if (mode === fileMetadata.viewMode) {
+  if (mode === settings.pdf.viewMode) {
     return;
   }
   const [singlePageViewElement, multiPageViewElement] = event.currentTarget.children;
@@ -815,6 +846,7 @@ async function setViewMode(event) {
   multiPageViewElement.classList.toggle("active");
 
   pdfElement.innerHTML = "";
+  settings.pdf.viewMode = mode;
 
   if (save) {
     updateFile(fileMetadata, { viewMode: mode });
@@ -829,12 +861,18 @@ async function setViewMode(event) {
     });
     registerIntersectionObserver();
     hideSinglePageNavBtn();
+    pdfElement.classList.add("offset");
 
     window.addEventListener("scroll", handleScroll);
     window.removeEventListener("scroll", handleSinglePageScroll);
     window.removeEventListener("click", handleAnnotationClick);
   }
   else {
+    const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
+
+    if (media.matches && !settings.keepToolbarVisible) {
+      pdfElement.classList.remove("offset");
+    }
     unregisterIntersectionObserver();
     await renderSingleEmptyPage(pdfElement, pdfInstance, fileMetadata);
     renderSinglePage(pageNumber);
@@ -845,6 +883,7 @@ async function setViewMode(event) {
     window.addEventListener("click", handleAnnotationClick);
     window.removeEventListener("scroll", handleScroll);
   }
+  setSettings(settings);
 }
 
 function rotatePages() {
@@ -857,7 +896,7 @@ function rotatePages() {
     updateFile(fileMetadata, { rotation });
   }
 
-  if (fileMetadata.viewMode === "multi") {
+  if (settings.pdf.viewMode === "multi") {
     updatePages(scale.currentScale);
     views = getPageViews();
     registerIntersectionObserver();
@@ -891,9 +930,9 @@ function getScaledPageDimensions(index, scale) {
   return { width, height };
 }
 
-async function getPageViewport(pdf, { pageNumber, scale = { currentScale: 1 }, rotation = 0 }) {
+async function getPageViewport(pdf, { pageNumber, rotation = 0 }, useDefaultScale = false) {
   const page = await pdf.getPage(pageNumber);
-  return page.getViewport({ scale: scale.currentScale, rotation: rotation + page.rotate });
+  return page.getViewport({ scale: useDefaultScale ? 1 : scale.currentScale, rotation: rotation + page.rotate });
 }
 
 async function getPageDiv(pdf, file) {
@@ -905,6 +944,7 @@ async function getPageDiv(pdf, file) {
 
   div.setAttribute("data-page-number", file.pageNumber);
   div.classList.add("viewer-page");
+
   return div;
 }
 
@@ -912,7 +952,7 @@ async function getPageDimensions(pdf, rotation) {
   const dimensions = [];
 
   for (let i = 0; i < pdf.numPages; i += 1) {
-    const { width, height } = await getPageViewport(pdf, { pageNumber: i + 1, rotation });
+    const { width, height } = await getPageViewport(pdf, { pageNumber: i + 1, rotation }, true);
 
     dimensions.push({ width, height });
   }
@@ -940,13 +980,6 @@ async function renderEmptyPages(pdfElement, pdfInstance, file) {
   }
   await Promise.all(promises);
   pdfElement.appendChild(fragment);
-}
-
-function getDefaultScale() {
-  return {
-    name: "1",
-    currentScale: defaultScale
-  };
 }
 
 export {

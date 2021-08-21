@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { savePreferences } from "../../../services/fileService";
+import { setSettings } from "../../../services/fileWarningService";
 import Icon from "../../Icon";
 import Notification from "../../Notification";
 import "./file-load-modal.scss";
 
-export default function FileLoadModal({ message, filePreferences, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage }) {
+export default function FileLoadModal({ message, fileWarning, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage }) {
   const [hide, setHide] = useState(false);
   const timeoutId = useRef(0);
 
@@ -36,28 +36,24 @@ export default function FileLoadModal({ message, filePreferences, saveFileLoadMo
   }
 
   function changeFileSaveStatus(saveFile) {
-    const updatedPreferences = {
-      ...filePreferences,
-      hideWarning: hide,
-      saveLoadedFile: saveFile
-    };
+    const settings = { ...fileWarning, hide, saveFile };
 
     if (saveFile) {
-      saveFileLoadModalFile(updatedPreferences);
+      saveFileLoadModalFile(settings);
     }
     else {
-      hideFileLoadModal(updatedPreferences);
+      hideFileLoadModal(settings);
     }
 
     if (hide) {
-      savePreferences(updatedPreferences);
+      setSettings(settings);
     }
   }
 
   if (message.type === "negative") {
     return <Notification notification={message} className="viewer-file-load-modal viewer-notification" dismiss={hideFileLoadMessage}/>;
   }
-  else if (message.type === "warning" && !filePreferences.hideWarning) {
+  else if (message.type === "warning" && !fileWarning.hide) {
     return (
       <div className="viewer-file-load-modal viewer-file-load-warning">
         <div className="viewer-file-load-warning-mesasge-container">
