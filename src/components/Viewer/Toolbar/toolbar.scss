@@ -157,6 +157,18 @@
   }
 }
 
+.viewer-toolbar-dropdown-group-alt {
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+.viewer-toolbar-dropdown-group-title {
+  margin-bottom: var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-grey-10);
+}
+
 .viewer-toolbar-dropdown-btn {
   justify-content: flex-start;
   width: 100%;
@@ -176,29 +188,15 @@
 
 .viewer-toolbar-settings-item {
   display: flex;
-  padding-left: var(--space-md);
-  padding-right: var(--space-md);
 
   &:not(:last-of-type) {
     margin-bottom: var(--space-md);
   }
 }
 
-.viewer-themes-container {
-  display: block;
-  padding-left: var(--space-md);
-  padding-right: var(--space-md);
-}
-
-.viewer-themes-title {
-  margin-bottom: var(--space-lg);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-grey-10);
-}
-
 .viewer-themes {
   display: flex;
+  margin-bottom: var(--space-xl);
 }
 
 .viewer-theme-btn {
@@ -241,4 +239,8 @@
     --background-color: #FBF0D9;
     --color: black;
   }
+}
+
+.viewer-toolbar-dropdown-range-input {
+  width: 100%;
 }

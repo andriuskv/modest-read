@@ -15,6 +15,7 @@ function initSettings() {
       viewMode: "single",
       spreadPages: false,
       theme: "white",
+      textOpacity: 1,
       scale: {
         name: "1",
         currentScale: 1
