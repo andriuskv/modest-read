@@ -34,7 +34,7 @@
 
 .viewer-outline-toggle-btn {
   display: none;
-  margin-left: var(--space-md);
+  margin-left: var(--space-sm);
 
   &.visible {
     display: block;
@@ -141,6 +141,10 @@
   }
 }
 
+.viewer-toolbar-dropdown-container {
+  margin-right: var(--space-sm);
+}
+
 .viewer-toolbar-dropdown {
   padding: var(--space-md) 0;
   transform: translateY(calc(var(--space-md) + var(--space-xs)));
@@ -148,9 +152,11 @@
 }
 
 .viewer-toolbar-dropdown-group {
-  padding-bottom: var(--space-md);
-  margin-bottom: var(--space-md);
-  border-bottom: 1px solid var(--color-grey-50);
+  &:not(:last-of-type) {
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-grey-50);
+  }
 
   &.hidden {
     display: none;

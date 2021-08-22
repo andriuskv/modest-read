@@ -5,7 +5,6 @@ import { computeHash, setDocumentTitle } from "../../utils";
 import * as fileService from "../../services/fileService";
 import * as settingsService from "../../services/settingsService";
 import * as fileWarningService from "../../services/fileWarningService";
-import "./viewer.scss";
 import ErrorPage from "../ErrorPage";
 import Modal from "../Modal";
 import Icon from "../Icon";
@@ -13,6 +12,7 @@ import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import Spinner from "./Spinner";
+import "./viewer.scss";
 
 export default function Viewer() {
   const { user } = useUser();

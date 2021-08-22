@@ -55,6 +55,9 @@ export default function Login() {
       if (data.code === 200) {
         history.replace({ pathname: "/" });
       }
+      else if (data.code === 500) {
+        showNotification("form", "Something went wrong. Try again later.");
+      }
       else {
         showNotification(data.field, data.message);
       }

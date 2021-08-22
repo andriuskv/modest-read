@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback } from "react";
 import { setSetting } from "../../../services/settingsService";
-import "./toolbar.scss";
 import Icon from "../../Icon";
 import Dropdown from "../../Dropdown";
 import FileInfo from "../FileInfo";
+import "./toolbar.scss";
 
 export default function Toolbar({ file, settings, fileWarning, setViewerSettings, updateFileSaveSetting, handleFileUpload, exitViewer, showMarginModal }) {
   const keepVisible = useRef(false);
@@ -186,7 +186,7 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
     <div className={`viewer-toolbar${settings.keepToolbarVisible ? " keep-visible" : ""}`} ref={toolbarRef}>
       <div className="view-toolbar-side">
         <FileInfo file={file}/>
-        <button id="js-viewer-outline-toggle-btn" className="btn icon-btn viewer-outline-toggle-btn" title="Toggle outline">
+        <button id="js-viewer-outline-toggle-btn" className="btn icon-btn icon-btn-alt viewer-outline-toggle-btn" title="Toggle outline">
           <Icon name="outline"/>
         </button>
         <div className="viewer-toolbar-zoom">
@@ -225,18 +225,12 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
         </div>
         <Dropdown
           toggle={{
-            content: <Icon name="dots-vertical"/>,
-            title: "More",
+            content: <Icon name="settings"/>,
+            title: "Settings",
             className: "btn icon-btn icon-btn-alt"
           }}
-          body={{ className: "viewer-toolbar-dropdown" }}>
-          <div className="viewer-toolbar-dropdown-group">
-            <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
-              <Icon name="upload"/>
-              <span>Load File</span>
-              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
-            </label>
-          </div>
+          body={{ className: "viewer-toolbar-dropdown" }}
+          container={{ className: "viewer-toolbar-dropdown-container"}}>
           {file.type === "pdf" && (
             <div className="viewer-toolbar-dropdown-group">
               <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
@@ -257,12 +251,6 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
           </div>
           {file.type === "epub" && (
             <>
-              <div className="viewer-toolbar-dropdown-group">
-                <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
-                  <Icon name="margin"/>
-                  <span>Set margin</span>
-                </button>
-              </div>
               <div id="js-viewer-spread-pages-setting"
                 className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${settings.epub.viewMode === "multi" ? " hidden" : ""}`}>
                 <label className="viewer-toolbar-settings-item">
@@ -272,6 +260,12 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
                   </div>
                   <span className="checkbox-label">Spread pages</span>
                 </label>
+              </div>
+              <div className="viewer-toolbar-dropdown-group">
+                <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
+                  <Icon name="margin"/>
+                  <span>Set margin</span>
+                </button>
               </div>
               <div className="viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt">
                 <div className="viewer-toolbar-dropdown-group-title">Themes</div>
@@ -289,16 +283,35 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
               </div>
             </>
           )}
+          {file.type === "pdf" && (
+            <div className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
+              <label className="viewer-toolbar-settings-item">
+                <input type="checkbox" id="js-viewer-invert-colors" className="sr-only checkbox-input"/>
+                <div className="checkbox">
+                  <div className="checkbox-tick"></div>
+                </div>
+                <span className="checkbox-label">Invert page colors</span>
+              </label>
+            </div>
+          )}
+        </Dropdown>
+        <Dropdown
+          toggle={{
+            content: <Icon name="dots-vertical"/>,
+            title: "More",
+            className: "btn icon-btn icon-btn-alt"
+          }}
+          body={{ className: "viewer-toolbar-dropdown" }}>
+          <div className="viewer-toolbar-dropdown-group">
+            <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
+              <Icon name="upload"/>
+              <span>Load File</span>
+              <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
+            </label>
+          </div>
           <div className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
             {file.type === "pdf" && (
               <>
-                <label className="viewer-toolbar-settings-item">
-                  <input type="checkbox" id="js-viewer-invert-colors" className="sr-only checkbox-input"/>
-                  <div className="checkbox">
-                    <div className="checkbox-tick"></div>
-                  </div>
-                  <span className="checkbox-label">Invert page colors</span>
-                </label>
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" className="sr-only checkbox-input"
                     name="keepToolbarVisible"
@@ -323,10 +336,12 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
               </label>
             )}
           </div>
-          <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
-            <Icon name="exit"/>
-            <span>Exit</span>
-          </button>
+          <div className="viewer-toolbar-dropdown-group">
+            <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
+              <Icon name="exit"/>
+              <span>Exit</span>
+            </button>
+          </div>
         </Dropdown>
       </div>
     </div>
