@@ -264,7 +264,7 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
                 </button>
               </div>
               <div id="js-viewer-spread-pages-setting"
-                className={`viewer-toolbar-dropdown-group${settings.epub.viewMode === "multi" ? " hidden" : ""}`}>
+                className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${settings.epub.viewMode === "multi" ? " hidden" : ""}`}>
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" id="js-viewer-spread-pages" className="sr-only checkbox-input"/>
                   <div className="checkbox">
@@ -273,18 +273,23 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
                   <span className="checkbox-label">Spread pages</span>
                 </label>
               </div>
-              <div className="viewer-toolbar-dropdown-group viewer-themes-container">
-                <div className="viewer-themes-title">Themes</div>
+              <div className="viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt">
+                <div className="viewer-toolbar-dropdown-group-title">Themes</div>
                 <div id="js-viewer-themes" className="viewer-themes">
                   <button className="btn viewer-theme-btn black" data-theme="black">A</button>
                   <button className="btn viewer-theme-btn white" data-theme="white">A</button>
                   <button className="btn viewer-theme-btn grey" data-theme="grey">A</button>
                   <button className="btn viewer-theme-btn orange" data-theme="orange">A</button>
                 </div>
+                <label>
+                  <div className="viewer-toolbar-dropdown-group-title">Text opacity</div>
+                  <input type="range" id="js-viewer-text-opacity"
+                    className="range-input viewer-toolbar-dropdown-range-input" min="0.1" max="1" step="0.1"/>
+                </label>
               </div>
             </>
           )}
-          <div className={`viewer-toolbar-dropdown-group${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
+          <div className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
             {file.type === "pdf" && (
               <>
                 <label className="viewer-toolbar-settings-item">

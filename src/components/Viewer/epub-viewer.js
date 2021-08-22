@@ -31,6 +31,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
   rendition = getRendition(settings.epub.viewMode, settings.epub.spreadPages, settings.epub.margin);
 
   initTheme();
+  initTextOpacity();
   initScale(scale);
   initPage(metadata.pageNumber, metadata.pageCount);
   initViewMode(settings.epub.viewMode, settings.epub.spreadPages);
@@ -112,6 +113,17 @@ function initTheme() {
   document.getElementById("js-viewer-themes").addEventListener("click", setTheme);
 }
 
+function initTextOpacity() {
+  const element = document.getElementById("js-viewer-text-opacity");
+
+  element.value = settings.epub.textOpacity;
+  element.addEventListener("change", setTextOpacity);
+}
+
+function cleanupTextOpacity() {
+  document.getElementById("js-viewer-text-opacity").removeEventListener("change", setTextOpacity);
+}
+
 function cleanupViewMode() {
   const viewModesElement = document.getElementById("js-viewer-view-modes");
   const spreadPagesElement = document.getElementById("js-viewer-spread-pages");
@@ -131,6 +143,13 @@ function setTheme(event) {
     return;
   }
   settings.epub.theme = element.attrValue;
+
+  applyTheme();
+  setSettings(settings);
+}
+
+function setTextOpacity(event) {
+  settings.epub.textOpacity = Number(event.target.value);
 
   applyTheme();
   setSettings(settings);
@@ -180,42 +199,42 @@ function resetFontSize(content) {
 }
 
 function applyTheme() {
-  const { theme } = settings.epub;
+  const { theme, textOpacity } = settings.epub;
   const themes = {
     black: {
       "body": {
-        "color": "white",
+        "color": `rgb(255, 255, 255, ${textOpacity})`,
         "background-color": "black"
       },
       "a": {
-        "color": "white"
+        "color": `rgb(255, 255, 255, ${textOpacity})`
       }
     },
     white: {
       "body": {
-        "color": "black",
+        "color": `rgb(0, 0, 0, ${textOpacity})`,
         "background-color": "white"
       },
       "a": {
-        "color": "black"
+        "color": `rgb(0, 0, 0, ${textOpacity})`
       }
     },
     grey: {
       "body": {
-        "color": "white",
+        "color": `rgb(255, 255, 255, ${textOpacity})`,
         "background-color": "#1d1c1b"
       },
       "a": {
-        "color": "white"
+        "color": `rgb(255, 255, 255, ${textOpacity})`
       }
     },
     orange: {
       "body": {
-        "color": "black",
+        "color": `rgb(0, 0, 0, ${textOpacity})`,
         "background-color": "#FBF0D9"
       },
       "a": {
-        "color": "black"
+        "color": `rgb(0, 0, 0, ${textOpacity})`
       }
     }
   };
@@ -279,6 +298,7 @@ function cleanupEpubViewer(reloading) {
       epubElement.classList.remove(`theme-${settings.epub.theme}`);
     }
     cleanupViewMode();
+    cleanupTextOpacity();
     cleanupScale();
   }
 
