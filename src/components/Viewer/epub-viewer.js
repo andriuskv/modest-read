@@ -67,7 +67,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
     params.accessedAt = Date.now();
 
     updateFile(metadata, params);
-    fileService.saveCurrentFile(blob);
+    fileService.saveCurrentFile(metadata.hash, blob);
   }
   startCounting(user);
 }

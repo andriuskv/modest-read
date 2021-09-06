@@ -1,4 +1,4 @@
-import { createStore, set, setMany, values, get, update, del } from "idb-keyval";
+import { createStore, set, setMany, values, get, update, del, clear } from "idb-keyval";
 import { getResponse } from "../utils";
 
 const store = createStore("modest-keep", "files");
@@ -36,8 +36,8 @@ function fetchServerFile(id, userId) {
   return fetch(`/api/files/${userId}/${id}`).then(getResponse);
 }
 
-function fetchCurrentFile() {
-  return get("file", currentFileStore);
+function fetchCurrentFile(hash) {
+  return get(hash, currentFileStore);
 }
 
 async function updateFile(data, { id, userId, local }) {
@@ -103,13 +103,14 @@ function saveFile(file, userId) {
   }
 }
 
-async function saveCurrentFile(file) {
-  const currentFile = await fetchCurrentFile();
+async function saveCurrentFile(hash, file) {
+  const currentFile = await fetchCurrentFile(hash);
 
-  if (currentFile?.name === file.name) {
+  if (currentFile) {
     return;
   }
-  set("file", file, currentFileStore);
+  clear(currentFileStore);
+  set(hash, file, currentFileStore);
 }
 
 async function findFile(hash, userId) {

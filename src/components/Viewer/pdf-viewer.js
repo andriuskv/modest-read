@@ -121,7 +121,7 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
     params.accessedAt = Date.now();
 
     updateFile(metadata, params);
-    fileService.saveCurrentFile(blob);
+    fileService.saveCurrentFile(metadata.hash, blob);
   }
   startCounting(user);
 }

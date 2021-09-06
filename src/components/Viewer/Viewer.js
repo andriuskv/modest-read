@@ -69,7 +69,7 @@ export default function Viewer() {
     const file = await fileService.fetchFile(id, user.id, type);
 
     if (file?.id) {
-      const currentFile = await fileService.fetchCurrentFile();
+      const currentFile = await fileService.fetchCurrentFile(file.hash);
       file.type = file.type || "pdf";
 
       if (currentFile && currentFile.name === file.name) {
@@ -257,7 +257,7 @@ export default function Viewer() {
 
   function saveLoadedFile(blob, metadata) {
     fileService.saveFile(metadata, user.id);
-    fileService.saveCurrentFile(blob);
+    fileService.saveCurrentFile(metadata.hash, blob);
   }
 
   async function setSaveViewerFile(save) {
