@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { setDocumentTitle, getMonthName, getWeekdayName, getDaysInMonth, getCurrentDate, getFirstDayIndex } from "../../utils";
 import { useUser } from "../../context/user-context";
 import { getCalendarYear, fetchStatistics, resetStatistics } from "../../services/statsService";
@@ -428,6 +429,9 @@ export default function Statistics() {
     <div className="container">
       <Header className="stats-header"/>
       <div className="stats-view-selection">
+        <Link to="/" className="btn icon-btn icon-btn-alt stats-home-btn">
+          <Icon name="home"/>
+        </Link>
         <button className={`btn stats-view-selection-btn${activeView === "week" ? " active" : ""}`}
           onClick={() => selectView("week")}>Week</button>
         <button className={`btn stats-view-selection-btn${activeView === "year" ? " active" : ""}`}
