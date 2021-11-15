@@ -293,10 +293,6 @@
 
   @include breakpoint-md {
     padding-top: var(--space-xl);
-
-    &:first-of-type {
-      padding-top: var(--space-md);
-    }
   }
 }
 
@@ -305,10 +301,10 @@
   align-items: center;
   font-size: var(--text-lg);
   color: var(--color-grey-10);
+}
 
-  span {
-    margin-left: var(--space-md);
-  }
+.files-category-name-text {
+  margin-left: var(--space-md);
 }
 
 .files-cards {
