@@ -14,10 +14,10 @@ import LandingPage from "../LandingPage";
 import Notification from "../Notification";
 import ErrorPage from "../ErrorPage";
 import FileCard from "../FileCard";
+import "./files.scss";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
-import "./files.scss";
 
 export default function Files() {
   const { user } = useUser();
@@ -786,7 +786,7 @@ export default function Files() {
               <div className="files-category" key={i}>
                 <h3 className="files-category-name">
                   <Icon name={category.icon} size="24px"/>
-                  <span>{category.name}</span>
+                  <span className="files-category-name-text">{category.name}</span>
                 </h3>
                 {renderFiles(category.files)}
               </div>
@@ -795,10 +795,10 @@ export default function Files() {
         </div>
       );
     }
-    const { files } = categories.find(({ id }) => id === state.visibleCategory);
+    const category = categories.find(({ id }) => id === state.visibleCategory);
 
-    if (files.length) {
-      return renderFiles(files);
+    if (category?.files.length) {
+      return renderFiles(category.files);
     }
     const { files: originalFiles, id } = state.categories.find(({ id }) => id === state.visibleCategory);
 
