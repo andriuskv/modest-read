@@ -735,7 +735,7 @@ export default function Files() {
             className: "btn icon-btn"
           }}>
           <div className="files-file-card-dropdown-group">
-            {file.local ? (
+            {user.email ? file.local ? (
               <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
                 onClick={() => showFileTransferModal(file)}>
                 <Icon name="cloud"/>
@@ -747,7 +747,7 @@ export default function Files() {
                 <Icon name="home"/>
                 <span>Download</span>
               </button>
-            )}
+            ) : null}
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
               onClick={() => showResetProgressModal(file.id)}>
               <Icon name="reset"/>
