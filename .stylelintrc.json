@@ -1,0 +1,11 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "custom-property-empty-line-before": "never",
+    "max-line-length": null,
+    "shorthand-property-no-redundant-values": null,
+    "font-family-name-quotes": "always-unless-keyword",
+    "comment-empty-line-before": null,
+    "value-no-vendor-prefix": null
+  }
+}

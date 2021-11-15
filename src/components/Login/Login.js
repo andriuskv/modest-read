@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { setDocumentTitle } from "../../utils";
 import { useUser } from "../../context/user-context";
 import BannerImage from "../BannerImage";
@@ -7,14 +7,14 @@ import Notification from "../Notification";
 import "./login.scss";
 
 export default function Login() {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { user, loginUser } = useUser();
   const [submitDisabled, setSubmitDisabled] = useState(false);
   const [notification, setNotification] = useState({});
 
   useEffect(() => {
     if (user.email) {
-      history.replace({ pathname: "/" });
+      navigate("/", { replace: true });
     }
     else {
       setDocumentTitle("Login");
@@ -53,7 +53,7 @@ export default function Login() {
       setSubmitDisabled(false);
 
       if (data.code === 200) {
-        history.replace({ pathname: "/" });
+        navigate("/", { replace: true });
       }
       else if (data.code === 500) {
         showNotification("form", "Something went wrong. Try again later.");

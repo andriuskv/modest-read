@@ -6,7 +6,6 @@ import "normalize.css";
 import "./styles/index.scss";
 
 import App from "./components/App";
-import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 ReactDOM.render(
   <StrictMode>
@@ -15,4 +14,6 @@ ReactDOM.render(
   document.getElementById("root")
 );
 
-serviceWorkerRegistration.register();
+if (process.env.NODE_ENV === "production") {
+  navigator.serviceWorker.register("./sw.js").catch(console.log);
+}

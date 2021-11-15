@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/user-context";
 import { computeHash, setDocumentTitle } from "../../utils";
 import * as fileService from "../../services/fileService";
@@ -15,8 +15,9 @@ import Spinner from "./Spinner";
 import "./viewer.scss";
 
 export default function Viewer() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useUser();
-  const history = useHistory();
   const { id } = useParams();
   const [state, setState] = useState({});
   const [fileWarning, setFileWarning] = useState(() => fileWarningService.getSettings());
@@ -39,11 +40,11 @@ export default function Viewer() {
       return;
     }
     return () => {
-      if (history.location.pathname === "/") {
+      if (location.pathname === "/") {
         cleanupViewer();
       }
     };
-  }, [state.file, history.location.pathname]);
+  }, [state.file, location.pathname]);
 
   useEffect(() => {
     window.addEventListener("drop", memoizedDropHandler);
@@ -62,10 +63,10 @@ export default function Viewer() {
   }, [state.file]);
 
   async function init() {
-    if (history.location.state) {
+    if (location.state) {
       return;
     }
-    const type = new URLSearchParams(history.location.search).get("type") || "";
+    const type = new URLSearchParams(location.search).get("type") || "";
     const file = await fileService.fetchFile(id, user.id, type);
 
     if (file?.id) {
@@ -240,7 +241,7 @@ export default function Viewer() {
       blob: file,
       save
     });
-    history.replace({ pathname: `/viewer/${newFile.id}`, state: true });
+    navigate(`/viewer/${newFile.id}`, { replace: true, state: true });
     setDocumentTitle(newFile.name);
     setState({ file: newFile });
   }
@@ -325,7 +326,7 @@ export default function Viewer() {
   }
 
   function exitViewer() {
-    history.push({ pathname: "/" });
+    navigate("/");
     cleanupViewer();
   }
 

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { HashRouter, Route, Switch } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import { UserProvider } from "../context/user-context";
 
 const Files = lazy(() => import("./Files"));
@@ -14,14 +14,14 @@ export default function App() {
     <HashRouter>
       <UserProvider>
         <Suspense fallback={null}>
-          <Switch>
-            <Route path="/" exact component={Files}/>
-            <Route path="/viewer/:id" component={Viewer}/>
-            <Route path="/statistics" component={Statistics}/>
-            <Route path="/login" component={Login}/>
-            <Route path="/register" component={Register}/>
-            <Route component={NoMatch}/>
-          </Switch>
+          <Routes>
+            <Route path="/" element={<Files/>}/>
+            <Route path="/viewer/:id" element={<Viewer/>}/>
+            <Route path="/statistics" element={<Statistics/>}/>
+            <Route path="/login" element={<Login/>}/>
+            <Route path="/register" element={<Register/>}/>
+            <Route path="*" element={<NoMatch/>}/>
+          </Routes>
         </Suspense>
       </UserProvider>
     </HashRouter>

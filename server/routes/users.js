@@ -86,7 +86,6 @@ router.get("/logout", (req, res) => {
 
 router.get("/me", async ({ session: { user }}, res) => {
   if (user) {
-    console.log(user);
     res.json(user);
   }
   else {
