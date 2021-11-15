@@ -59,7 +59,8 @@
     "webpack": "^5.64.0",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.5.0",
-    "workbox-webpack-plugin": "^6.3.0"
+    "workbox-webpack-plugin": "^6.3.0",
+    "worker-loader": "^3.0.8"
   },
   "browserslist": [
     "last 4 chrome versions",
