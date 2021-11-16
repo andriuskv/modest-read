@@ -284,7 +284,7 @@ export default function Files() {
           type: file.name.slice(file.name.lastIndexOf(".") + 1),
           sizeString: getFileSizeString(file.size),
           ...params,
-          status: "not started",
+          status: "plan-to-read",
           pageNumber: 1,
           loading: true
         });
@@ -335,21 +335,21 @@ export default function Files() {
       files: []
     },
     {
-      name: "Planing to Read",
-      id: "planing to read",
+      name: "Plan To Read",
+      id: "plan-to-read",
       icon: "book-question-mark",
       files: []
     },
     {
-      name: "Not Started",
-      id: "not started",
-      icon: "book",
+      name: "Completed",
+      id: "completed",
+      icon: "book-check-mark",
       files: []
     },
     {
-      name: "Have Read",
-      id: "have read",
-      icon: "book-check-mark",
+      name: "Dropped",
+      id: "dropped",
+      icon: "book-dropped",
       files: []
     }];
 
@@ -401,7 +401,7 @@ export default function Files() {
   function resetProgress(id) {
     const file = files.find(file => file.id === id);
     const params = {
-      status: "not started",
+      status: "plan-to-read",
       accessedAt: 0,
       pageNumber: 1
     };
@@ -718,7 +718,7 @@ export default function Files() {
             className: "btn icon-btn"
           }}>
           <div className="files-file-card-dropdown-group">
-            <div className="files-file-card-dropdown-group-title">Set Reading Status</div>
+            <div className="files-file-card-dropdown-group-title">Reading Status</div>
             {state.categories.slice(1).map((category, i) => (
               <button className={`btn icon-text-btn dropdown-btn files-file-card-dropdown-btn${file.status === category.id ? " active" : ""}`} key={i}
                 onClick={() => changeReadingStatus(file.id, category.id)}>

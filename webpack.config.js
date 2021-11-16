@@ -53,6 +53,7 @@ module.exports = function(env = {}) {
       client: {
         logging: "error"
       },
+      open: true,
       hot: false,
       compress: true,
       port: 3000,
