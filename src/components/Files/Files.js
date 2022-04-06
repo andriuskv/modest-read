@@ -764,11 +764,52 @@ export default function Files() {
     );
   }
 
+  function renderEmptyCategoryNotice() {
+    return (
+      <div className="files-category-notice">
+        <p className="files-category-notice-message">You don't have any files.</p>
+        <label className="btn icon-text-btn primary-btn no-files-notice-btn">
+          <Icon name="upload" size="24px"/>
+          <span>Import Files</span>
+          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
+        </label>
+      </div>
+    );
+  }
+
   function renderFiles(files) {
     return (
       <ul className={`files-cards ${state.type}`}>
         {files.map(file => file.loading ? <FileCardPlaceholder key={file.id}/> : renderFile(file))}
       </ul>
+    );
+  }
+
+  function renderAllCatergories(categories) {
+    const items = [];
+    let empty = true;
+
+    for (const category of categories.slice(1)) {
+      if (category.files.length) {
+        empty = false;
+
+        items.push((
+          <div className="files-category" key={category.name}>
+            <h3 className="files-category-name">
+              <Icon name={category.icon} size="24px"/>
+              <span className="files-category-name-text">{category.name}</span>
+            </h3>
+            {renderFiles(category.files)}
+          </div>
+        ));
+      }
+    }
+
+    if (empty) {
+      return renderEmptyCategoryNotice();
+    }
+    return (
+      <div>{items}</div>
     );
   }
 
@@ -779,21 +820,7 @@ export default function Files() {
       if (state.matchedFileCount === 0) {
         return <p className="files-category-notice">Your search term doesn't match any files.</p>;
       }
-      return (
-        <div>
-          {categories.slice(1).map((category, i) => (
-            category.files.length ? (
-              <div className="files-category" key={i}>
-                <h3 className="files-category-name">
-                  <Icon name={category.icon} size="24px"/>
-                  <span className="files-category-name-text">{category.name}</span>
-                </h3>
-                {renderFiles(category.files)}
-              </div>
-            ) : null
-          ))}
-        </div>
-      );
+      return renderAllCatergories(categories);
     }
     const category = categories.find(({ id }) => id === state.visibleCategory);
 
@@ -806,16 +833,7 @@ export default function Files() {
       return <p className="files-category-notice">Your search term doesn't match any files in this category.</p>;
     }
     else if (id === "all") {
-      return (
-        <div className="files-category-notice">
-          <p className="files-category-notice-message">You don't have any files.</p>
-          <label className="btn icon-text-btn primary-btn no-files-notice-btn">
-            <Icon name="upload" size="24px"/>
-            <span>Import Files</span>
-            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
-          </label>
-        </div>
-      );
+      return renderEmptyCategoryNotice();
     }
     return <p className="files-category-notice">You have no files in this category.</p>;
   }

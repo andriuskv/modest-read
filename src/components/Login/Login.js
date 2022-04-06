@@ -87,14 +87,14 @@ export default function Login() {
             <input type="email" className="input login-form-field" name="email" required/>
           </label>
           {notification.field === "email" && (
-            <div className="login-form-field-notification">{notification.email.value}</div>
+            <div className="login-form-field-notification">{notification.value}</div>
           )}
           <label className="login-form-field-group">
             <div className="login-form-field-name">Password</div>
             <input type="password" className="input login-form-field" name="password" required/>
           </label>
           {notification.field === "password" && (
-            <div className="login-form-field-notification">{notification.password.value}</div>
+            <div className="login-form-field-notification">{notification.value}</div>
           )}
           <button className="btn login-form-submit-btn" disabled={submitDisabled}>{submitDisabled ? "Loging In..." : "Log In"}</button>
           <div className="login-form-bottom">
