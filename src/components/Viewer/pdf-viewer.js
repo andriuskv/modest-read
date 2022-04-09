@@ -169,6 +169,7 @@ function cleanupPdfViewer(reloading) {
     pdfInstance = null;
 
     stopCounting();
+    clearTimeout(saveTimeoutId);
     cleanupScale();
     cleanupViewMode();
     cleanupPageSelection();
@@ -189,6 +190,7 @@ function cleanupPdfViewer(reloading) {
 }
 
 function setSavePdfFile(saveFile) {
+  clearTimeout(saveTimeoutId);
   save = saveFile;
 }
 

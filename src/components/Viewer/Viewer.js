@@ -25,7 +25,7 @@ export default function Viewer() {
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [marginModal, setMarginModal] = useState(null);
   const viewerRef = useRef(null);
-  const viewerLoaded = useRef(false);
+  const viewerState = useRef(0);
   const memoizedDropHandler = useCallback(handleDrop, [state, fileWarning, fileLoadMessage]);
 
   useLayoutEffect(() => {
@@ -57,15 +57,26 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
+    if (!state.file || state.filePreviewVisible) {
+      return;
+    }
+
     if (state.file) {
       viewerRef.current.classList.add("offset");
     }
-  }, [state.file]);
+    initViewer(viewerRef.current, {
+      blob: state.currentFile,
+      metadata: state.file,
+      save: state.save
+    });
+  }, [state.filePreviewVisible, state.file]);
 
   async function init() {
-    if (location.state) {
+    if (state.reload || viewerState.current) {
       return;
     }
+    viewerState.current = 1;
+
     const type = new URLSearchParams(location.search).get("type") || "";
     const file = await fileService.fetchFile(id, user.id, type);
 
@@ -74,11 +85,7 @@ export default function Viewer() {
       file.type = file.type || "pdf";
 
       if (currentFile && currentFile.name === file.name) {
-        initViewer(viewerRef.current, {
-          blob: currentFile,
-          metadata: file
-        });
-        setState({ file });
+        setState({ file, currentFile });
       }
       else {
         setState({ file, filePreviewVisible: true });
@@ -113,7 +120,7 @@ export default function Viewer() {
   }
 
   async function initViewer(container, file) {
-    viewerLoaded.current = true;
+    viewerState.current = 2;
     file.metadata.type = file.metadata.type || "pdf";
 
     if (file.metadata.type === "pdf") {
@@ -145,13 +152,6 @@ export default function Viewer() {
     }
   }
 
-  function reloadViewer(container, file) {
-    if (viewerLoaded.current) {
-      cleanupViewer(true);
-    }
-    initViewer(container, file);
-  }
-
   async function uploadFile(file) {
     if (!state.file) {
       return;
@@ -169,13 +169,8 @@ export default function Viewer() {
 
     if (hash === state.file.hash) {
       if (state.filePreviewVisible) {
-        initViewer(viewerRef.current, {
-          blob: file,
-          metadata: state.file,
-          save: true
-        });
         hideFileLoadMessage();
-        setState({ file: state.file });
+        setState({ file: state.file, currentFile: file });
       }
       else {
         setFileLoadMessage({
@@ -236,14 +231,13 @@ export default function Viewer() {
         fileService.saveFile(newFile, user.id);
       }
     }
-    reloadViewer(viewerRef.current, {
-      metadata: newFile,
-      blob: file,
-      save
-    });
-    navigate(`/viewer/${newFile.id}`, { replace: true, state: true });
+
+    if (viewerState.current) {
+      cleanupViewer(true);
+    }
+    navigate(`/viewer/${newFile.id}`, { replace: true });
     setDocumentTitle(newFile.name);
-    setState({ file: newFile });
+    setState({ file: newFile, currentFile: file, reload: true, save: false });
   }
 
   function loadPreviewFile() {

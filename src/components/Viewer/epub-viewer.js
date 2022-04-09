@@ -297,6 +297,7 @@ function cleanupEpubViewer(reloading) {
       epubElement.innerHTML = "";
       epubElement.classList.remove(`theme-${settings.epub.theme}`);
     }
+    clearTimeout(saveTimeoutId);
     cleanupViewMode();
     cleanupTextOpacity();
     cleanupScale();
@@ -320,6 +321,7 @@ function cleanupScale() {
 }
 
 function setSaveEpubFile(saveFile) {
+  clearTimeout(saveTimeoutId);
   save = saveFile;
 }
 
