@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { setSettings } from "../../../services/fileWarningService";
-import Icon from "../../Icon";
-import Notification from "../../Notification";
+import { setSettings } from "services/fileWarningService";
+import Icon from "components/Icon";
+import Notification from "components/Notification";
 import "./file-load-modal.scss";
 
 export default function FileLoadModal({ message, fileWarning, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage }) {
@@ -57,7 +57,7 @@ export default function FileLoadModal({ message, fileWarning, saveFileLoadModalF
     return (
       <div className="viewer-file-load-modal viewer-file-load-warning">
         <div className="viewer-file-load-warning-mesasge-container">
-          <Icon name="info" size="24px"/>
+          <Icon id="info" size="24px"/>
           <p className="viewer-file-load-warning-mesasge">{message.value}</p>
         </div>
         <label className="checkbox-container viewer-file-load-warning-checkbox-container">

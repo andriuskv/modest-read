@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { setDocumentTitle, getMonthName, getWeekdayName, getDaysInMonth, getCurrentDate, getFirstDayIndex } from "../../utils";
-import { useUser } from "../../context/user-context";
-import { getCalendarYear, fetchStatistics, resetStatistics } from "../../services/statsService";
-import Header from "../Header";
-import Icon from "../Icon";
-import Dropdown from "../Dropdown";
-import Notification from "../Notification";
-import ConfirmationModal from "../ConfirmationModal";
+import { setDocumentTitle, getMonthName, getWeekdayName, getDaysInMonth, getCurrentDate, getFirstDayIndex } from "utils";
+import { useUser } from "contexts/user-context";
+import { getCalendarYear, fetchStatistics, resetStatistics } from "services/statsService";
+import Header from "components/Header";
+import Icon from "components/Icon";
+import Dropdown from "components/Dropdown";
+import Notification from "components/Notification";
+import ConfirmationModal from "components/ConfirmationModal";
 import "./statistics.scss";
 
 export default function Statistics() {
@@ -351,7 +351,7 @@ export default function Statistics() {
       <div className="stats-container">
         <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousWeek} title="Previous week">
-            <Icon name="chevron-left" size="24px"/>
+            <Icon id="chevron-left" size="24px"/>
           </button>
           <div className="stats-graph-info">
             <h3 className="stats-graph-title">{getWeekRangeString()}</h3>
@@ -359,7 +359,7 @@ export default function Statistics() {
           </div>
           {activeWeek === currentDate.week && activeYear === currentDate.year ? null : (
             <button className="btn icon-btn" onClick={nextWeek} title="Next week">
-              <Icon name="chevron-right" size="24px"/>
+              <Icon id="chevron-right" size="24px"/>
             </button>
           )}
         </div>
@@ -384,7 +384,7 @@ export default function Statistics() {
       <div className="stats-container">
         <div className="stats-graph-top">
           <button className="btn icon-btn" onClick={previousYear} title="Previous year">
-            <Icon name="chevron-left" size="24px"/>
+            <Icon id="chevron-left" size="24px"/>
           </button>
           <div className="stats-graph-info">
             <h3 className="stats-graph-title">{durationCalendar[activeYear].name}</h3>
@@ -392,7 +392,7 @@ export default function Statistics() {
           </div>
           {activeYear !== currentDate.year && (
             <button className="btn icon-btn" onClick={nextYear} title="Next year">
-              <Icon name="chevron-right" size="24px"/>
+              <Icon id="chevron-right" size="24px"/>
             </button>
           )}
         </div>
@@ -430,7 +430,7 @@ export default function Statistics() {
       <Header className="stats-header"/>
       <div className="stats-view-selection">
         <Link to="/" className="btn icon-btn icon-btn-alt stats-home-btn">
-          <Icon name="home"/>
+          <Icon id="home"/>
         </Link>
         <button className={`btn stats-view-selection-btn${activeView === "week" ? " active" : ""}`}
           onClick={() => selectView("week")}>Week</button>
@@ -439,14 +439,14 @@ export default function Statistics() {
         <Dropdown
           container={{ className: "stats-dropdown-container" }}
           toggle={{
-            content: <Icon name="dots-vertical" size="24px"/>,
+            content: <Icon id="dots-vertical" size="24px"/>,
             title: "More",
             className: "btn icon-btn icon-btn-alt"
           }}
           body={{ className: "stats-dropdown" }}>
           <button className="btn icon-text-btn dropdown-btn stats-dropdown-btn"
             onClick={() => showResetModal()}>
-            <Icon name="reset"/>
+            <Icon id="reset"/>
             <span>Reset Statistics</span>
           </button>
         </Dropdown>

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import Icon from "../../Icon";
+import Icon from "components/Icon";
 import "./file-search.scss";
 
 export default function FileSearch({ searchFiles, resetSearch }) {
@@ -22,14 +22,14 @@ export default function FileSearch({ searchFiles, resetSearch }) {
 
   return (
     <div className="files-search">
-      <Icon name="search" className="files-search-item files-search-icon"/>
+      <Icon id="search" className="files-search-item files-search-icon"/>
       <input type="text" className="input files-search-input" placeholder="Search"
         onChange={handleSearchChange}
         value={searchValue}/>
       {searchValue && (
         <button className="btn icon-btn icon-btn-alt files-search-item files-search-btn"
           onClick={clearSearchInput}>
-          <Icon name="close"/>
+          <Icon id="close"/>
         </button>
       )}
     </div>

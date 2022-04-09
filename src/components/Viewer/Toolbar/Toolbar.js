@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
-import { setSetting } from "../../../services/settingsService";
-import Icon from "../../Icon";
-import Dropdown from "../../Dropdown";
+import { setSetting } from "services/settingsService";
+import Icon from "components/Icon";
+import Dropdown from "components/Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.scss";
 
@@ -187,11 +187,11 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
       <div className="view-toolbar-side">
         <FileInfo file={file}/>
         <button id="js-viewer-outline-toggle-btn" className="btn icon-btn icon-btn-alt viewer-outline-toggle-btn" title="Toggle outline">
-          <Icon name="outline"/>
+          <Icon id="outline"/>
         </button>
         <div className="viewer-toolbar-zoom">
           <button id="js-viewer-zoom-out" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom out">
-            <Icon name="minus"/>
+            <Icon id="minus"/>
           </button>
           <select id="js-viewer-scale-select" className="input viewer-toolbar-zoom-select">
             <option value="custom" style={{ display: "none" }}></option>
@@ -206,26 +206,26 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
             <option value="4">400%</option>
           </select>
           <button id="js-viewer-zoom-in" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom in">
-            <Icon name="plus"/>
+            <Icon id="plus"/>
           </button>
         </div>
       </div>
       <div className="view-toolbar-side">
         <div className="viewer-toolbar-page">
           <button id="js-viewer-previous-page" className="btn icon-btn viewer-toolbar-tool-btn">
-            <Icon name="arrow-up"/>
+            <Icon id="arrow-up"/>
           </button>
           <div id="js-viewer-page-input-container" className="viewer-toolbar-page-input-container">
             <input id="js-viewer-page-input" type="text" inputMode="numeric" className="input viewer-toolbar-page-input"/>
             <span></span>
           </div>
           <button id="js-viewer-next-page" className="btn icon-btn viewer-toolbar-tool-btn">
-            <Icon name="arrow-down"/>
+            <Icon id="arrow-down"/>
           </button>
         </div>
         <Dropdown
           toggle={{
-            content: <Icon name="settings"/>,
+            content: <Icon id="settings"/>,
             title: "Settings",
             className: "btn icon-btn icon-btn-alt"
           }}
@@ -234,18 +234,18 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
           {file.type === "pdf" && (
             <div className="viewer-toolbar-dropdown-group">
               <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
-                <Icon name="rotate"/>
+                <Icon id="rotate"/>
                 <span>Rotate pages</span>
               </button>
             </div>
           )}
           <div id="js-viewer-view-modes" className="viewer-toolbar-dropdown-group">
             <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="single">
-              <Icon name="page"/>
+              <Icon id="page"/>
               <span>Single page</span>
             </button>
             <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
-              <Icon name="pages"/>
+              <Icon id="pages"/>
               <span>Multi page</span>
             </button>
           </div>
@@ -263,7 +263,7 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
               </div>
               <div className="viewer-toolbar-dropdown-group">
                 <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" onClick={showMarginModal}>
-                  <Icon name="margin"/>
+                  <Icon id="margin"/>
                   <span>Set margin</span>
                 </button>
               </div>
@@ -297,14 +297,14 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
         </Dropdown>
         <Dropdown
           toggle={{
-            content: <Icon name="dots-vertical"/>,
+            content: <Icon id="dots-vertical"/>,
             title: "More",
             className: "btn icon-btn icon-btn-alt"
           }}
           body={{ className: "viewer-toolbar-dropdown" }}>
           <div className="viewer-toolbar-dropdown-group">
             <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
-              <Icon name="upload"/>
+              <Icon id="upload"/>
               <span>Load File</span>
               <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
             </label>
@@ -338,7 +338,7 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
           </div>
           <div className="viewer-toolbar-dropdown-group">
             <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={localExitViewer} title="Exit">
-              <Icon name="exit"/>
+              <Icon id="exit"/>
               <span>Exit</span>
             </button>
           </div>

@@ -17,7 +17,9 @@ module.exports = function(env = {}) {
       }
     }),
     new MiniCssExtractPlugin({
-      filename: "[name].css"
+      filename: "[name].css",
+      chunkFilename: "[id].css",
+      ignoreOrder: false
     }),
     new HtmlWebpackPlugin({
       template: "./public/index.html",
@@ -70,7 +72,9 @@ module.exports = function(env = {}) {
       alias: {
         components: path.resolve(__dirname, "src/components"),
         contexts: path.resolve(__dirname, "src/contexts"),
-        services: path.resolve(__dirname, "src/services")
+        services: path.resolve(__dirname, "src/services"),
+        assets: path.resolve(__dirname, "src/assets"),
+        utils$: path.resolve(__dirname, "src/utils.js")
       }
     },
     output: {
@@ -125,15 +129,16 @@ module.exports = function(env = {}) {
             {
               loader: "css-loader",
               options: {
-                sourceMap: !env.prod,
+                esModule: true,
+                importLoaders: 1,
                 url: false
               }
             },
             {
-              loader: "sass-loader",
-              options: {
-                sourceMap: !env.prod
-              }
+              loader: "postcss-loader"
+            },
+            {
+              loader: "sass-loader"
             }
           ]
         },

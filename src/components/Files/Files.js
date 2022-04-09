@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "../../utils";
-import { useUser } from "../../context/user-context";
-import * as fileService from "../../services/fileService";
-import { getSettings, setSettings, setSetting } from "../../services/settingsService";
-import Header from "../Header";
-import BannerImage from "../BannerImage";
-import Icon from "../Icon";
-import Dropdown from "../Dropdown";
-import ConfirmationModal from "../ConfirmationModal";
-import LandingPage from "../LandingPage";
-import Notification from "../Notification";
-import ErrorPage from "../ErrorPage";
-import FileCard from "../FileCard";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "utils";
+import { useUser } from "contexts/user-context";
+import * as fileService from "services/fileService";
+import { getSettings, setSettings, setSetting } from "services/settingsService";
+import Header from "components/Header";
+import BannerImage from "components/BannerImage";
+import Icon from "components/Icon";
+import Dropdown from "components/Dropdown";
+import ConfirmationModal from "components/ConfirmationModal";
+import LandingPage from "components/LandingPage";
+import Notification from "components/Notification";
+import ErrorPage from "components/ErrorPage";
+import FileCard from "components/FileCard";
 import "./files.scss";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
@@ -636,11 +636,11 @@ export default function Files() {
     return (
       <>
         <Link to="/statistics" className="btn icon-text-btn files-more-dropdown-btn">
-          <Icon name="stats" size="24px"/>
+          <Icon id="stats" size="24px"/>
           <span>Statistics</span>
         </Link>
         <label className="btn icon-text-btn dropdown-btn files-more-dropdown-btn files-import-btn">
-          <Icon name="upload" size="24px"/>
+          <Icon id="upload" size="24px"/>
           <span>Import Files</span>
           <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
@@ -652,7 +652,7 @@ export default function Files() {
     return (
       <div className="files-header">
         <button className="btn icon-btn files-sidebar-toggle-btn" onClick={toggleMenu} title="Toggle sidebar">
-          <Icon name="menu" size="24px"/>
+          <Icon id="menu" size="24px"/>
         </button>
         <Header shouldRenderUser={true}/>
         <div className={`files-categories-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
@@ -665,7 +665,7 @@ export default function Files() {
                 <li key={i}>
                   <button className={`btn icon-text-btn files-category-btn${state.visibleCategory === category.id ? " active" : ""}`}
                     onClick={() => selectCategory(category.id)}>
-                    <Icon name={category.icon} size="24px"/>
+                    <Icon id={category.icon} size="24px"/>
                     <span>{category.name}</span>
                     <span>{category.files.length}</span>
                   </button>
@@ -675,7 +675,7 @@ export default function Files() {
             {renderMoreBtns()}
             <Dropdown
               toggle={{
-                content: <Icon name="dots-vertical" size="24px"/>,
+                content: <Icon id="dots-vertical" size="24px"/>,
                 title: "More",
                 className: "btn icon-btn icon-btn-alt files-more-dropdown-toggle-btn"
               }}
@@ -684,12 +684,12 @@ export default function Files() {
               <div className="files-layout-setting">
                 <button className={`btn icon-text-btn files-layout-setting-item${state.type === "grid" ? " active" : ""}`}
                   onClick={() => changeLayout("grid")}>
-                  <Icon name="grid" size="24px"/>
+                  <Icon id="grid" size="24px"/>
                   <span>Grid</span>
                 </button>
                 <button className={`btn icon-text-btn files-layout-setting-item${state.type === "list" ? " active" : ""}`}
                   onClick={() => changeLayout("list")}>
-                  <Icon name="list" size="24px"/>
+                  <Icon id="list" size="24px"/>
                   <span>List</span>
                 </button>
               </div>
@@ -713,7 +713,7 @@ export default function Files() {
       <FileCard file={file} showLink={true} user={user} key={file.id}>
         <Dropdown
           toggle={{
-            content: <Icon name="bookshelf"/>,
+            content: <Icon id="bookshelf"/>,
             title: "Set reading status",
             className: "btn icon-btn"
           }}>
@@ -722,7 +722,7 @@ export default function Files() {
             {state.categories.slice(1).map((category, i) => (
               <button className={`btn icon-text-btn dropdown-btn files-file-card-dropdown-btn${file.status === category.id ? " active" : ""}`} key={i}
                 onClick={() => changeReadingStatus(file.id, category.id)}>
-                <Icon name={category.icon}/>
+                <Icon id={category.icon}/>
                 <span>{category.name}</span>
               </button>
             ))}
@@ -730,7 +730,7 @@ export default function Files() {
         </Dropdown>
         <Dropdown
           toggle={{
-            content: <Icon name="dots-vertical"/>,
+            content: <Icon id="dots-vertical"/>,
             title: "More",
             className: "btn icon-btn"
           }}>
@@ -738,24 +738,24 @@ export default function Files() {
             {user.email ? file.local ? (
               <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
                 onClick={() => showFileTransferModal(file)}>
-                <Icon name="cloud"/>
+                <Icon id="cloud"/>
                 <span>Upload</span>
               </button>
             ) : (
               <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
                 onClick={() => showFileTransferModal(file)}>
-                <Icon name="home"/>
+                <Icon id="home"/>
                 <span>Download</span>
               </button>
             ) : null}
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
               onClick={() => showResetProgressModal(file.id)}>
-              <Icon name="reset"/>
+              <Icon id="reset"/>
               <span>Reset Progress</span>
             </button>
             <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
               onClick={() => showRemoveFileModal(file.id)}>
-              <Icon name="trash"/>
+              <Icon id="trash"/>
               <span>Remove File</span>
             </button>
           </div>
@@ -769,7 +769,7 @@ export default function Files() {
       <div className="files-category-notice">
         <p className="files-category-notice-message">You don't have any files.</p>
         <label className="btn icon-text-btn primary-btn no-files-notice-btn">
-          <Icon name="upload" size="24px"/>
+          <Icon id="upload" size="24px"/>
           <span>Import Files</span>
           <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
@@ -796,7 +796,7 @@ export default function Files() {
         items.push((
           <div className="files-category" key={category.name}>
             <h3 className="files-category-name">
-              <Icon name={category.icon} size="24px"/>
+              <Icon id={category.icon} size="24px"/>
               <span className="files-category-name-text">{category.name}</span>
             </h3>
             {renderFiles(category.files)}

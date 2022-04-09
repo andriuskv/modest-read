@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { setDocumentTitle } from "../../utils";
-import { useUser } from "../../context/user-context";
-import BannerImage from "../BannerImage";
-import Notification from "../Notification";
+import { setDocumentTitle } from "utils";
+import { useUser } from "contexts/user-context";
+import BannerImage from "components/BannerImage";
+import Notification from "components/Notification";
 import "./register.scss";
 
 export default function Register() {

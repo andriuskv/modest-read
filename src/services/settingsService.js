@@ -1,4 +1,4 @@
-import { copyObject } from "../utils";
+import { copyObject } from "utils";
 
 const settings = initSettings();
 

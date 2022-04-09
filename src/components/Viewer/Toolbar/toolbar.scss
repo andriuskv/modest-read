@@ -181,7 +181,7 @@
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     --background-color: var(--color-grey-50);
     color: var(--color-white);
   }
@@ -222,7 +222,7 @@
     opacity: 0.8;
   }
 
-  &.focus-visible {
+  &:focus-visible {
     box-shadow: 0 0 0 2px var(--color-primary);
   }
 

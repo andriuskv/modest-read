@@ -22,7 +22,7 @@
   .notification-btn {
     color: inherit;
 
-    &:hover, &.focus-visible {
+    &:hover, &:focus-visible {
       --background-color: var(--color-white-20);
     }
   }

@@ -1,5 +1,5 @@
 import { createStore, set, setMany, values, get, update, del, clear } from "idb-keyval";
-import { getResponse } from "../utils";
+import { getResponse } from "utils";
 
 const store = createStore("modest-keep", "files");
 const currentFileStore = createStore("modest-keep-file", "current-file");

@@ -185,7 +185,7 @@
   margin-left: var(--space-sm);
   font-size: var(--text-sm);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     text-decoration: underline;
   }
 }

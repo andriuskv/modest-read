@@ -1,4 +1,4 @@
-import ErrorPage from "../ErrorPage";
+import ErrorPage from "components/ErrorPage";
 
 export default function NoMatch() {
   return (

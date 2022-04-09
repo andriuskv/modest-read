@@ -1,7 +1,7 @@
 .files-sort-dropdown-toggle-btn {
   color: var(--color-grey-10);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     --background-color: transparent;
 
     color: var(--color-white);
@@ -31,7 +31,7 @@
   color: var(--color-grey-10);
   text-align: left;
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     background-color: var(--color-grey-50);
     color: var(--color-white);
   }

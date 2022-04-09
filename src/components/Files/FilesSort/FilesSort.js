@@ -1,5 +1,5 @@
-import Icon from "../../Icon";
-import Dropdown from "../../Dropdown";
+import Icon from "components/Icon";
+import Dropdown from "components/Dropdown";
 import "./files-sort.scss";
 
 export default function FilesSort({ sortBy, sortOrder, sortFileCatalog }) {
@@ -12,7 +12,7 @@ export default function FilesSort({ sortBy, sortOrder, sortFileCatalog }) {
       toggle={{
         content: (
           <>
-            <Icon name="sort" size="24px"/>
+            <Icon id="sort" size="24px"/>
             <span>Sort</span>
           </>
         ),
