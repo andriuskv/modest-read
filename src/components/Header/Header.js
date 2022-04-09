@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { useUser } from "../../context/user-context";
-import Dropdown from "../Dropdown";
-import Icon from "../Icon";
+import { useUser } from "contexts/user-context";
+import Dropdown from "components/Dropdown";
+import Icon from "components/Icon";
 import "./header.scss";
 
 export default function Header({ className, shouldRenderUser = false }) {
@@ -15,7 +15,7 @@ export default function Header({ className, shouldRenderUser = false }) {
       return (
         <Dropdown container={{ className: "header-user" }}
           toggle={{
-            content: <Icon name="user" size="24px"/>,
+            content: <Icon id="user" size="24px"/>,
             className: "btn icon-btn icon-btn-alt user-dropdown-toggle-btn",
             title: `Logged in as ${user.email}`
           }}

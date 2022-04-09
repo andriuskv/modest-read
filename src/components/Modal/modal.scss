@@ -52,7 +52,7 @@
   .text-btn {
     margin-right: var(--space-md);
 
-    &:hover, &.focus-visible {
+    &:hover, &:focus-visible {
       background-color: var(--color-grey-30);
     }
   }

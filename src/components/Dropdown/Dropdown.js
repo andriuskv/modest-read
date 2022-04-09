@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
-import "./dropdown.scss";
 import { v4 as uuidv4 } from "uuid";
-import { dispatchCustomEvent } from "../../utils";
+import { dispatchCustomEvent } from "utils";
+import "./dropdown.scss";
 
 export default function Dropdown({ container, toggle, body, children }) {
   const [state, setState] = useState({ id: uuidv4() });

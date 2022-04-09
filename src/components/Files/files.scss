@@ -91,7 +91,7 @@
 .files-sidebar-title {
   width: 100%;
   height: 32px;
-  background-image: url("../../assets/icon-text.svg");
+  background-image: url("assets/icon-text.svg");
   background-position: center;
   background-repeat: no-repeat;
   text-indent: -9999px;
@@ -117,7 +117,7 @@
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     --background-color: transparent;
 
     color: var(--color-white);
@@ -127,7 +127,7 @@
     box-shadow: 0 2px 0 0 var(--color-primary);
     color: var(--color-white);
 
-    &.focus-visible {
+    &:focus-visible {
       outline: 1px solid var(--color-primary);
     }
   }
@@ -159,7 +159,7 @@
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     --background-color: transparent;
 
     color: var(--color-white);
@@ -239,13 +239,13 @@
     border-right: 1px solid var(--color-grey-50);
   }
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     --background-color: var(--color-grey-50);
 
     color: var(--color-white);
   }
 
-  &.focus-visible {
+  &:focus-visible {
     box-shadow: inset 0 0 0 1px var(--color-primary);
   }
 
@@ -351,7 +351,7 @@
   border-radius: 0;
   color: var(--color-grey-10);
 
-  &:hover, &.focus-visible {
+  &:hover, &:focus-visible {
     background-color: var(--color-grey-50);
     color: var(--color-white);
   }

@@ -1,5 +1,5 @@
+import spinner from "assets/ring.svg";
 import "./spinner.scss";
-import spinner from "../../../assets/ring.svg";
 
 export default function Spinner() {
   return (

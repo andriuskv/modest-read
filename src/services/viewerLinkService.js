@@ -1,5 +1,5 @@
-import { scrollToPage } from "../utils";
-import { getSetting } from "./settingsService";
+import { scrollToPage } from "utils";
+import { getSetting } from "services/settingsService";
 
 export default class LinkService {
   constructor(pdfDocument, pdfElement, url) {

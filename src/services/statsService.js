@@ -1,4 +1,4 @@
-import { getDaysInMonth, getCurrentDate, getResponse } from "../utils";
+import { getDaysInMonth, getCurrentDate, getResponse } from "utils";
 
 let readingTime = JSON.parse(localStorage.getItem("reading-time")) || {};
 let isLocalUser = true;

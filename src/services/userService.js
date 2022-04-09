@@ -1,4 +1,4 @@
-import { getResponse } from "../utils";
+import { getResponse } from "utils";
 
 function fetchSessionUser() {
   return fetch("/api/users/me").then(getResponse);

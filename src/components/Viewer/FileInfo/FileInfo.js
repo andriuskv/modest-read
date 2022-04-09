@@ -1,5 +1,5 @@
-import Icon from "../../Icon";
-import Dropdown from "../../Dropdown";
+import Icon from "components/Icon";
+import Dropdown from "components/Dropdown";
 import "./file-info.scss";
 
 export default function FileInfo({ file }) {
@@ -27,7 +27,7 @@ export default function FileInfo({ file }) {
   return (
     <Dropdown
       toggle={{
-        content: <Icon name="info"/>,
+        content: <Icon id="info"/>,
         title: "Information",
         className: "btn icon-btn icon-btn-alt"
       }}

@@ -1,18 +1,18 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import { useUser } from "../../context/user-context";
-import { computeHash, setDocumentTitle } from "../../utils";
-import * as fileService from "../../services/fileService";
-import * as settingsService from "../../services/settingsService";
-import * as fileWarningService from "../../services/fileWarningService";
-import ErrorPage from "../ErrorPage";
-import Modal from "../Modal";
-import Icon from "../Icon";
+import { computeHash, setDocumentTitle } from "utils";
+import { useUser } from "contexts/user-context";
+import * as fileService from "services/fileService";
+import * as settingsService from "services/settingsService";
+import * as fileWarningService from "services/fileWarningService";
+import ErrorPage from "components/ErrorPage";
+import Modal from "components/Modal";
+import Icon from "components/Icon";
+import "./viewer.scss";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";
 import Spinner from "./Spinner";
-import "./viewer.scss";
 
 export default function Viewer() {
   const location = useLocation();
@@ -363,16 +363,16 @@ export default function Viewer() {
       <div id="js-viewer" className="viewer offset" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
       <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">
-        <Icon name="chevron-left"/>
+        <Icon id="chevron-left"/>
       </button>
       <button id="js-viewer-nav-next-btn" className="btn icon-btn viewer-navigation-btn next">
-        <Icon name="chevron-right"/>
+        <Icon id="chevron-right"/>
       </button>
       {marginModal && (
         <Modal hide={hideMarginModal}>
           <form onSubmit={handleMarginFormSubmit}>
             <div className="modal-title-container">
-              <Icon name="margin" className="modal-title-icon viewer-margin-modal-icon"/>
+              <Icon id="margin" className="modal-title-icon viewer-margin-modal-icon"/>
               <h3 className="modal-title">Margin</h3>
             </div>
             <div className="viewer-margin-modal-body">

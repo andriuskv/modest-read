@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import Icon from "../Icon";
+import Icon from "components/Icon";
 import "./file-card.scss";
 
 export default function FileCard({ file, user, showLink, children }) {
@@ -10,7 +10,7 @@ export default function FileCard({ file, user, showLink, children }) {
           className="file-card-left file-card-link"
           title={`Open ${file.name}`}>
           <img src={file.coverImage} className="file-card-image" alt=""/>
-          <Icon name="zoom" className="file-card-icon" size="36px"/>
+          <Icon id="zoom" className="file-card-icon" size="36px"/>
         </Link>
       ) : (
         <div className="file-card-left">
@@ -19,7 +19,7 @@ export default function FileCard({ file, user, showLink, children }) {
       )}
       <div className="file-card-info">
         <div className="file-card-title">
-          {file.local && user.email ? <Icon name="home" size="16px" className="file-card-local-icon"/> : null}
+          {file.local && user.email ? <Icon id="home" size="16px" className="file-card-local-icon"/> : null}
           <span className="file-card-title-inner">{file.title || file.name}</span>
         </div>
         {file.author && <div className="file-card-author">{file.author}</div>}

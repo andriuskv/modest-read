@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { classNames } from "../../utils";
-import Icon from "../Icon";
+import { classNames } from "utils";
+import Icon from "components/Icon";
 import "./notification.scss";
 
 export default function Notification({ notification, expandable, className = "", margin, children, dismiss }) {
@@ -28,7 +28,7 @@ export default function Notification({ notification, expandable, className = "",
 
   return (
     <div className={classNames("notification", className, type, margin ? `margin-${margin}` : "", expanded ? "expanded" : "", state.flashing ? "flash" : "")}>
-      <Icon name={type === "negative" ? "circle-cross" : "circle-check"} className="notification-icon" size="24px"/>
+      <Icon id={type === "negative" ? "circle-cross" : "circle-check"} className="notification-icon" size="24px"/>
       {expandable ? (
         <div className="notification-expandable-content-container">
           <div className="notification-expandable-content">
@@ -36,7 +36,7 @@ export default function Notification({ notification, expandable, className = "",
             <button className="btn icon-btn notification-btn notification-expand-btn"
               onClick={toggleExpanded} title="Details"
               style={{ transform: `rotateZ(${expanded ? "180deg" : "0"})`}}>
-              <Icon name="menu-down"/>
+              <Icon id="menu-down"/>
             </button>
           </div>
           {expanded && children}
@@ -44,7 +44,7 @@ export default function Notification({ notification, expandable, className = "",
       ) : <span className="notification-text">{state.value}</span>}
       <button type="button" className="btn icon-btn notification-btn notification-dismiss-btn"
         onClick={dismiss} title="Dismiss">
-        <Icon name="close"/>
+        <Icon id="close"/>
       </button>
     </div>
   );
