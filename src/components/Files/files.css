@@ -1,11 +1,7 @@
-@import "../../styles/mixins.scss";
-
-@mixin sidebar-breakpoint {
-  @media (max-width: 1024px) { @content; }
-}
+@import "../../styles/mixins.css";
 
 .files-header {
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: flex;
     align-items: center;
     padding-bottom: var(--space-md);
@@ -17,7 +13,7 @@
 .files-sidebar-toggle-btn {
   display: none;
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     z-index: 1;
     position: absolute;
     display: flex;
@@ -43,7 +39,7 @@
 .files-categories-container {
   margin-bottom: var(--space-xl);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     z-index: 1;
     position: fixed;
     top: 0;
@@ -64,15 +60,16 @@
   display: flex;
   box-shadow: 0 2px 0 0 var(--color-grey-90);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     overflow: auto;
     display: block;
     width: 200px;
     height: 100%;
-    box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.16),
-                2px 0 4px 0 rgba(0, 0, 0, 0.08),
-                4px 0 8px 0 rgba(0, 0, 0, 0.04),
-                8px 0 16px 0 rgba(0, 0, 0, 0.02);
+    box-shadow:
+      0 1px 2px 0 var(--color-black-16),
+      0 2px 4px 0 var(--color-black-8),
+      0 4px 8px 0 var(--color-black-4),
+      0 8px 16px 0 var(--color-black-2);
     background-color: var(--color-grey-50);
   }
 }
@@ -80,7 +77,7 @@
 .files-sidebar-title-container {
   display: none;
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,9 +98,8 @@
   display: flex;
   margin-right: auto;
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: block;
-    margin-right: auto;
     padding: var(--space-md) 0;
     margin: var(--space-md) 0;
     border-top: 1px solid var(--color-grey-70);
@@ -132,16 +128,16 @@
     }
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     width: 100%;
     padding-left: var(--space-xl);
     padding-right: var(--space-xl);
 
-    span:first-of-type {
+    & span:first-of-type {
       margin-left: var(--space-xl);
     }
 
-    span:nth-child(3) {
+    & span:nth-child(3) {
       margin-left: auto;
     }
 
@@ -165,12 +161,12 @@
     color: var(--color-white);
   }
 
-  @include sidebar-breakpoint {
+  @media (max-width: 1024px) {
     display: none;
   }
 
-  @include breakpoint-md {
-    span {
+  @media (max-width: 900px) {
+    & span {
       margin-left: var(--space-xl);
     }
   }
@@ -178,13 +174,13 @@
 
 .files-import-btn {
   &:focus-within {
-     --background-color: transparent;
+    --background-color: transparent;
 
     box-shadow: 0 0 0 1px var(--color-primary);
     color: var(--color-white);
   }
 
-  @include sidebar-breakpoint {
+  @media (max-width: 1024px) {
     margin: 1px;
   }
 }
@@ -192,7 +188,7 @@
 .files-more-dropdown-toggle-btn {
   padding: var(--space-md);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: none;
   }
 }
@@ -201,19 +197,19 @@
   min-width: 200px;
   padding-bottom: var(--space-md);
 
-  .files-more-dropdown-btn {
+  & .files-more-dropdown-btn {
     display: none;
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: flex;
     position: static;
     box-shadow: none;
     background-color: transparent;
   }
 
-  @include sidebar-breakpoint {
-    .files-more-dropdown-btn {
+  @media (max-width: 1024px) {
+    & .files-more-dropdown-btn {
       display: flex;
     }
   }
@@ -225,7 +221,7 @@
   border-bottom: 1px solid var(--color-grey-50);
   color: var(--color-grey-10);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: none;
   }
 }
@@ -261,18 +257,18 @@
   margin-top: var(--space-md);
   font-size: var(--text-sm);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     margin-top: var(--space-xl);
     padding-top: var(--space-xl);
     padding-left: var(--space-xl);
     border-top: 1px solid var(--color-grey-70);
     color: var(--color-grey-10);
 
-    .checkbox {
+    & .checkbox {
       margin: 0 var(--space-xs);
     }
 
-    .checkbox-label {
+    & .checkbox-label {
       margin-left: var(--space-xl);
     }
   }
@@ -291,7 +287,7 @@
     padding-top: var(--space-xl);
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     padding-top: var(--space-xl);
   }
 }
@@ -319,7 +315,7 @@
     grid-template-columns: auto;
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     grid-template-columns: auto;
   }
 }
@@ -357,7 +353,7 @@
   }
 
   &.active {
-    background-color:var(--color-grey-60);
+    background-color: var(--color-grey-60);
     color: var(--color-white);
   }
 }
@@ -375,7 +371,7 @@
   font-size: var(--text-xl);
   text-align: center;
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     font-size: var(--text-lg);
   }
 }
@@ -399,10 +395,11 @@
   padding: var(--space-lg) var(--space-xxl);
   border-radius: 999px;
   background-color: var(--color-grey-40);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.16),
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 4px 8px 0 rgba(0, 0, 0, 0.04),
-              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 1px 2px 0 var(--color-black-16),
+    0 2px 4px 0 var(--color-black-8),
+    0 4px 8px 0 var(--color-black-4),
+    0 8px 16px 0 var(--color-black-2);
   font-size: var(--text-sm);
   font-weight: 500;
 }

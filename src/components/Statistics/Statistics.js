@@ -8,7 +8,7 @@ import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
 import Notification from "components/Notification";
 import ConfirmationModal from "components/ConfirmationModal";
-import "./statistics.scss";
+import "./statistics.css";
 
 export default function Statistics() {
   const { user } = useUser();

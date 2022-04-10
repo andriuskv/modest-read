@@ -12,11 +12,11 @@
     align-items: flex-start;
     border-radius: 4px;
 
-    .notification-icon {
+    & .notification-icon {
       margin-top: var(--space-xs);
     }
 
-    .notification-expandable-content-container {
+    & .notification-expandable-content-container {
       margin-top: var(--space-sm);
       margin-bottom: 0;
     }
@@ -84,6 +84,7 @@
   50% {
     --notification-color: var(--color-negative-10);
   }
+
   100% {
     --notification-color: var(--color-negative-20);
   }

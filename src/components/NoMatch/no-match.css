@@ -1,5 +1,3 @@
-@import "../../styles/mixins.scss";
-
 .no-match {
   display: flex;
   flex-direction: column;
@@ -12,7 +10,7 @@
   text-align: center;
   font-size: var(--text-xxl);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     font-size: var(--text-xl);
   }
 }

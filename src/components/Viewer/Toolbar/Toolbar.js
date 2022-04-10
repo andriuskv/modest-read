@@ -3,7 +3,7 @@ import { setSetting } from "services/settingsService";
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
 import FileInfo from "../FileInfo";
-import "./toolbar.scss";
+import "./toolbar.css";
 
 export default function Toolbar({ file, settings, fileWarning, setViewerSettings, updateFileSaveSetting, handleFileUpload, exitViewer, showMarginModal }) {
   const keepVisible = useRef(false);

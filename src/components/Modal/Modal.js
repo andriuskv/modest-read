@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import "./modal.scss";
+import "./modal.css";
 
 export default function Modal({ children, hide }) {
   useEffect(() => {

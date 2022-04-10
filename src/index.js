@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 
-import "./styles/index.scss";
+import "./styles/base.css";
+import "components/Dropdown/dropdown.css";
 
 import App from "components/App";
 

@@ -1,6 +1,6 @@
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
-import "./files-sort.scss";
+import "./files-sort.css";
 
 export default function FilesSort({ sortBy, sortOrder, sortFileCatalog }) {
   function changeSortOrder({ target }) {

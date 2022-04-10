@@ -8,7 +8,7 @@ import * as fileWarningService from "services/fileWarningService";
 import ErrorPage from "components/ErrorPage";
 import Modal from "components/Modal";
 import Icon from "components/Icon";
-import "./viewer.scss";
+import "./viewer.css";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
 import FileLoadModal from "./FileLoadModal";

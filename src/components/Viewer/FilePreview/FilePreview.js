@@ -4,7 +4,7 @@ import Notification from "components/Notification";
 import BannerImage from "components/BannerImage";
 import FileCard from "components/FileCard";
 import Spinner from "../Spinner";
-import "./file-preview.scss";
+import "./file-preview.css";
 
 export default function FilePreview({ file, user, loading, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
   return (

@@ -14,7 +14,7 @@ import LandingPage from "components/LandingPage";
 import Notification from "components/Notification";
 import ErrorPage from "components/ErrorPage";
 import FileCard from "components/FileCard";
-import "./files.scss";
+import "./files.css";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";

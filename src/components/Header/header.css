@@ -1,4 +1,4 @@
-@import "../../styles/mixins.scss";
+@import "../../styles/mixins.css";
 
 .header {
   position: relative;
@@ -7,7 +7,7 @@
   width: 100%;
   margin-bottom: var(--space-md);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     justify-content: center;
     margin-bottom: 0;
   }
@@ -42,7 +42,7 @@
 }
 
 .user-email {
-  @include text-truncate;
+  @mixin text-truncate;
 
   padding: 0 var(--space-md) 0 var(--space-lg);
   font-weight: 500;

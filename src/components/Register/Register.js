@@ -4,7 +4,7 @@ import { setDocumentTitle } from "utils";
 import { useUser } from "contexts/user-context";
 import BannerImage from "components/BannerImage";
 import Notification from "components/Notification";
-import "./register.scss";
+import "./register.css";
 
 export default function Register() {
   const navigate = useNavigate();

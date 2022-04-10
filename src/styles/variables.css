@@ -18,28 +18,26 @@
   --text-xxl: calc(1.75 * var(--text-base-size));
   --text-xxxl: calc(2.5 * var(--text-base-size));
 
-  --color-primary: hsl(260, 48%, 52%);
-  --color-primary-10: hsl(260, 48%, 57%);
+  --color-primary: hsl(260deg 48% 52%);
+  --color-primary-10: hsl(260deg 48% 57%);
 
-  --color-white: hsl(260, 8%, 96%);
-  --color-white-20: hsla(260, 8%, 96%, 0.2);
-  --color-white-80: hsla(260, 8%, 96%, 0.8);
+  --color-white: hsl(260deg 8% 96%);
+  --color-white-20: hsl(260deg 8% 96% / 20%);
+  --color-white-80: hsl(260deg 8% 96% / 80%);
 
-  --color-grey-10: hsl(263, 2%, 66%);
-  --color-grey-30: hsl(263, 4%, 34%);
-  --color-grey-40: hsl(263, 4%, 25%);
-  --color-grey-50: hsl(263, 4%, 22%);
-  --color-grey-60: hsl(263, 4%, 20%);
-  --color-grey-70: hsl(263, 5%, 18%);
-  --color-grey-80: hsl(263, 5%, 14%);
-  --color-grey-80-60: hsla(263, 5%, 14%, 0.6);
-  --color-grey-90: hsl(263, 6%, 10%);
+  --color-grey-10: hsl(263deg 2% 66%);
+  --color-grey-30: hsl(263deg 4% 34%);
+  --color-grey-40: hsl(263deg 4% 25%);
+  --color-grey-50: hsl(263deg 4% 22%);
+  --color-grey-60: hsl(263deg 4% 20%);
+  --color-grey-70: hsl(263deg 5% 18%);
+  --color-grey-80: hsl(263deg 5% 14%);
+  --color-grey-80-60: hsl(263deg 5% 14% / 60%);
+  --color-grey-90: hsl(263deg 6% 10%);
 
-  --color-black-20: hsla(0, 0%, 0%, 0.2);
+  --color-black-20: hsl(0deg 0% 0% / 20%);
 
-  --color-negative-10: hsl(0, 86%, 82%);
-  --color-negative-20: hsl(0, 86%, 70%);
-  --color-negative-20-10: hsla(0, 86%, 70%, 0.1);
+  --color-negative-10: hsl(0deg 86% 82%);
+  --color-negative-20: hsl(0deg 86% 70%);
+  --color-negative-20-10: hsl(0deg 86% 70% / 10%);
 }
-
-

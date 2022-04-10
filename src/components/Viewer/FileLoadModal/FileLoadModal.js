@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { setSettings } from "services/fileWarningService";
 import Icon from "components/Icon";
 import Notification from "components/Notification";
-import "./file-load-modal.scss";
+import "./file-load-modal.css";
 
 export default function FileLoadModal({ message, fileWarning, saveFileLoadModalFile, hideFileLoadModal, hideFileLoadMessage }) {
   const [hide, setHide] = useState(false);
