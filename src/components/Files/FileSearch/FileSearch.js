@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import Icon from "components/Icon";
-import "./file-search.scss";
+import "./file-search.css";
 
 export default function FileSearch({ searchFiles, resetSearch }) {
   const [searchValue, setSearchValue] = useState("");

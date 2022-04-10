@@ -1,17 +1,15 @@
-@import "../../styles/mixins.scss";
-
 .viewer {
   &.offset {
     padding-top: 40px;
   }
 
   &.invert {
-    .viewer-page {
+    & .viewer-page {
       filter: invert(100%);
     }
   }
 
-  ::selection {
+  &::selection {
     color: transparent;
     background-color: var(--color-primary);
   }
@@ -29,7 +27,7 @@
   }
 
   &.theme-orange {
-    background-color: #FBF0D9;
+    background-color: #fbf0d9;
   }
 }
 
@@ -71,10 +69,10 @@
 }
 
 .viewer-annotation-layer {
-  section {
+  & section {
     position: absolute;
 
-    a {
+    & a {
       position: absolute;
       font-size: 1em;
       top: 0;
@@ -97,6 +95,7 @@
 
   &:hover {
     --background-color: transform;
+
     color: var(--color-grey-10);
   }
 
@@ -114,7 +113,7 @@
     }
   }
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     &.visible {
       display: block;
     }
@@ -137,18 +136,17 @@
 }
 
 .viewer-outline {
-  @include scrollbar;
-
   overflow-y: auto;
   width: 240px;
   height: 100%;
   padding-top: var(--space-sm);
   padding-bottom: var(--space-sm);
   border-top: 40px solid var(--color-grey-60);
-  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.16),
-              2px 0 4px 0 rgba(0, 0, 0, 0.08),
-              4px 0 8px 0 rgba(0, 0, 0, 0.04),
-              8px 0 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    1px 0 2px 0 var(--color-black-16),
+    2px 0 4px 0 var(--color-black-8),
+    4px 0 8px 0 var(--color-black-4),
+    8px 0 16px 0 var(--color-black-2);
   background-color: var(--color-grey-60);
 }
 

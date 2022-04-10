@@ -4,7 +4,7 @@ import { setDocumentTitle } from "utils";
 import { useUser } from "contexts/user-context";
 import BannerImage from "components/BannerImage";
 import Notification from "components/Notification";
-import "./login.scss";
+import "./login.css";
 
 export default function Login() {
   const navigate = useNavigate();

@@ -18,10 +18,11 @@
   padding: var(--space-xl);
   border-radius: 8px;
   background-color: var(--color-grey-40);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.16),
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 4px 8px 0 rgba(0, 0, 0, 0.04),
-              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 1px 2px 0 var(--color-black-16),
+    0 2px 4px 0 var(--color-black-8),
+    0 4px 8px 0 var(--color-black-4),
+    0 8px 16px 0 var(--color-black-2);
 }
 
 .modal-title-container {
@@ -49,7 +50,7 @@
   justify-content: flex-end;
   margin-top: var(--space-xl);
 
-  .text-btn {
+  & .text-btn {
     margin-right: var(--space-md);
 
     &:hover, &:focus-visible {

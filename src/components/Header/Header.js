@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useUser } from "contexts/user-context";
 import Dropdown from "components/Dropdown";
 import Icon from "components/Icon";
-import "./header.scss";
+import "./header.css";
 
 export default function Header({ className, shouldRenderUser = false }) {
   const { user, logoutUser } = useUser();

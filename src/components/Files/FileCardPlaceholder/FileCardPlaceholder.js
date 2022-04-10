@@ -1,4 +1,4 @@
-import "./file-card-placeholder.scss";
+import "./file-card-placeholder.css";
 
 export default function FileCardPlaceholder() {
   return (

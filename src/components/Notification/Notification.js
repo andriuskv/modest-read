@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { classNames } from "utils";
 import Icon from "components/Icon";
-import "./notification.scss";
+import "./notification.css";
 
 export default function Notification({ notification, expandable, className = "", margin, children, dismiss }) {
   const [state, setState] = useState(notification);

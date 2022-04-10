@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Icon from "components/Icon";
-import "./file-card.scss";
+import "./file-card.css";
 
 export default function FileCard({ file, user, showLink, children }) {
   return (

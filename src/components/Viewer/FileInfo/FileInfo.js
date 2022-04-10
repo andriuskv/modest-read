@@ -1,6 +1,6 @@
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
-import "./file-info.scss";
+import "./file-info.css";
 
 export default function FileInfo({ file }) {
   function renderTitle() {

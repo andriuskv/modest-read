@@ -1,12 +1,10 @@
-@import "../../../styles/mixins.scss";
-
 .viewer-file-preview-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: var(--space-xl);
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     padding: var(--space-xl) var(--space-md);
   }
 }

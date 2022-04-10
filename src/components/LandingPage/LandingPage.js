@@ -1,6 +1,6 @@
 import bgImg from "./background-image.png";
 import icon from "./icon.svg";
-import "./landing-page.scss";
+import "./landing-page.css";
 
 export default function LandingPage({ hide }) {
   return (

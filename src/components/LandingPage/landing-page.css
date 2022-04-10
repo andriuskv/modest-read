@@ -1,8 +1,4 @@
-@import "../../styles/mixins.scss";
-
-@mixin landing-breakpoint {
-  @media (max-width: 1280px) { @content; }
-}
+@import "../../styles/mixins.css";
 
 .landing-container {
   overflow: hidden;
@@ -30,19 +26,20 @@
   width: 360px;
   height: 150%;
   transform: translateY(-50%) rotateZ(24deg);
-  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.16),
-              0 0 4px 0 rgba(0, 0, 0, 0.08),
-              0 0 8px 0 rgba(0, 0, 0, 0.04),
-              0 0 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 0 2px 0 var(--color-black-16),
+    0 0 4px 0 var(--color-black-8),
+    0 0 8px 0 var(--color-black-4),
+    0 0 16px 0 var(--color-black-2);
   background-color: var(--color-primary);
 
-  @include landing-breakpoint {
+  @media (max-width: 1280px) {
     width: 256px;
     height: 250%;
     transform: translateY(-50%) rotateZ(60deg);
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     top: 0;
     left: 0;
     width: 100%;
@@ -50,7 +47,7 @@
     transform: translateY(calc(100% - var(--space-xxxl)));
   }
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     transform: translateY(calc(50% - var(--space-xxxl)));
   }
 }
@@ -65,24 +62,25 @@
   width: 360px;
   height: 360px;
   border-radius: 50%;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.16),
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 4px 8px 0 rgba(0, 0, 0, 0.04),
-              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 1px 2px 0 var(--color-black-16),
+    0 2px 4px 0 var(--color-black-8),
+    0 4px 8px 0 var(--color-black-4),
+    0 8px 16px 0 var(--color-black-2);
 
-  @include landing-breakpoint {
+  @media (max-width: 1280px) {
     right: 8%;
     width: 256px;
     height: 256px;
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     top: 0;
     left: 50%;
     transform: translate(-50%, calc(25% - var(--space-xxxl)));
   }
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     width: 192px;
     height: 192px;
     transform: translate(-50%, calc(50% - var(--space-xxxl)));
@@ -103,17 +101,18 @@
   margin-left: var(--space-xxxl);
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.16),
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 4px 8px 0 rgba(0, 0, 0, 0.04),
-              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 1px 2px 0 var(--color-black-16),
+    0 2px 4px 0 var(--color-black-8),
+    0 4px 8px 0 var(--color-black-4),
+    0 8px 16px 0 var(--color-black-2);
   background-color: var(--color-grey-70);
 
-  @include landing-breakpoint {
+  @media (max-width: 1280px) {
     width: 380px;
   }
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     width: 100%;
     padding-top: 320px;
     margin-left: 0;
@@ -121,7 +120,7 @@
     box-shadow: none;
   }
 
-  @include breakpoint-sm {
+  @media (max-width: 480px) {
     padding-top: 288px;
   }
 }
@@ -131,12 +130,13 @@
   height: 128px;
   margin-bottom: var(--space-xxxl);
   border-radius: 50%;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.16),
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 4px 8px 0 rgba(0, 0, 0, 0.04),
-              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 1px 2px 0 var(--color-black-16),
+    0 2px 4px 0 var(--color-black-8),
+    0 4px 8px 0 var(--color-black-4),
+    0 8px 16px 0 var(--color-black-2);
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     display: none;
   }
 }
@@ -150,7 +150,7 @@
   background-repeat: no-repeat;
   text-indent: -9999px;
 
-  @include breakpoint-md {
+  @media (max-width: 900px) {
     height: 80px;
     max-height: none;
     background-image: url("assets/icon-text.svg");

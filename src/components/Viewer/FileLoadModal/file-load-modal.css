@@ -7,7 +7,7 @@
   min-width: 320px;
   transition: 0.2s top;
 
-  .viewer-toolbar.hidden + & {
+  @nest .viewer-toolbar.hidden + & {
     top: var(--space-md);
   }
 }
@@ -19,7 +19,7 @@
   min-width: auto;
   box-shadow: none;
 
-  .notification-btn {
+  & .notification-btn {
     color: inherit;
 
     &:hover, &:focus-visible {
@@ -49,7 +49,7 @@
   font-size: var(--text-sm);
   color: var(--color-grey-10);
 
-  .checkbox {
+  & .checkbox {
     background-color: var(--color-grey-40);
   }
 }

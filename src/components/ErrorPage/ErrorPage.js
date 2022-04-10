@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { setDocumentTitle } from "utils";
 import Icon from "components/Icon";
 import BannerImage from "components/BannerImage";
-import "./error-page.scss";
+import "./error-page.css";
 
 export default function ErrorPage({ message, title, link }) {
   useEffect(() => {
