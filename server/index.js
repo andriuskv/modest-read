@@ -8,7 +8,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(cors({
   credentials: true,
-  origin: ["https://modest-read.herokuapp.com"],
+  origin: ["https://modest-read.onrender.com", "https://modest-read.herokuapp.com"],
   allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json({ limit: "10mb" }));
