@@ -1,4 +1,6 @@
 .viewer {
+  min-height: 100%;
+
   &.offset {
     padding-top: 40px;
   }
@@ -84,38 +86,6 @@
         background-color: var(--color-primary);
         opacity: 0.2;
       }
-    }
-  }
-}
-
-.viewer-navigation-btn {
-  position: fixed;
-  bottom: var(--space-md);
-  display: none;
-
-  &:hover {
-    --background-color: transform;
-
-    color: var(--color-grey-10);
-  }
-
-  &.previous {
-    left: var(--space-md);
-  }
-
-  &.next {
-    right: var(--space-md);
-  }
-
-  @media only screen and (hover: none) and (pointer: coarse) {
-    &.visible {
-      display: block;
-    }
-  }
-
-  @media (max-width: 480px) {
-    &.visible {
-      display: block;
     }
   }
 }

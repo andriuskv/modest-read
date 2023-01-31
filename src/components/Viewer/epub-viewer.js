@@ -20,6 +20,7 @@ let previousTheme = "";
 let saveTimeoutId = 0;
 let dataToSave = {};
 let user = {};
+let mouseDownStartPos = null;
 
 async function initEpubViewer(container, { metadata, blob, save = true }, loggedUser) {
   const { default: epubjs } = await import("epubjs");
@@ -46,6 +47,7 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
   rendition.on("relocated", handleRelocation);
   rendition.on("keydown", handleKeyDownOnRendition);
   rendition.on("click", handleClickOnRendition);
+  rendition.on("mousedown", handleMouseDownOnRendition);
   rendition.display(metadata.location);
 
   setSaveEpubFile(save);
@@ -277,11 +279,44 @@ function handleKeyDownOnRendition(event) {
   }
 }
 
-function handleClickOnRendition() {
+function handleClickOnRendition(event) {
   if (dropdownId) {
     dropdownId = "";
     hideDropdown();
   }
+
+  if (settings.epub.viewMode !== "single") {
+    return;
+  }
+
+  // Disable navigation to different page if mouse down and up positions differ
+  if (event.screenX !== mouseDownStartPos.x || event.screenY !== mouseDownStartPos.y) {
+    return;
+  }
+  const width = event.currentTarget.body.offsetWidth;
+  const height = event.currentTarget.body.offsetHeight;
+
+  const offsetY = window.outerHeight - window.innerHeight;
+
+  const x = event.offsetX % width;
+  const y = event.screenY - offsetY;
+
+  const ratioX = x / width;
+  const ratioY = y / height;
+
+  if (ratioY > 0.666 || ratioY > 0.333 && ratioX > 0.666) {
+    nextPage();
+  }
+  else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
+    previousPage();
+  }
+}
+
+function handleMouseDownOnRendition(event) {
+  mouseDownStartPos = {
+    x:  event.screenX,
+    y:  event.screenY
+  };
 }
 
 function handleSpreadPagesSetting({ target }) {
@@ -332,7 +367,6 @@ function initPage(pageNumber, pageCount) {
   const pageInputElement = document.getElementById("js-viewer-page-input");
 
   updatePageInputElement(pageNumber);
-  showMobileNavBtn();
 
   pageInputContainerElement.lastElementChild.textContent = `of ${pageCount}`;
 
@@ -386,16 +420,6 @@ async function getOutline() {
   const navigation = await book.loaded.navigation;
 
   return Array.isArray(navigation.toc) ? navigation.toc.map(getOutlineItem) : [];
-}
-
-function showMobileNavBtn() {
-  const previousPageElement = document.getElementById("js-viewer-nav-previous-btn");
-  const nextPageElement = document.getElementById("js-viewer-nav-next-btn");
-
-  previousPageElement.classList.add("visible");
-  nextPageElement.classList.add("visible");
-  previousPageElement.addEventListener("click", previousPage);
-  nextPageElement.addEventListener("click", nextPage);
 }
 
 function previousPage() {
