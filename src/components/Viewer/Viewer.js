@@ -356,12 +356,6 @@ export default function Viewer() {
       )}
       <div id="js-viewer" className="viewer offset" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
-      <button id="js-viewer-nav-previous-btn" className="btn icon-btn viewer-navigation-btn previous">
-        <Icon id="chevron-left"/>
-      </button>
-      <button id="js-viewer-nav-next-btn" className="btn icon-btn viewer-navigation-btn next">
-        <Icon id="chevron-right"/>
-      </button>
       {marginModal && (
         <Modal hide={hideMarginModal}>
           <form onSubmit={handleMarginFormSubmit}>

@@ -27,6 +27,7 @@ let scrolling = false;
 let saveTimeoutId = 0;
 let dataToSave = {};
 let user = {};
+let mouseDownStartPos = null;
 
 async function initPdfViewer(container, { metadata, blob, save = true }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack");
@@ -95,12 +96,13 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
       pdfElement.classList.remove("offset");
     }
     renderSinglePage(pageNumber);
-    showSinglePageNavBtn();
 
     singlePageViewElement.classList.add("active");
 
     window.addEventListener("scroll", handleSinglePageScroll);
     window.addEventListener("click", handleAnnotationClick);
+    container.addEventListener("click", handleNavigationAreaClick);
+    container.addEventListener("mousedown", handleMouseDownOnRendition);
   }
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
@@ -141,26 +143,6 @@ function updateFile(file, data, skipWaiting = false) {
   }, skipWaiting ? 1 : 10000);
 }
 
-function showSinglePageNavBtn() {
-  const previousPageElement = document.getElementById("js-viewer-nav-previous-btn");
-  const nextPageElement = document.getElementById("js-viewer-nav-next-btn");
-
-  previousPageElement.classList.add("visible");
-  nextPageElement.classList.add("visible");
-  previousPageElement.addEventListener("click", previousPage);
-  nextPageElement.addEventListener("click", nextPage);
-}
-
-function hideSinglePageNavBtn() {
-  const previousPageElement = document.getElementById("js-viewer-nav-previous-btn");
-  const nextPageElement = document.getElementById("js-viewer-nav-next-btn");
-
-  previousPageElement.classList.remove("visible");
-  nextPageElement.classList.remove("visible");
-  previousPageElement.removeEventListener("click", previousPage);
-  nextPageElement.removeEventListener("click", nextPage);
-}
-
 function cleanupPdfViewer(reloading) {
   if (reloading) {
     if (pdfElement) {
@@ -187,6 +169,8 @@ function cleanupPdfViewer(reloading) {
   window.removeEventListener("keyup", handleKeyUp);
   window.removeEventListener("wheel", handleWheel, { passive: false });
   window.removeEventListener("click", handleAnnotationClick);
+  pdfElement.removeEventListener("click", handleNavigationAreaClick);
+  pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
 }
 
 function setSavePdfFile(saveFile) {
@@ -362,6 +346,37 @@ function handleAnnotationClick({ target }) {
   if (target.nodeName === "A" && target.classList.contains("internalLink")) {
     goToDestination(target.href);
   }
+}
+
+function handleNavigationAreaClick(event) {
+  // Disable navigation to different page if mouse down and up positions differ
+  if (event.screenX !== mouseDownStartPos.x || event.screenY !== mouseDownStartPos.y) {
+    return;
+  }
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  const offsetY = window.outerHeight - window.innerHeight;
+
+  const x = event.screenX;
+  const y = event.screenY - offsetY;
+
+  const ratioX = x / width;
+  const ratioY = y / height;
+
+  if (ratioY > 0.666 || ratioY > 0.333 && ratioX > 0.666) {
+    nextPage();
+  }
+  else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
+    previousPage();
+  }
+}
+
+function handleMouseDownOnRendition(event) {
+  mouseDownStartPos = {
+    x:  event.screenX,
+    y:  event.screenY
+  };
 }
 
 function handleKeyDown(event) {
@@ -862,12 +877,13 @@ async function setViewMode(event) {
       scrollLeft: 0
     });
     registerIntersectionObserver();
-    hideSinglePageNavBtn();
     pdfElement.classList.add("offset");
 
     window.addEventListener("scroll", handleScroll);
     window.removeEventListener("scroll", handleSinglePageScroll);
     window.removeEventListener("click", handleAnnotationClick);
+    pdfElement.removeEventListener("click", handleNavigationAreaClick);
+    pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
   }
   else {
     const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
@@ -879,8 +895,9 @@ async function setViewMode(event) {
     await renderSingleEmptyPage(pdfElement, pdfInstance, fileMetadata);
     renderSinglePage(pageNumber);
     window.scrollTo(0, 0);
-    showSinglePageNavBtn();
 
+    pdfElement.addEventListener("click", handleNavigationAreaClick);
+    pdfElement.addEventListener("mousedown", handleMouseDownOnRendition);
     window.addEventListener("scroll", handleSinglePageScroll);
     window.addEventListener("click", handleAnnotationClick);
     window.removeEventListener("scroll", handleScroll);

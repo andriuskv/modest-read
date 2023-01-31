@@ -6,13 +6,13 @@ function findUser(email) {
 }
 
 async function createUser({ email, password }) {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, "sha512").toString("hex");
   const user = await findUser(email);
 
   if (user) {
     return null;
   }
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, "sha512").toString("hex");
   const { id } = await db.one("INSERT INTO users(email, hash, salt) VALUES($1, $2, $3) RETURNING id", [email, hash, salt]);
 
   return {
