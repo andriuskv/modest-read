@@ -12,6 +12,10 @@ export default class LinkService {
     this.goToDestination(dest);
   }
 
+  addLinkAttributes(link, url) {
+    link.setAttribute("href", url);
+  }
+
   async goToDestination(dest) {
     let explicitDest = null;
 

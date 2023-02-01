@@ -40,6 +40,8 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   pageNumber = metadata.pageNumber || 1;
   document.body.style.overscrollBehavior = "none";
 
+  container.style.setProperty("--scale-factor", scale.currentScale);
+
   ([pageDimensions] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
     settings.pdf.viewMode === "multi" ?
@@ -158,6 +160,7 @@ function cleanupPdfViewer(reloading) {
     cleanupColorInversion();
   }
   document.body.style.overscrollBehavior = "";
+  pdfElement.style.setProperty("--scale-factor", "");
   unregisterIntersectionObserver();
 
   if (save) {
@@ -576,9 +579,9 @@ async function renderPageContent(container) {
     viewport
   }).promise;
 
-  requestAnimationFrame(async () => {
+  requestAnimationFrame(() => {
     pdfjs.renderTextLayer({
-      textContent: await page.getTextContent(),
+      textContentSource: page.streamTextContent(),
       container: textLayerDiv,
       viewport,
       textDivs: []
@@ -752,6 +755,8 @@ function setScale(value, name = "custom") {
   scale.name = name;
   scale.currentScale = value;
   scale.displayValue = Math.round(value * 100 / defaultScale);
+
+  pdfElement.style.setProperty("--scale-factor", value);
 
   if (settings.pdf.viewMode === "multi") {
     const { top } = getPageElementBox(pageNumber, pdfElement.children);
