@@ -1,4 +1,4 @@
-@import "../../../styles/mixins.css";
+@import url("../../../styles/mixins.css");
 
 .viewer-toolbar {
   z-index: 2;
@@ -6,22 +6,20 @@
   top: 0;
   left: 0;
   right: 0;
-  display: flex;
+  display: none;
   align-items: center;
   flex-shrink: 0;
   height: 40px;
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm) 32px var(--space-sm) 0;
   background-color: var(--color-grey-70);
   transition: 0.2s transform;
 
-  &:not(.keep-visible) {
-    &.hiding {
-      transform: translateY(-100%);
-    }
+  &.visible {
+    display: flex;
+  }
 
-    &.hidden {
-      display: none;
-    }
+  &.hiding {
+    transform: translateY(-100%);
   }
 }
 
@@ -251,4 +249,16 @@
 
 .viewer-toolbar-dropdown-range-input {
   width: 100%;
+}
+
+.viewer-toolbar-toggle-btn {
+  z-index: 2;
+  position: fixed;
+  top: 6px;
+  right: var(--space-sm);
+  transition: 0.2s transform;
+
+  &:hover, &:focus-visible {
+    --background-color: rgba(255 255 255 / 10%);
+  }
 }

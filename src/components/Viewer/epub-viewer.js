@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { getElementByAttr, getEpubCoverUrl, getFileSizeString } from "../../utils";
+import { getElementByAttr, dispatchCustomEvent, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import * as fileService from "../../services/fileService";
 import { getSettings, setSettings } from "../../services/settingsService";
 import { startCounting, stopCounting } from "../../services/statsService";
@@ -310,6 +310,9 @@ function handleClickOnRendition(event) {
   else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
     previousPage();
   }
+  else {
+    dispatchCustomEvent("toolbar-toggle");
+  }
 }
 
 function handleMouseDownOnRendition(event) {
@@ -505,7 +508,7 @@ function getRendition(viewMode, spreadPages, margin) {
     horizontalMargin = 20;
   }
   const options = {
-    height: document.documentElement.offsetHeight - 40,
+    height: document.documentElement.offsetHeight,
     // Only half of gap is visible in single page mode, in multi page mode it is ignored.
     gap: horizontalMargin * 2 || 0.1
   };
@@ -544,12 +547,14 @@ function resetRendition(viewMode, spreadPages, margin) {
   rendition.off("relocated", handleRelocation);
   rendition.off("keydown", handleKeyDownOnRendition);
   rendition.off("click", handleClickOnRendition);
+  rendition.off("mousedown", handleMouseDownOnRendition);
 
   rendition = getRendition(viewMode, spreadPages, margin);
 
   rendition.on("relocated", handleRelocation);
   rendition.on("keydown", handleKeyDownOnRendition);
   rendition.on("click", handleClickOnRendition);
+  rendition.on("mousedown", handleMouseDownOnRendition);
   rendition.display(fileMetadata.location);
 }
 

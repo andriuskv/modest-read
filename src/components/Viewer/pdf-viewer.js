@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
+import { dispatchCustomEvent, getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
 import * as fileService from "../../services/fileService";
 import { getSettings, setSettings } from "../../services/settingsService";
 import LinkService from "../../services/viewerLinkService";
@@ -92,11 +92,6 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
     registerIntersectionObserver();
   }
   else {
-    const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
-
-    if (media.matches && !settings.keepToolbarVisible) {
-      pdfElement.classList.remove("offset");
-    }
     renderSinglePage(pageNumber);
 
     singlePageViewElement.classList.add("active");
@@ -372,6 +367,9 @@ function handleNavigationAreaClick(event) {
   }
   else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
     previousPage();
+  }
+  else {
+    dispatchCustomEvent("toolbar-toggle");
   }
 }
 
@@ -706,7 +704,7 @@ function updatePageBtnElementState(pageNumber) {
 
 function setPage(value, updatePageInput = true) {
   if (settings.pdf.viewMode === "multi") {
-    scrollToPage(value, pdfElement.children, { keepToolbarVisible: settings.keepToolbarVisible });
+    scrollToPage(value, pdfElement.children);
   }
   else {
     pageNumber = value;
@@ -785,12 +783,6 @@ function setScale(value, name = "custom") {
   setSettings(settings);
 }
 
-function getMaxHeight(height) {
-  const singlePageViewMode = settings.pdf.viewMode === "single";
-  const { keepToolbarVisible } = settings;
-  return height - (keepToolbarVisible || pageNumber === 1 || singlePageViewMode ? 56 : 16);
-}
-
 async function handleScaleSelect({ target }) {
   const { value } = target;
   let newScale = 0;
@@ -798,7 +790,7 @@ async function handleScaleSelect({ target }) {
   if (value === "fit-width") {
     const { offsetWidth, scrollHeight, offsetHeight } = document.documentElement;
     const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation }, true);
-    const maxHeight = getMaxHeight(offsetHeight);
+    const maxHeight = offsetHeight - 16;
     let maxWidth = offsetWidth - 16;
     let scrollbarWidth = 0;
     newScale = maxWidth / width;
@@ -826,7 +818,7 @@ async function handleScaleSelect({ target }) {
     const { scrollWidth, offsetWidth, offsetHeight } = document.documentElement;
     const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation }, true);
     const maxWidth = offsetWidth - 16;
-    let maxHeight = getMaxHeight(offsetHeight);
+    let maxHeight = offsetHeight - 16;
     let scrollbarWidth = 0;
     newScale = maxHeight / height;
 
@@ -878,7 +870,6 @@ async function setViewMode(event) {
     await renderEmptyPages(pdfElement, pdfInstance, fileMetadata);
     views = getPageViews();
     scrollToPage(pageNumber, pdfElement.children, {
-      keepToolbarVisible: settings.keepToolbarVisible,
       scrollLeft: 0
     });
     registerIntersectionObserver();
@@ -891,11 +882,6 @@ async function setViewMode(event) {
     pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
   }
   else {
-    const media = matchMedia("only screen and (hover: none) and (pointer: coarse)");
-
-    if (media.matches && !settings.keepToolbarVisible) {
-      pdfElement.classList.remove("offset");
-    }
     unregisterIntersectionObserver();
     await renderSingleEmptyPage(pdfElement, pdfInstance, fileMetadata);
     renderSinglePage(pageNumber);
@@ -924,7 +910,7 @@ function rotatePages() {
     updatePages(scale.currentScale);
     views = getPageViews();
     registerIntersectionObserver();
-    scrollToPage(pageNumber, pdfElement.children, { keepToolbarVisible: settings.keepToolbarVisible });
+    scrollToPage(pageNumber, pdfElement.children);
   }
   else {
     renderSinglePage(pageNumber);

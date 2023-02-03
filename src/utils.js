@@ -18,6 +18,12 @@ function getElementByAttr(attr, element, endElement = null) {
   }
 }
 
+function dispatchCustomEvent(eventName, data) {
+  const event = new CustomEvent(eventName, { detail: data });
+
+  window.dispatchEvent(event);
+}
+
 async function pageToDataURL(pdf) {
   const DEFAULT_SCALE = 0.4;
   const page = await pdf.getPage(1);
@@ -143,10 +149,9 @@ function getPageElementBox(number, elements) {
   return execFuncOnPageElement(elements, number, element => element.getBoundingClientRect());
 }
 
-function scrollToPage(number, elements, { keepToolbarVisible, scrollLeft = document.documentElement.scrollLeft }) {
+function scrollToPage(number, elements, { scrollLeft = document.documentElement.scrollLeft } = {}) {
   execFuncOnPageElement(elements, number, element => {
-    const offset = keepToolbarVisible || number === 1 ? 40 : 0;
-    window.scrollTo(scrollLeft, element.offsetTop - offset);
+    window.scrollTo(scrollLeft, element.offsetTop);
   });
 }
 
@@ -164,12 +169,6 @@ function getScrollbarWidth() {
 
   outer.remove();
   return scrollbarWidth;
-}
-
-function dispatchCustomEvent(eventName, data) {
-  const event = new CustomEvent(eventName, { detail: data });
-
-  window.dispatchEvent(event);
 }
 
 function getMonthName(month, useShortName = false) {

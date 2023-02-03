@@ -1,8 +1,6 @@
 .viewer {
-  min-height: 100%;
-
-  &.offset {
-    padding-top: 40px;
+  &.visible {
+    min-height: 100%;
   }
 
   &.invert {
