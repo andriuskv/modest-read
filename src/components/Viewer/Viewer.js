@@ -60,10 +60,6 @@ export default function Viewer() {
     if (!state.file || state.filePreviewVisible) {
       return;
     }
-
-    if (state.file) {
-      viewerRef.current.classList.add("offset");
-    }
     initViewer(viewerRef.current, {
       blob: state.currentFile,
       metadata: state.file,
@@ -122,6 +118,8 @@ export default function Viewer() {
   async function initViewer(container, file) {
     viewerState.current = 2;
     file.metadata.type = file.metadata.type || "pdf";
+
+    container.classList.add("visible");
 
     if (file.metadata.type === "pdf") {
       const { initPdfViewer } = await import("./pdf-viewer");
@@ -354,7 +352,7 @@ export default function Viewer() {
           {state.loading && <Spinner/>}
         </>
       )}
-      <div id="js-viewer" className="viewer offset" ref={viewerRef}></div>
+      <div id="js-viewer" className="viewer" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
       {marginModal && (
         <Modal hide={hideMarginModal}>

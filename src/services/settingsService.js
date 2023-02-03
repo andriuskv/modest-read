@@ -10,7 +10,8 @@ function initSettings() {
     sortOrder: 1,
     showCategories: false,
     layoutType: "grid",
-    keepToolbarVisible: false,
+    toolbarVisible: true,
+    // keepToolbarVisible: false,
     epub: {
       viewMode: "single",
       spreadPages: false,
