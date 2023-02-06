@@ -1,8 +1,8 @@
-import { createStore, set, setMany, values, get, update, del, clear } from "idb-keyval";
+import { createStore, set, setMany, values, get, update, del } from "idb-keyval";
 import { getResponse } from "utils";
 
 const store = createStore("modest-keep", "files");
-const currentFileStore = createStore("modest-keep-file", "current-file");
+const cachedFilesStore = createStore("modest-keep-file-cache", "files");
 
 async function fetchFiles(settings, user) {
   const [idbFiles, response] = await Promise.all([values(store), user.id ? fetchServerFiles(user.id) : {}]);
@@ -36,12 +36,15 @@ function fetchServerFile(id, userId) {
   return fetch(`/api/files/${userId}/${id}`).then(getResponse);
 }
 
-function fetchCurrentFile(hash) {
-  return get(hash, currentFileStore);
+function fetchCachedFile(hash) {
+  return get(hash, cachedFilesStore);
 }
 
-async function updateFile(data, { id, userId, local }) {
-  if (local) {
+async function updateFile(data, { id, isLocal, hash, readingStatus, userId }) {
+  if (isLocal) {
+    if (data.status && data.status !== "reading" && readingStatus === "reading") {
+      removeCachedFile(hash);
+    }
     await update(id, file => ({ ...file, ...data }), store);
     return true;
   }
@@ -60,8 +63,11 @@ function updateServerFile(data, fileId, userId) {
   }).then(getResponse);
 }
 
-async function deleteFile(id, local, userId) {
-  if (local) {
+async function deleteFile(id, { isLocal, hash, readingStatus, userId }) {
+  if (isLocal) {
+    if (readingStatus === "reading") {
+      removeCachedFile(hash);
+    }
     return del(id, store).then(() => true);
   }
   const response = await deleteServerFile(id, userId);
@@ -103,14 +109,17 @@ function saveFile(file, userId) {
   }
 }
 
-async function saveCurrentFile(hash, file) {
-  const currentFile = await fetchCurrentFile(hash);
+async function cacheFile(hash, file) {
+  const cachedFile = await fetchCachedFile(hash);
 
-  if (currentFile) {
+  if (cachedFile) {
     return;
   }
-  clear(currentFileStore);
-  set(hash, file, currentFileStore);
+  set(hash, file, cachedFilesStore);
+}
+
+async function removeCachedFile(hash) {
+  return del(hash, cachedFilesStore).then(() => true);
 }
 
 async function findFile(hash, userId) {
@@ -190,8 +199,9 @@ export {
   deleteFile,
   saveFiles,
   saveFile,
-  fetchCurrentFile,
-  saveCurrentFile,
+  fetchCachedFile,
+  cacheFile,
+  removeCachedFile,
   findFile,
   sortFiles
 };
