@@ -11,7 +11,6 @@ function initSettings() {
     showCategories: false,
     layoutType: "grid",
     toolbarVisible: true,
-    // keepToolbarVisible: false,
     epub: {
       viewMode: "single",
       spreadPages: false,

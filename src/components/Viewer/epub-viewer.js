@@ -68,8 +68,8 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
     }
     params.accessedAt = Date.now();
 
-    updateFile(metadata, params);
-    fileService.saveCurrentFile(metadata.hash, blob);
+    updateFile(metadata, params, true);
+    fileService.cacheFile(metadata.hash, blob);
   }
   startCounting(user);
 }
@@ -82,7 +82,7 @@ function updateFile(file, data, skipWaiting = false) {
   saveTimeoutId = setTimeout(() => {
     fileService.updateFile(dataToSave, {
       id: file.id,
-      local: file.local,
+      isLocal: file.local,
       userId: user.id
     });
     dataToSave = {};

@@ -421,7 +421,9 @@ export default function Files() {
     try {
       const success = await fileService.updateFile(params, {
         id: file.id,
-        local: file.local,
+        hash: file.hash,
+        readingStatus: file.status,
+        isLocal: file.local,
         userId: user.id
       });
 
@@ -459,7 +461,12 @@ export default function Files() {
     try {
       const index = files.findIndex(file => file.id === id);
       const file = files[index];
-      const success = await fileService.deleteFile(id, file.local, user.id);
+      const success = await fileService.deleteFile(id, {
+        isLocal: file.local,
+        hash: file.hash,
+        readingStatus: file.status,
+        userId: user.id
+      });
 
       if (success) {
         files.splice(index, 1);
@@ -503,7 +510,12 @@ export default function Files() {
       const saved = await fileService.saveFiles([file], local ? user : {});
 
       if (saved) {
-        const deleted = await fileService.deleteFile(file.id, !file.local, user.id);
+        const deleted = await fileService.deleteFile(file.id, {
+          isLocal: !file.local,
+          hash: file.hash,
+          readingStatus: file.status,
+          userId: user.id
+        });
 
         if (deleted) {
           setFiles([...files]);

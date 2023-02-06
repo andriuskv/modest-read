@@ -77,11 +77,11 @@ export default function Viewer() {
     const file = await fileService.fetchFile(id, user.id, type);
 
     if (file?.id) {
-      const currentFile = await fileService.fetchCurrentFile(file.hash);
+      const cachedFile = await fileService.fetchCachedFile(file.hash);
       file.type = file.type || "pdf";
 
-      if (currentFile && currentFile.name === file.name) {
-        setState({ file, currentFile });
+      if (cachedFile && cachedFile.name === file.name) {
+        setState({ file, currentFile: cachedFile });
       }
       else {
         setState({ file, filePreviewVisible: true });
@@ -250,7 +250,7 @@ export default function Viewer() {
 
   function saveLoadedFile(blob, metadata) {
     fileService.saveFile(metadata, user.id);
-    fileService.saveCurrentFile(metadata.hash, blob);
+    fileService.cacheFile(metadata.hash, blob);
   }
 
   async function setSaveViewerFile(save) {
