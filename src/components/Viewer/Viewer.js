@@ -57,7 +57,7 @@ export default function Viewer() {
   }, [memoizedDropHandler]);
 
   useEffect(() => {
-    if (!state.file || state.filePreviewVisible) {
+    if (!state.loading || !state.file || state.filePreviewVisible) {
       return;
     }
     initViewer(viewerRef.current, {
@@ -81,7 +81,7 @@ export default function Viewer() {
       file.type = file.type || "pdf";
 
       if (cachedFile && cachedFile.name === file.name) {
-        setState({ file, currentFile: cachedFile });
+        setState({ file, currentFile: cachedFile, loading: true });
       }
       else {
         setState({ file, filePreviewVisible: true });
@@ -124,13 +124,15 @@ export default function Viewer() {
     if (file.metadata.type === "pdf") {
       const { initPdfViewer } = await import("./pdf-viewer");
 
-      initPdfViewer(container, file, user);
+      await initPdfViewer(container, file, user);
     }
     else if (file.metadata.type === "epub") {
       const { initEpubViewer } = await import("./epub-viewer");
 
-      initEpubViewer(container, file, user);
+      await initEpubViewer(container, file, user);
     }
+    delete state.loading;
+    setState({ ...state });
   }
 
   async function cleanupViewer(reloading = false) {
@@ -168,7 +170,7 @@ export default function Viewer() {
     if (hash === state.file.hash) {
       if (state.filePreviewVisible) {
         hideFileLoadMessage();
-        setState({ file: state.file, currentFile: file });
+        setState({ file: state.file, currentFile: file, loading: true });
       }
       else {
         setFileLoadMessage({
@@ -208,6 +210,7 @@ export default function Viewer() {
         const { getNewEpubFile } = await import("./epub-viewer");
         newFile = await getNewEpubFile(file, user);
       }
+      newFile.status = "reading";
       newFile.hash = hash;
 
       if (!state.filePreviewVisible) {
@@ -226,7 +229,7 @@ export default function Viewer() {
       }
 
       if (save) {
-        fileService.saveFile(newFile, user.id);
+        saveLoadedFile(file, newFile);
       }
     }
 
@@ -235,7 +238,7 @@ export default function Viewer() {
     }
     navigate(`/viewer/${newFile.id}`, { replace: true });
     setDocumentTitle(newFile.name);
-    setState({ file: newFile, currentFile: file, reload: true, save: false });
+    setState({ file: newFile, currentFile: file, reload: true, save: false, loading: true });
   }
 
   function loadPreviewFile() {
