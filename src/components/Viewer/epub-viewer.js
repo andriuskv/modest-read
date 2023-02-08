@@ -31,6 +31,8 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
   epubElement = container;
   rendition = getRendition(settings.epub.viewMode, settings.epub.spreadPages, settings.epub.margin);
 
+  document.body.style.overscrollBehavior = "none";
+
   initTheme();
   initTextOpacity();
   initScale(scale);
@@ -344,6 +346,7 @@ function cleanupEpubViewer(reloading) {
   if (save) {
     updateFile(fileMetadata, dataToSave, true);
   }
+  document.body.style.overscrollBehavior = "";
   stopCounting();
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);

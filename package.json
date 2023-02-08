@@ -23,7 +23,7 @@
     "pg-promise": "^11.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.8.0",
+    "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
     "sequelize": "^6.28.0",
     "uuid": "^9.0.0",
