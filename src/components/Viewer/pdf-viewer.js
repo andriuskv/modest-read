@@ -362,10 +362,10 @@ function handleNavigationAreaClick(event) {
   const ratioX = x / width;
   const ratioY = y / height;
 
-  if (ratioY > 0.666 || ratioY > 0.333 && ratioX > 0.666) {
+  if (ratioY > 0.8 || ratioY > 0.2 && ratioX > 0.8) {
     nextPage();
   }
-  else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
+  else if (ratioY < 0.2 || ratioY < 0.8 && ratioX < 0.2) {
     previousPage();
   }
   else {
