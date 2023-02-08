@@ -54,7 +54,6 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
 
   setSaveEpubFile(save);
 
-  window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
 
   if (save) {
@@ -278,6 +277,23 @@ function handleRelocation(locations) {
 function handleKeyDownOnRendition(event) {
   if (event.ctrlKey) {
     document.activeElement.blur();
+
+    if (event.key === "+") {
+      zoomIn();
+      event.preventDefault();
+    }
+    if (event.key === "-") {
+      zoomOut();
+      event.preventDefault();
+    }
+    return;
+  }
+
+  if (event.key === "ArrowLeft") {
+    previousPage();
+  }
+  else if (event.key === "ArrowRight") {
+    nextPage();
   }
 }
 
@@ -348,7 +364,6 @@ function cleanupEpubViewer(reloading) {
   }
   document.body.style.overscrollBehavior = "";
   stopCounting();
-  window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
 }
 
@@ -643,31 +658,6 @@ function handlePageInputBlur({ target }) {
 function handlePageInputKeydown(event) {
   if (event.key === "Enter") {
     event.target.blur();
-  }
-}
-
-function handleKeyDown(event) {
-  if (event.target.nodeName === "INPUT") {
-    return;
-  }
-
-  if (event.ctrlKey) {
-    if (event.key === "+") {
-      zoomIn();
-      event.preventDefault();
-    }
-    if (event.key === "-") {
-      zoomOut();
-      event.preventDefault();
-    }
-    return;
-  }
-
-  if (event.key === "ArrowLeft") {
-    previousPage();
-  }
-  else if (event.key === "ArrowRight") {
-    nextPage();
   }
 }
 

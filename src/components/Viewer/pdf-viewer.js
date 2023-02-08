@@ -401,10 +401,10 @@ function handleKeyDown(event) {
 
   if (scrollWidth <= offsetWidth) {
     if (event.key === "ArrowLeft") {
-      setPage(pageNumber - 1);
+      previousPage();
     }
     else if (event.key === "ArrowRight") {
-      setPage(pageNumber + 1);
+      nextPage();
     }
   }
 }
@@ -723,11 +723,23 @@ function setPage(value, updatePageInput = true) {
 }
 
 function previousPage() {
-  setPage(pageNumber - 1);
+  let previousPageNumber = pageNumber - 1;
+
+  if (previousPageNumber < 1) {
+    previousPageNumber = 1;
+  }
+  setPage(previousPageNumber);
 }
 
 function nextPage() {
-  setPage(pageNumber + 1);
+  const { pageCount } = fileMetadata;
+  let nextPageNumber = pageNumber + 1;
+
+  if (nextPageNumber > pageCount) {
+    nextPageNumber = pageCount;
+  }
+  setPage(nextPageNumber);
+
 }
 
 function zoomIn() {
