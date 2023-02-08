@@ -295,21 +295,21 @@ function handleClickOnRendition(event) {
   if (event.screenX !== mouseDownStartPos.x || event.screenY !== mouseDownStartPos.y) {
     return;
   }
-  const width = event.currentTarget.body.offsetWidth;
-  const height = event.currentTarget.body.offsetHeight;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
 
   const offsetY = window.outerHeight - window.innerHeight;
 
-  const x = event.offsetX % width;
+  const x = event.screenX;
   const y = event.screenY - offsetY;
 
   const ratioX = x / width;
   const ratioY = y / height;
 
-  if (ratioY > 0.666 || ratioY > 0.333 && ratioX > 0.666) {
+  if (ratioY > 0.8 || ratioY > 0.2 && ratioX > 0.8) {
     nextPage();
   }
-  else if (ratioY <= 0.333 || ratioY < 0.666 && ratioX <= 0.333) {
+  else if (ratioY < 0.2 || ratioY < 0.8 && ratioX < 0.2) {
     previousPage();
   }
   else {
