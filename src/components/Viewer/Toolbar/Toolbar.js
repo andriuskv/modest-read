@@ -5,7 +5,7 @@ import Dropdown from "components/Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.css";
 
-export default function Toolbar({ file, settings, fileWarning, setViewerSettings, updateFileSaveSetting, handleFileUpload, exitViewer, showMarginModal }) {
+export default function Toolbar({ file, settings, setViewerSettings, handleFileUpload, exitViewer, showMarginModal }) {
   const toolbarRef = useRef(null);
   const toolbarToggleBtnRef = useRef(null);
   const timeoutId = useRef(0);
@@ -158,7 +158,7 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
               </>
             )}
             {file.type === "pdf" && (
-              <div className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
+              <div className="viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt">
                 <label className="viewer-toolbar-settings-item">
                   <input type="checkbox" id="js-viewer-invert-colors" className="sr-only checkbox-input"/>
                   <div className="checkbox">
@@ -182,19 +182,6 @@ export default function Toolbar({ file, settings, fileWarning, setViewerSettings
                 <span>Load File</span>
                 <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
               </label>
-            </div>
-            <div className={`viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt${file.type === "epub" && fileWarning.hide ? " hidden" : ""}`}>
-              {!fileWarning.hide && (
-                <label className="viewer-toolbar-settings-item">
-                  <input type="checkbox" className="sr-only checkbox-input"
-                    onChange={updateFileSaveSetting}
-                    checked={fileWarning.saveFile}/>
-                  <div className="checkbox">
-                    <div className="checkbox-tick"></div>
-                  </div>
-                  <span className="checkbox-label">Save loaded file</span>
-                </label>
-              )}
             </div>
             <div className="viewer-toolbar-dropdown-group">
               <button className="btn icon-text-btn viewer-toolbar-dropdown-btn" onClick={exitViewer} title="Exit">

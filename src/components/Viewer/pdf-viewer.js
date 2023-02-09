@@ -20,7 +20,6 @@ let observer = null;
 let scale = null;
 let rotation = 0;
 let pageNumber = 1;
-let save = true;
 let swapDimensions = false;
 let ctrlPressed = false;
 let scrolling = false;
@@ -29,7 +28,7 @@ let dataToSave = {};
 let user = {};
 let mouseDownStartPos = null;
 
-async function initPdfViewer(container, { metadata, blob, save = true }, loggedUser) {
+async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack");
   user = loggedUser;
   pdfElement = container;
@@ -80,7 +79,6 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   initColorInversion();
   initPage();
   initOutline(getOutline, goToDestination);
-  setSavePdfFile(save);
 
   const [singlePageViewElement, multiPageViewElement] = document.getElementById("js-viewer-view-modes").children;
 
@@ -108,20 +106,17 @@ async function initPdfViewer(container, { metadata, blob, save = true }, loggedU
   document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePages);
   document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
 
-  if (save) {
-    if (metadata.status !== "have read") {
-      if (metadata.pageCount === 1) {
-        params.status = "have read";
-      }
-      else if (params.status !== "reading") {
-        params.status = "reading";
-      }
+  if (metadata.status !== "have read") {
+    if (metadata.pageCount === 1) {
+      params.status = "have read";
     }
-    params.accessedAt = Date.now();
-
-    updateFile(metadata, params, true);
-    fileService.cacheFile(metadata.hash, blob);
+    else if (params.status !== "reading") {
+      params.status = "reading";
+    }
   }
+  params.accessedAt = Date.now();
+
+  updateFile(metadata, params, true);
   startCounting(user);
 }
 
@@ -157,10 +152,8 @@ function cleanupPdfViewer(reloading) {
   document.body.style.overscrollBehavior = "";
   pdfElement.style.setProperty("--scale-factor", "");
   unregisterIntersectionObserver();
+  updateFile(fileMetadata, dataToSave, true);
 
-  if (save) {
-    updateFile(fileMetadata, dataToSave, true);
-  }
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
   window.removeEventListener("keydown", handleKeyDown);
@@ -169,11 +162,6 @@ function cleanupPdfViewer(reloading) {
   window.removeEventListener("click", handleAnnotationClick);
   pdfElement.removeEventListener("click", handleNavigationAreaClick);
   pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
-}
-
-function setSavePdfFile(saveFile) {
-  clearTimeout(saveTimeoutId);
-  save = saveFile;
 }
 
 function initScale(scale) {
@@ -265,13 +253,11 @@ function handleScroll() {
 
     pageNumber = getVisiblePageNumber(views, newScrollTop);
 
-    if (save) {
-      updateFile(fileMetadata, {
-        scrollTop: newScrollTop,
-        scrollLeft,
-        pageNumber
-      });
-    }
+    updateFile(fileMetadata, {
+      scrollTop: newScrollTop,
+      scrollLeft,
+      pageNumber
+    });
 
     if (pageNumber !== oldPageNumber) {
       updatePageInputElement(pageNumber);
@@ -290,12 +276,11 @@ function handleSinglePageScroll() {
   requestAnimationFrame(() => {
     const { scrollTop, scrollLeft } = document.documentElement;
 
-    if (save) {
-      updateFile(fileMetadata, {
-        scrollTop: scrollTop < 0 ? 0 : scrollTop,
-        scrollLeft
-      });
-    }
+    updateFile(fileMetadata, {
+      scrollTop: scrollTop < 0 ? 0 : scrollTop,
+      scrollLeft
+    });
+
     scrolling = false;
   });
 }
@@ -501,6 +486,7 @@ async function getNewPdfFile(file, user) {
 
   return {
     ...parsePdfMetadata(metadata),
+    ...params,
     id: uuidv4(),
     name: file.name,
     type: "pdf",
@@ -713,9 +699,7 @@ function setPage(value, updatePageInput = true) {
   else {
     pageNumber = value;
 
-    if (save) {
-      updateFile(fileMetadata, { pageNumber });
-    }
+    updateFile(fileMetadata, { pageNumber });
     renderSinglePage(value);
     window.scrollTo(0, 0);
 
@@ -791,9 +775,7 @@ function setScale(value, name = "custom") {
   }
   settings.pdf.scale = scale;
 
-  if (save) {
-    updateFile(fileMetadata, { scale: scale.currentScale, scrollTop, scrollLeft });
-  }
+  updateFile(fileMetadata, { scale: scale.currentScale, scrollTop, scrollLeft });
   updateScaleElement(scale);
   window.scrollTo(scrollLeft, scrollTop);
   setSettings(settings);
@@ -878,9 +860,7 @@ async function setViewMode(event) {
   pdfElement.innerHTML = "";
   settings.pdf.viewMode = mode;
 
-  if (save) {
-    updateFile(fileMetadata, { viewMode: mode });
-  }
+  updateFile(fileMetadata, { viewMode: mode });
 
   if (mode === "multi") {
     await renderEmptyPages(pdfElement, pdfInstance, fileMetadata);
@@ -918,9 +898,7 @@ function rotatePages() {
   rotation = nextRotation === 360 ? 0 : nextRotation;
   swapDimensions = !swapDimensions;
 
-  if (save) {
-    updateFile(fileMetadata, { rotation });
-  }
+  updateFile(fileMetadata, { rotation });
 
   if (settings.pdf.viewMode === "multi") {
     updatePages(scale.currentScale);
@@ -1011,6 +989,5 @@ async function renderEmptyPages(pdfElement, pdfInstance, file) {
 export {
   initPdfViewer,
   cleanupPdfViewer,
-  getNewPdfFile,
-  setSavePdfFile
+  getNewPdfFile
 };
