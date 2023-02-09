@@ -13,7 +13,6 @@ let rendition = null;
 let fileMetadata = null;
 let scale = null;
 let epubElement = null;
-let save = true;
 let dropdownId = "";
 let hideDropdown = null;
 let previousTheme = "";
@@ -22,7 +21,7 @@ let dataToSave = {};
 let user = {};
 let mouseDownStartPos = null;
 
-async function initEpubViewer(container, { metadata, blob, save = true }, loggedUser) {
+async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   const { default: epubjs } = await import("epubjs");
   user = loggedUser;
   book = epubjs(blob);
@@ -52,27 +51,25 @@ async function initEpubViewer(container, { metadata, blob, save = true }, logged
   rendition.on("mousedown", handleMouseDownOnRendition);
   rendition.display(metadata.location);
 
-  setSaveEpubFile(save);
-
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
 
-  if (save) {
-    const params = {};
-
-    if (metadata.status !== "have read") {
-      if (metadata.pageCount === 1) {
-        params.status = "have read";
-      }
-      else {
-        params.status = "reading";
-      }
-    }
-    params.accessedAt = Date.now();
-
-    updateFile(metadata, params, true);
-    fileService.cacheFile(metadata.hash, blob);
-  }
+  updateReadingStatus(metadata);
   startCounting(user);
+}
+
+function updateReadingStatus(metadata) {
+  const params = {};
+
+  if (metadata.status !== "have read") {
+    if (metadata.pageCount === 1) {
+      params.status = "have read";
+    }
+    else {
+      params.status = "reading";
+    }
+  }
+  params.accessedAt = Date.now();
+  updateFile(metadata, params, true);
 }
 
 function updateFile(file, data, skipWaiting = false) {
@@ -264,12 +261,10 @@ function handleRelocation(locations) {
   const { cfi, location, index } = locations.start;
   const pageNumber = location + 1;
 
-  if (save) {
-    updateFile(fileMetadata, {
-      location: cfi,
-      pageNumber: book.locations.locationFromCfi(cfi) + 1
-    });
-  }
+  updateFile(fileMetadata, {
+    location: cfi,
+    pageNumber: book.locations.locationFromCfi(cfi) + 1
+  });
   updatePageInputElement(pageNumber);
   updatePageBtnElementState(pageNumber, book.locations.length(), { location, index, atStart: locations.atStart });
 }
@@ -358,11 +353,8 @@ function cleanupEpubViewer(reloading) {
     cleanupTextOpacity();
     cleanupScale();
   }
-
-  if (save) {
-    updateFile(fileMetadata, dataToSave, true);
-  }
   document.body.style.overscrollBehavior = "";
+  updateFile(fileMetadata, dataToSave, true);
   stopCounting();
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
 }
@@ -374,11 +366,6 @@ function cleanupScale() {
   zoomOutElement.removeEventListener("click", zoomOut);
   zoomInElement.removeEventListener("click", zoomIn);
   document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
-}
-
-function setSaveEpubFile(saveFile) {
-  clearTimeout(saveTimeoutId);
-  save = saveFile;
 }
 
 function initPage(pageNumber, pageCount) {
@@ -664,7 +651,6 @@ function handlePageInputKeydown(event) {
 export {
   initEpubViewer,
   cleanupEpubViewer,
-  setSaveEpubFile,
   updateEpubMargin,
   getNewEpubFile
 };

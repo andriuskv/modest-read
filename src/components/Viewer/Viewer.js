@@ -4,14 +4,12 @@ import { computeHash, setDocumentTitle } from "utils";
 import { useUser } from "contexts/user-context";
 import * as fileService from "services/fileService";
 import * as settingsService from "services/settingsService";
-import * as fileWarningService from "services/fileWarningService";
 import ErrorPage from "components/ErrorPage";
 import Modal from "components/Modal";
 import Icon from "components/Icon";
 import "./viewer.css";
 import FilePreview from "./FilePreview";
 import Toolbar from "./Toolbar";
-import FileLoadModal from "./FileLoadModal";
 import Spinner from "./Spinner";
 
 export default function Viewer() {
@@ -20,13 +18,12 @@ export default function Viewer() {
   const { user } = useUser();
   const { id } = useParams();
   const [state, setState] = useState({});
-  const [fileWarning, setFileWarning] = useState(() => fileWarningService.getSettings());
   const [settings, setSettings] = useState(() => settingsService.getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [marginModal, setMarginModal] = useState(null);
   const viewerRef = useRef(null);
   const viewerState = useRef(0);
-  const memoizedDropHandler = useCallback(handleDrop, [state, fileWarning, fileLoadMessage]);
+  const memoizedDropHandler = useCallback(handleDrop, [state, fileLoadMessage]);
 
   useLayoutEffect(() => {
     if (user.loading) {
@@ -62,8 +59,7 @@ export default function Viewer() {
     }
     initViewer(viewerRef.current, {
       blob: state.currentFile,
-      metadata: state.file,
-      save: state.save
+      metadata: state.file
     });
   }, [state.filePreviewVisible, state.file]);
 
@@ -196,49 +192,31 @@ export default function Viewer() {
     setState({ ...state, loading: true });
 
     const hash = await computeHash(await file.arrayBuffer());
-    let newFile = await fileService.findFile(hash, user.id);
-    let save = true;
+    let fileMetadata = await fileService.findFile(hash, user.id);
 
-    if (!newFile) {
+    if (!fileMetadata) {
       const fileType = file.name.slice(file.name.lastIndexOf(".") + 1);
 
       if (fileType === "pdf") {
         const { getNewPdfFile } = await import("./pdf-viewer");
-        newFile = await getNewPdfFile(file, user);
+        fileMetadata = await getNewPdfFile(file, user);
       }
       else if (fileType === "epub") {
         const { getNewEpubFile } = await import("./epub-viewer");
-        newFile = await getNewEpubFile(file, user);
+        fileMetadata = await getNewEpubFile(file, user);
       }
-      newFile.status = "reading";
-      newFile.hash = hash;
+      fileMetadata.status = "reading";
+      fileMetadata.hash = hash;
 
-      if (!state.filePreviewVisible) {
-        if (fileWarning.hide) {
-          save = fileWarning.saveFile;
-        }
-        else {
-          save = false;
-
-          setFileLoadMessage({
-            file,
-            type: "warning",
-            value: "Do you want to save this file?"
-          });
-        }
-      }
-
-      if (save) {
-        saveLoadedFile(file, newFile);
-      }
+      saveLoadedFile(file, fileMetadata);
     }
 
     if (viewerState.current) {
-      cleanupViewer(true);
+      await cleanupViewer(true);
     }
-    navigate(`/viewer/${newFile.id}`, { replace: true });
-    setDocumentTitle(newFile.name);
-    setState({ file: newFile, currentFile: file, reload: true, save: false, loading: true });
+    navigate(`/viewer/${fileMetadata.id}${fileMetadata.local ? "?type=local" : ""}`, { replace: true });
+    setDocumentTitle(fileMetadata.name);
+    setState({ file: fileMetadata, currentFile: file, reload: true, loading: true });
   }
 
   function loadPreviewFile() {
@@ -246,47 +224,13 @@ export default function Viewer() {
     hideFileLoadMessage();
   }
 
-  function saveFileLoadModalFile(preferences) {
-    saveLoadedFile(fileLoadMessage.file, state.file);
-    hideFileLoadModal(preferences);
-  }
-
   function saveLoadedFile(blob, metadata) {
     fileService.saveFile(metadata, user.id);
     fileService.cacheFile(metadata.hash, blob);
   }
 
-  async function setSaveViewerFile(save) {
-    if (state.file.type === "pdf") {
-      const { setSavePdfFile } = await import("./pdf-viewer");
-
-      setSavePdfFile(save);
-    }
-    else if (state.file.type === "epub") {
-      const { setSaveEpubFile } = await import("./epub-viewer");
-
-      setSaveEpubFile(save);
-    }
-  }
-
   function hideFileLoadMessage() {
     setFileLoadMessage(null);
-  }
-
-  function hideFileLoadModal(settings) {
-    setSaveViewerFile(settings.saveFile);
-    setFileWarning(settings);
-    hideFileLoadMessage();
-  }
-
-  function updateFileSaveSetting({ target }) {
-    const settings = {
-      ...fileWarning,
-      saveFile: target.checked
-    };
-
-    setFileWarning(settings);
-    fileWarningService.setSettings(settings);
   }
 
   function setViewerSettings(name, value) {
@@ -335,20 +279,12 @@ export default function Viewer() {
           dismissNotification={hideFileLoadMessage}
           handleFileUpload={handleFileUpload}
           loadPreviewFile={loadPreviewFile}/>
-      ) : fileLoadMessage ? (
-        <FileLoadModal message={fileLoadMessage}
-          fileWarning={fileWarning}
-          saveFileLoadModalFile={saveFileLoadModalFile}
-          hideFileLoadModal={hideFileLoadModal}
-          hideFileLoadMessage={hideFileLoadMessage}/>
       ) : null}
       {state.file && !state.filePreviewVisible && (
         <>
           <Toolbar file={state.file}
             settings={settings}
-            fileWarning={fileWarning}
             setViewerSettings={setViewerSettings}
-            updateFileSaveSetting={updateFileSaveSetting}
             handleFileUpload={handleFileUpload}
             showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>
