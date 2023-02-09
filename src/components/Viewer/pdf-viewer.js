@@ -341,12 +341,16 @@ function handlePageInputKeydown(event) {
 }
 
 function handleAnnotationClick({ target }) {
-  if (target.nodeName === "A" && target.classList.contains("internalLink")) {
+  if (target.nodeName === "A" && target.href) {
     goToDestination(target.href);
   }
 }
 
 function handleNavigationAreaClick(event) {
+  if (event.target.nodeName === "A" && event.target.href) {
+    return;
+  }
+
   // Disable navigation to different page if mouse down and up positions differ
   if (event.screenX !== mouseDownStartPos.x || event.screenY !== mouseDownStartPos.y) {
     return;
