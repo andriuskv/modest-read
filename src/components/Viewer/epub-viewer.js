@@ -303,7 +303,7 @@ function handleClickOnRendition(event) {
     hideDropdown();
   }
 
-  if (settings.epub.viewMode !== "single") {
+  if (event.target.nodeName === "A" && event.target.href) {
     return;
   }
 
