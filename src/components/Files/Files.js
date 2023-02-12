@@ -511,6 +511,7 @@ export default function Files() {
 
       if (saved) {
         const deleted = await fileService.deleteFile(file.id, {
+          deleteFromCache: false,
           isLocal: !file.local,
           hash: file.hash,
           readingStatus: file.status,
