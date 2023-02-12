@@ -4,6 +4,20 @@ import { getResponse } from "utils";
 const store = createStore("modest-keep", "files");
 const cachedFilesStore = createStore("modest-keep-file-cache", "files");
 
+const fileCache = {};
+
+function addToFileCache(hash, blob) {
+  fileCache[hash] = blob;
+}
+
+function deleteFromFileCache(hash) {
+  delete fileCache[hash];
+}
+
+function getFromFileCache(hash) {
+  return fileCache[hash];
+}
+
 async function fetchFiles(settings, user) {
   const [idbFiles, response] = await Promise.all([values(store), user.id ? fetchServerFiles(user.id) : {}]);
 
@@ -37,13 +51,24 @@ function fetchServerFile(id, userId) {
 }
 
 function fetchCachedFile(hash) {
+  const file = getFromFileCache(hash);
+
+  if (file) {
+    set(hash, file, cachedFilesStore);
+    deleteFromFileCache(hash);
+    return file;
+  }
+  return fetchPersistentFile(hash);
+}
+
+function fetchPersistentFile(hash) {
   return get(hash, cachedFilesStore);
 }
 
 async function updateFile(data, { id, isLocal, hash, readingStatus, userId }) {
   if (isLocal) {
     if (data.status && data.status !== "reading" && readingStatus === "reading") {
-      removeCachedFile(hash);
+      deleteCachedFile(hash);
     }
     await update(id, file => ({ ...file, ...data }), store);
     return true;
@@ -110,7 +135,7 @@ function saveFile(file, userId) {
 }
 
 async function cacheFile(hash, file) {
-  const cachedFile = await fetchCachedFile(hash);
+  const cachedFile = await fetchPersistentFile(hash);
 
   if (cachedFile) {
     return;
@@ -118,7 +143,7 @@ async function cacheFile(hash, file) {
   set(hash, file, cachedFilesStore);
 }
 
-async function removeCachedFile(hash) {
+async function deleteCachedFile(hash) {
   return del(hash, cachedFilesStore).then(() => true);
 }
 
@@ -193,6 +218,8 @@ function sortByLastAccessed(files, sortBy, sortOrder) {
 }
 
 export {
+  addToFileCache,
+  deleteFromFileCache,
   fetchFiles,
   fetchFile,
   updateFile,
@@ -201,7 +228,6 @@ export {
   saveFile,
   fetchCachedFile,
   cacheFile,
-  removeCachedFile,
   findFile,
   sortFiles
 };

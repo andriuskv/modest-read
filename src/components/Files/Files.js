@@ -74,6 +74,8 @@ export default function Files() {
       const wordArray = CryptoJS.lib.WordArray.create(buffer);
       const hash = CryptoJS.MD5(wordArray).toString();
 
+      fileService.addToFileCache(hash, file.blob);
+
       delete file.loading;
       delete file.blob;
 
@@ -120,6 +122,8 @@ export default function Files() {
       file.coverImage = coverImage;
       file.viewMode = "single";
       file.hash = hash;
+
+      fileService.addToFileCache(hash, file.blob);
 
       delete file.loading;
       delete file.blob;
@@ -469,6 +473,7 @@ export default function Files() {
       });
 
       if (success) {
+        fileService.deleteFromFileCache(file.hash);
         files.splice(index, 1);
         setFiles([...files]);
         setState({
