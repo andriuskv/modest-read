@@ -63,10 +63,10 @@ function updateServerFile(data, fileId, userId) {
   }).then(getResponse);
 }
 
-async function deleteFile(id, { isLocal, hash, readingStatus, userId }) {
+async function deleteFile(id, { isLocal, hash, readingStatus, userId, deleteFromCache = true }) {
   if (isLocal) {
-    if (readingStatus === "reading") {
-      removeCachedFile(hash);
+    if (deleteFromCache && readingStatus === "reading") {
+      deleteCachedFile(hash);
     }
     return del(id, store).then(() => true);
   }
