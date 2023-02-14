@@ -170,9 +170,23 @@ function initScale(scale) {
 
   updateScaleElement(scale);
 
-  zoomOutElement.addEventListener("click", zoomOut);
-  zoomInElement.addEventListener("click", zoomIn);
-  document.getElementById("js-viewer-scale-select").addEventListener("change", handleScaleSelect);
+  zoomOutElement.addEventListener("click", handleZoomOut);
+  zoomInElement.addEventListener("click", handleZoomIn);
+
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (selectElement) {
+    selectElement.addEventListener("change", handleScaleSelect);
+  }
+  else if (zoomOptionsElement) {
+    const zoomOptionElement = zoomOptionsElement.querySelector(`[data-value="${scale.name}"]`);
+
+    if (zoomOptionElement) {
+      zoomOptionElement.classList.add("active");
+    }
+    zoomOptionsElement.addEventListener("click", handleZoomOptionClick);
+  }
 }
 
 function initPage() {
@@ -220,9 +234,18 @@ function cleanupScale() {
   const zoomOutElement = document.getElementById("js-viewer-zoom-out");
   const zoomInElement = document.getElementById("js-viewer-zoom-in");
 
-  zoomOutElement.removeEventListener("click", zoomOut);
-  zoomInElement.removeEventListener("click", zoomIn);
-  document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
+  zoomOutElement.removeEventListener("click", handleZoomOut);
+  zoomInElement.removeEventListener("click", handleZoomIn);
+
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (selectElement) {
+    selectElement.removeEventListener("change", handleScaleSelect);
+  }
+  else if (zoomOptionsElement) {
+    zoomOptionsElement.removeEventListener("click", handleZoomOptionClick);
+  }
 }
 
 function cleanupViewMode() {
@@ -727,7 +750,16 @@ function nextPage() {
     nextPageNumber = pageCount;
   }
   setPage(nextPageNumber);
+}
 
+function handleZoomOut() {
+  zoomOut();
+  cleanupActiveZoomOption();
+}
+
+function handleZoomIn() {
+  zoomIn();
+  cleanupActiveZoomOption();
 }
 
 function zoomIn() {
@@ -738,11 +770,26 @@ function zoomOut() {
   setScale(Math.max(scale.currentScale / 1.1, minScale));
 }
 
-function updateScaleElement(scale) {
-  const element = document.getElementById("js-viewer-scale-select");
+function cleanupActiveZoomOption() {
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+  const optionElement = zoomOptionsElement.querySelector(".active");
 
-  element.value = scale.name;
-  element.firstElementChild.textContent = `${scale.displayValue}%`;
+  if (optionElement) {
+    optionElement.classList.remove("active");
+  }
+}
+
+function updateScaleElement(scale) {
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomValueElement = document.getElementById("js-viewer-zoom-value");
+
+  if (selectElement) {
+    selectElement.value = scale.name;
+    selectElement.firstElementChild.textContent = `${scale.displayValue}%`;
+  }
+  else {
+    zoomValueElement.textContent = `${scale.displayValue}%`;
+  }
 }
 
 function setScale(value, name = "custom") {
@@ -781,8 +828,7 @@ function setScale(value, name = "custom") {
   setSettings(settings);
 }
 
-async function handleScaleSelect({ target }) {
-  const { value } = target;
+async function setSelectedScale(value) {
   let newScale = 0;
 
   if (value === "fit-width") {
@@ -839,6 +885,26 @@ async function handleScaleSelect({ target }) {
     newScale = defaultScale * value;
   }
   setScale(newScale, value);
+}
+
+function handleScaleSelect({ target }) {
+  const { value } = target;
+
+  setSelectedScale(value);
+}
+
+function handleZoomOptionClick({ target, currentTarget }) {
+  const value = target.getAttribute("data-value");
+
+  if (value) {
+    const prevActiveElement = currentTarget.querySelector(".active");
+
+    if (prevActiveElement) {
+      prevActiveElement.classList.remove("active");
+    }
+    target.classList.add("active");
+    setSelectedScale(value);
+  }
 }
 
 async function setViewMode(event) {

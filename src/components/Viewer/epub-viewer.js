@@ -363,9 +363,18 @@ function cleanupScale() {
   const zoomOutElement = document.getElementById("js-viewer-zoom-out");
   const zoomInElement = document.getElementById("js-viewer-zoom-in");
 
-  zoomOutElement.removeEventListener("click", zoomOut);
-  zoomInElement.removeEventListener("click", zoomIn);
-  document.getElementById("js-viewer-scale-select").removeEventListener("change", handleScaleSelect);
+  zoomOutElement.removeEventListener("click", handleZoomOut);
+  zoomInElement.removeEventListener("click", handleZoomIn);
+
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (selectElement) {
+    selectElement.removeEventListener("change", handleScaleSelect);
+  }
+  else if (zoomOptionsElement) {
+    zoomOptionsElement.removeEventListener("click", handleZoomOptionClick);
+  }
 }
 
 function initPage(pageNumber, pageCount) {
@@ -444,16 +453,46 @@ function initScale(scale) {
 
   updateScaleElement(scale);
 
-  zoomOutElement.addEventListener("click", zoomOut);
-  zoomInElement.addEventListener("click", zoomIn);
-  document.getElementById("js-viewer-scale-select").addEventListener("change", handleScaleSelect);
+  zoomOutElement.addEventListener("click", handleZoomOut);
+  zoomInElement.addEventListener("click", handleZoomIn);
+
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (selectElement) {
+    selectElement.addEventListener("change", handleScaleSelect);
+  }
+  else if (zoomOptionsElement) {
+    const zoomOptionElement = zoomOptionsElement.querySelector(`[data-value="${scale.currentScale}"]`);
+
+    if (zoomOptionElement) {
+      zoomOptionElement.classList.add("active");
+    }
+    zoomOptionsElement.addEventListener("click", handleZoomOptionClick);
+  }
 }
 
 function updateScaleElement(scale) {
-  const element = document.getElementById("js-viewer-scale-select");
+  const selectElement = document.getElementById("js-viewer-scale-select");
+  const zoomValueElement = document.getElementById("js-viewer-zoom-value");
 
-  element.value = scale.name;
-  element.firstElementChild.textContent = `${scale.displayValue}%`;
+  if (selectElement) {
+    selectElement.value = scale.name;
+    selectElement.firstElementChild.textContent = `${scale.displayValue}%`;
+  }
+  else {
+    zoomValueElement.textContent = `${scale.displayValue}%`;
+  }
+}
+
+function handleZoomOut() {
+  zoomOut();
+  cleanupActiveZoomOption();
+}
+
+function handleZoomIn() {
+  zoomIn();
+  cleanupActiveZoomOption();
 }
 
 function zoomIn() {
@@ -468,6 +507,30 @@ async function handleScaleSelect({ target }) {
   const { value } = target;
 
   setScale(value, value);
+}
+
+function cleanupActiveZoomOption() {
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+  const optionElement = zoomOptionsElement.querySelector(".active");
+
+  if (optionElement) {
+    optionElement.classList.remove("active");
+  }
+}
+
+function handleZoomOptionClick({ target, currentTarget }) {
+  const value = target.getAttribute("data-value");
+
+  if (value) {
+    const name = target.textContent;
+    const prevActiveElement = currentTarget.querySelector(".active");
+
+    if (prevActiveElement) {
+      prevActiveElement.classList.remove("active");
+    }
+    target.classList.add("active");
+    setScale(value, name);
+  }
 }
 
 function setScale(value, name = "custom") {

@@ -9,6 +9,7 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
   const toolbarRef = useRef(null);
   const toolbarToggleBtnRef = useRef(null);
   const timeoutId = useRef(0);
+  const media = matchMedia("(max-width: 480px)");
 
   useLayoutEffect(() => {
     toolbarRef.current.classList.toggle("visible", settings.toolbarVisible);
@@ -63,26 +64,58 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
           <button id="js-viewer-outline-toggle-btn" className="btn icon-btn icon-btn-alt viewer-outline-toggle-btn" title="Toggle outline">
             <Icon id="outline"/>
           </button>
-          <div className="viewer-toolbar-zoom">
-            <button id="js-viewer-zoom-out" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom out">
-              <Icon id="minus"/>
-            </button>
-            <select id="js-viewer-scale-select" className="input viewer-toolbar-zoom-select">
-              <option value="custom" style={{ display: "none" }}></option>
-              {file.type === "pdf" && <option value="fit-width">Fit Width</option>}
-              {file.type === "pdf" && <option value="fit-page">Fit Page</option>}
-              <option value="0.5">50%</option>
-              <option value="0.75">75%</option>
-              <option value="1">100%</option>
-              <option value="1.5">150%</option>
-              <option value="2">200%</option>
-              <option value="3">300%</option>
-              <option value="4">400%</option>
-            </select>
-            <button id="js-viewer-zoom-in" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom in">
-              <Icon id="plus"/>
-            </button>
-          </div>
+          {media.matches ? (
+            <Dropdown
+              toggle={{
+                content: <Icon id="zoom"/>,
+                title: "Zoom options",
+                className: "btn icon-btn icon-btn-alt"
+              }}
+              body={{ className: "viewer-toolbar-dropdown viewer-toolbar-zoom-dropdown" }}
+              container={{ className: "viewer-toolbar-zoom-dropdown-container" }}>
+              <div className="viewer-toolbar-zoom-dropdown-top">
+                <button id="js-viewer-zoom-out" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom out">
+                  <Icon id="minus"/>
+                </button>
+                <span id="js-viewer-zoom-value" className="viewer-zoom-value"></span>
+                <button id="js-viewer-zoom-in" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom in">
+                  <Icon id="plus"/>
+                </button>
+              </div>
+              <div id="js-viewer-toolbar-zoom-dropdown-options" className="viewer-toolbar-zoom-dropdown-options">
+                {file.type === "pdf" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-width">Fit Width</button>}
+                {file.type === "pdf" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-page">Fit Page</button>}
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="0.5">50%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="0.75">75%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="1">100%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="1.5">150%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="2">200%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="3">300%</button>
+                <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="4">400%</button>
+              </div>
+            </Dropdown>
+          ) : (
+            <div className="viewer-toolbar-zoom">
+              <button id="js-viewer-zoom-out" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom out">
+                <Icon id="minus"/>
+              </button>
+              <select id="js-viewer-scale-select" className="input viewer-toolbar-zoom-select">
+                <option value="custom" style={{ display: "none" }}></option>
+                {file.type === "pdf" && <option value="fit-width">Fit Width</option>}
+                {file.type === "pdf" && <option value="fit-page">Fit Page</option>}
+                <option value="0.5">50%</option>
+                <option value="0.75">75%</option>
+                <option value="1">100%</option>
+                <option value="1.5">150%</option>
+                <option value="2">200%</option>
+                <option value="3">300%</option>
+                <option value="4">400%</option>
+              </select>
+              <button id="js-viewer-zoom-in" className="btn icon-btn viewer-toolbar-tool-btn" title="Zoom in">
+                <Icon id="plus"/>
+              </button>
+            </div>
+          )}
         </div>
         <div className="view-toolbar-side">
           <div className="viewer-toolbar-page">
@@ -114,11 +147,11 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
               </div>
             )}
             <div id="js-viewer-view-modes" className="viewer-toolbar-dropdown-group">
-              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="single">
+              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-mode="single">
                 <Icon id="page"/>
                 <span>Single page</span>
               </button>
-              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn viewer-view-mode-btn" data-mode="multi">
+              <button className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-mode="multi">
                 <Icon id="pages"/>
                 <span>Multi page</span>
               </button>
