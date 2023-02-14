@@ -10,7 +10,7 @@ export default function FileCard({ file, user, showLink, children }) {
           className="file-card-left file-card-link"
           title={`Open ${file.name}`}>
           <img src={file.coverImage} className="file-card-image" alt=""/>
-          <Icon id="zoom" className="file-card-icon" size="36px"/>
+          <Icon id="zoom-in" className="file-card-icon" size="36px"/>
         </Link>
       ) : (
         <div className="file-card-left">

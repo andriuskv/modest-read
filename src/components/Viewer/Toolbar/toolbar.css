@@ -1,7 +1,7 @@
 @import url("../../../styles/mixins.css");
 
 .viewer-toolbar {
-  z-index: 2;
+  z-index: 3;
   position: fixed;
   top: 0;
   left: 0;
@@ -21,6 +21,10 @@
   &.hiding {
     transform: translateY(-100%);
   }
+
+  @media (max-width: 480px) {
+    justify-content: space-between;
+  }
 }
 
 .view-toolbar-side {
@@ -28,6 +32,11 @@
   flex-grow: 1;
   width: 50%;
   padding: 0 var(--space-md);
+
+  @media (max-width: 480px) {
+    flex-grow: 0;
+    width: auto;
+  }
 }
 
 .viewer-outline-toggle-btn {
@@ -72,10 +81,6 @@
   border-left: 1px solid var(--color-grey-70);
   border-right: 1px solid var(--color-grey-70);
   background-color: inherit;
-
-  @media (max-width: 480px) {
-    display: none;
-  }
 }
 
 .viewer-toolbar-page {
@@ -86,7 +91,12 @@
   background-color: var(--color-grey-40);
 
   @media (max-width: 480px) {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     overflow: hidden;
+    height: calc(100% - var(--space-lg));
+    top: 6px;
 
     & .viewer-toolbar-tool-btn {
       display: none;
@@ -184,12 +194,12 @@
 
     color: var(--color-white);
   }
-}
 
-.viewer-view-mode-btn.active {
-  --background-color: var(--color-grey-60);
+  &.active {
+    --background-color: var(--color-grey-60);
 
-  color: var(--color-white);
+    color: var(--color-white);
+  }
 }
 
 .viewer-toolbar-settings-item {
@@ -198,6 +208,40 @@
   &:not(:last-of-type) {
     margin-bottom: var(--space-md);
   }
+}
+
+.viewer-toolbar-zoom-dropdown-container {
+  margin-left: var(--space-sm);
+}
+
+.viewer-toolbar-zoom-dropdown {
+  left: 0;
+  right: auto;
+  padding-top: 0;
+}
+
+.viewer-toolbar-zoom-dropdown-top {
+  display: flex;
+  border-bottom: 1px solid var(--color-grey-50);
+
+  & .viewer-toolbar-tool-btn {
+    padding: var(--space-md);
+    border-radius: 0;
+  }
+}
+
+.viewer-zoom-value {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--color-grey-50);
+  border-right: 1px solid var(--color-grey-50);
+}
+
+.viewer-toolbar-zoom-dropdown-options {
+  display: flex;
+  flex-direction: column;
 }
 
 .viewer-themes {
@@ -252,7 +296,7 @@
 }
 
 .viewer-toolbar-toggle-btn {
-  z-index: 2;
+  z-index: 3;
   position: fixed;
   top: 6px;
   right: var(--space-sm);

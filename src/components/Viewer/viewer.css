@@ -11,7 +11,7 @@
 
   &::selection {
     color: transparent;
-    background-color: var(--color-primary);
+    background-color: hsl(260deg 48% 52%);
   }
 
   &.theme-white {
