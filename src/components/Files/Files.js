@@ -74,7 +74,7 @@ export default function Files() {
       const wordArray = CryptoJS.lib.WordArray.create(buffer);
       const hash = CryptoJS.MD5(wordArray).toString();
 
-      fileService.addToFileCache(hash, file.blob);
+      fileService.cacheFile(hash, file.blob);
 
       delete file.loading;
       delete file.blob;
@@ -123,7 +123,7 @@ export default function Files() {
       file.viewMode = "single";
       file.hash = hash;
 
-      fileService.addToFileCache(hash, file.blob);
+      fileService.cacheFile(hash, file.blob);
 
       delete file.loading;
       delete file.blob;
@@ -468,12 +468,10 @@ export default function Files() {
       const success = await fileService.deleteFile(id, {
         isLocal: file.local,
         hash: file.hash,
-        readingStatus: file.status,
         userId: user.id
       });
 
       if (success) {
-        fileService.deleteFromFileCache(file.hash);
         files.splice(index, 1);
         setFiles([...files]);
         setState({
@@ -519,7 +517,6 @@ export default function Files() {
           deleteFromCache: false,
           isLocal: !file.local,
           hash: file.hash,
-          readingStatus: file.status,
           userId: user.id
         });
 
