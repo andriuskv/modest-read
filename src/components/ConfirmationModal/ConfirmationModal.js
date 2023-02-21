@@ -1,9 +1,9 @@
 import Modal from "components/Modal";
 import Icon from "components/Icon";
 
-export default function ConfirmationModal({ iconId, title, message, actionName, action, hide }) {
+export default function ConfirmationModal({ iconId, title, message, actionName, action, nested, hide }) {
   return (
-    <Modal hide={hide}>
+    <Modal nested={nested} hide={hide}>
       <div className="modal-title-container">
         <Icon id={iconId} className="modal-title-icon"/>
         <h3 className="modal-title">{title}</h3>

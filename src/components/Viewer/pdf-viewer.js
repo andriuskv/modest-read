@@ -106,14 +106,6 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePages);
   document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
 
-  if (metadata.status !== "have read") {
-    if (metadata.pageCount === 1) {
-      params.status = "have read";
-    }
-    else if (params.status !== "reading") {
-      params.status = "reading";
-    }
-  }
   params.accessedAt = Date.now();
 
   updateFile(metadata, params, true);
@@ -772,6 +764,10 @@ function zoomOut() {
 
 function cleanupActiveZoomOption() {
   const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (!zoomOptionsElement) {
+    return;
+  }
   const optionElement = zoomOptionsElement.querySelector(".active");
 
   if (optionElement) {

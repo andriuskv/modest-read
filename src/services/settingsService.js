@@ -8,7 +8,6 @@ function initSettings() {
   return copyObject(settings, {
     sortBy: "last-accessed",
     sortOrder: 1,
-    showCategories: false,
     layoutType: "grid",
     toolbarVisible: true,
     epub: {

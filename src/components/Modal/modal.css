@@ -13,6 +13,7 @@
 }
 
 .modal {
+  position: relative;
   width: 100%;
   max-width: 360px;
   padding: var(--space-xl);
@@ -23,6 +24,10 @@
     0 2px 4px 0 var(--color-black-8),
     0 4px 8px 0 var(--color-black-4),
     0 8px 16px 0 var(--color-black-2);
+
+  & .modal-mask {
+    position: absolute;
+  }
 }
 
 .modal-title-container {

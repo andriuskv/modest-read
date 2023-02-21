@@ -1,5 +1,5 @@
-@import "./fonts.css";
-@import "./variables.css";
+@import url("./fonts.css");
+@import url("./variables.css");
 
 *, *::after, *::before {
   box-sizing: border-box;
@@ -120,8 +120,8 @@ body {
   padding: var(--space-md) var(--space-xl);
   border-radius: 999px;
   background-color: var(--background-color);
-  font-weight: 500;
   font-size: var(--text-sm);
+  white-space: nowrap;
   transition: 0.1s background-color, 0.1s color;
   cursor: pointer;
 
@@ -130,12 +130,12 @@ body {
   }
 
   &:disabled {
-    color: var(--color-grey-10);
+    color: var(--color-grey-30);
 
     &:hover {
       --background-color: var(--color-grey-40);
 
-      color: var(--color-grey-10);
+      color: var(--color-grey-30);
       cursor: default;
     }
   }

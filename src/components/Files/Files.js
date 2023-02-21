@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "utils";
@@ -9,15 +9,17 @@ import Header from "components/Header";
 import BannerImage from "components/BannerImage";
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
-import ConfirmationModal from "components/ConfirmationModal";
 import LandingPage from "components/LandingPage";
-import Notification from "components/Notification";
 import ErrorPage from "components/ErrorPage";
 import FileCard from "components/FileCard";
 import "./files.css";
 import FileCardPlaceholder from "./FileCardPlaceholder";
 import FileSearch from "./FileSearch";
 import FilesSort from "./FilesSort";
+
+const Notification = lazy(() => import("components/Notification"));
+const ConfirmationModal = lazy(() => import("components/ConfirmationModal"));
+const CategoryModal = lazy(() => import("./CategoryModal"));
 
 export default function Files() {
   const { user } = useUser();
@@ -29,8 +31,9 @@ export default function Files() {
   const [filesLoading, setFilesLoading] = useState(false);
   const [importMessage, setImportMessage] = useState("");
   const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
-  const [modal, setModal] = useState(null);
+  const [confirmationModal, setConfirmationModal] = useState(null);
   const [indicatorVisible, setIndicatorVisible] = useState(false);
+  const [categoryModal, setCategoryModal] = useState(false);
   const memoizedDropHandler = useCallback(handleDrop, [state, files]);
   const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
   const initTimeoutId = useRef(0);
@@ -208,12 +211,11 @@ export default function Files() {
       if (data.files) {
         setFiles(data.files);
         setState({
-          visibleCategory: "all",
+          visibleCategory: "default",
           categories: getCategories(data.files),
           sortBy: settings.sortBy,
           sortOrder: settings.sortOrder,
-          type: settings.layoutType,
-          showCategories: settings.showCategories
+          layoutType: settings.layoutType
         });
         setLoading(false);
         setDocumentTitle("Files");
@@ -280,6 +282,7 @@ export default function Files() {
           params.local = true;
         }
         newFiles.push({
+          ...params,
           blob: file,
           id: uuidv4(),
           createdAt: Date.now(),
@@ -287,8 +290,6 @@ export default function Files() {
           size: file.size,
           type: file.name.slice(file.name.lastIndexOf(".") + 1),
           sizeString: getFileSizeString(file.size),
-          ...params,
-          status: "plan-to-read",
           pageNumber: 1,
           loading: true
         });
@@ -326,43 +327,62 @@ export default function Files() {
   }
 
   function getCategories(files) {
-    const categories = [{
-      name: "All",
-      id: "all",
-      icon: "bookshelf",
+    const categories = JSON.parse(localStorage.getItem("categories")) || [{
+      name: "Default",
+      id: "default",
       files: []
     },
     {
       name: "Reading",
       id: "reading",
-      icon: "open-book",
       files: []
     },
     {
       name: "Plan To Read",
       id: "plan-to-read",
-      icon: "book-question-mark",
       files: []
     },
     {
       name: "Completed",
       id: "completed",
-      icon: "book-check-mark",
       files: []
     },
     {
       name: "Dropped",
       id: "dropped",
-      icon: "book-dropped",
       files: []
     }];
 
-    for (const category of categories) {
-      if (category.id === "all") {
-        category.files = files;
+    let defaultCategory = categories.find(category => category.id === "default");
+
+    if (!defaultCategory) {
+      categories.unshift({
+        name: "Default",
+        id: "default",
+        files: []
+      });
+      [defaultCategory] = categories;
+    }
+
+    for (const file of files) {
+      let found = false;
+
+      for (const category of categories) {
+        for (const [index, fileId] of Object.entries(category.files)) {
+          if (file.id === fileId) {
+            found = true;
+            category.files[index] = file;
+            break;
+          }
+        }
+
+        if (found) {
+          break;
+        }
       }
-      else {
-        category.files = files.filter(file => file.status === category.id);
+
+      if (!found) {
+        defaultCategory.files.push(file);
       }
     }
     return categories;
@@ -388,24 +408,28 @@ export default function Files() {
     }
   }
 
-  function changeReadingStatus(id, status) {
-    const file = files.find(file => file.id === id);
-
-    if (status === file.status) {
-      return;
+  function getFileCategoryId(fileId) {
+    for (const category of state.categories) {
+      for (const file of category.files) {
+        if (file.id === fileId) {
+          return category.id;
+        }
+      }
     }
-    const params = { status };
+    return "default";
+  }
 
-    if (status === "reading") {
-      params.accessedAt = Date.now();
-    }
-    updateFile(file, params);
+  function enableFileCategoryUpdate(file) {
+    setCategoryModal({
+      action: "set",
+      fileId: file.id,
+      categoryId: getFileCategoryId(file.id)
+    });
   }
 
   function resetProgress(id) {
     const file = files.find(file => file.id === id);
     const params = {
-      status: "plan-to-read",
       accessedAt: 0,
       pageNumber: 1
     };
@@ -418,15 +442,13 @@ export default function Files() {
       params.location = "";
     }
     updateFile(file, params);
-    hideModal();
+    hideConfirmationModal();
   }
 
   async function updateFile(file, params) {
     try {
       const success = await fileService.updateFile(params, {
         id: file.id,
-        hash: file.hash,
-        readingStatus: file.status,
         isLocal: file.local,
         userId: user.id
       });
@@ -452,7 +474,7 @@ export default function Files() {
   }
 
   function showResetProgressModal(id) {
-    setModal({
+    setConfirmationModal({
       iconId: "reset",
       title: "Reset progress?",
       message: "Are you sure you want to reset reading progress for this file?",
@@ -482,7 +504,7 @@ export default function Files() {
       else {
         setNotification({ value: "Could not remove file. Try again later." });
       }
-      hideModal();
+      hideConfirmationModal();
     } catch (e) {
       console.log(e);
       setNotification({ value: "Could not remove file. Try again later." });
@@ -490,7 +512,7 @@ export default function Files() {
   }
 
   function showRemoveFileModal(id) {
-    setModal({
+    setConfirmationModal({
       iconId: "trash",
       title: "Remove this file?",
       message: "Are you sure you want to remove this file?",
@@ -535,7 +557,7 @@ export default function Files() {
       console.log(e);
       setNotification({ value: "Something went wrong. Try again later." });
     } finally {
-      hideModal();
+      hideConfirmationModal();
     }
   }
 
@@ -556,7 +578,7 @@ export default function Files() {
         message: "Are you sure you want to download this file? It will become inaccessible to other devices."
       };
     }
-    setModal({
+    setConfirmationModal({
       iconId: action.iconId,
       title: `${action.name} this file?`,
       message: action.message,
@@ -565,8 +587,8 @@ export default function Files() {
     });
   }
 
-  function hideModal() {
-    setModal(null);
+  function hideConfirmationModal() {
+    setConfirmationModal(null);
   }
 
   function dismissNotification() {
@@ -574,20 +596,10 @@ export default function Files() {
   }
 
   function changeLayout(type) {
-    if (type !== state.type) {
-      setState({ ...state, type });
+    if (type !== state.layoutType) {
+      setState({ ...state, layoutType: type });
       setSetting("layoutType", type);
     }
-  }
-
-  function toggleCategoryNames(event) {
-    const { checked } = event.target;
-
-    setState({
-      ...state,
-      showCategories: checked
-    });
-    setSetting("showCategories", checked);
   }
 
   function toggleMenu() {
@@ -647,10 +659,95 @@ export default function Files() {
     setState({ ...state });
   }
 
+  function showCategoryModal() {
+    setCategoryModal({});
+  }
+
+  function hideCategoryModal() {
+    setCategoryModal(null);
+  }
+
+  function assignCategory(id) {
+    if (id !== categoryModal.categoryId) {
+      let fileIndex = -1;
+      let file = null;
+
+      for (const category of state.categories) {
+        fileIndex = category.files.findIndex(item => item.id === categoryModal.fileId);
+
+        if (fileIndex >= 0) {
+          file = category.files[fileIndex];
+          category.files.splice(fileIndex, 1);
+          break;
+        }
+      }
+      const category = state.categories.find(category => category.id === id);
+
+      category.files.push(file);
+      setState({ ...state });
+      saveCategories(state.categories);
+    }
+    hideCategoryModal();
+  }
+
+  function changeCategoryOrder(order, id) {
+    const index = state.categories.findIndex(category => category.id === id);
+
+    if (order === -1 && index <= 0 || order === 1 && index >= state.categories.length - 1) {
+      return;
+    }
+    ([state.categories[index], state.categories[index + order]] = [state.categories[index + order], state.categories[index]]);
+    setState({ ...state });
+    saveCategories(state.categories);
+  }
+
+  function removeCategory(id) {
+    const index = state.categories.findIndex(category => category.id === id);
+    const category = state.categories[index];
+
+    if (category.files.length) {
+      const defaultCategory = state.categories.find(category => category.id === "default");
+      defaultCategory.files.push(...category.files);
+    }
+
+    if (state.visibleCategory === id) {
+      state.visibleCategory = "default";
+    }
+    state.categories.splice(index, 1);
+    setState({ ...state });
+    saveCategories(state.categories);
+  }
+
+  function createCategory(name) {
+    state.categories.push({
+      name,
+      id: crypto.randomUUID(),
+      files: []
+    });
+    setState({ ...state });
+    saveCategories(state.categories);
+  }
+
+  function updateCategoryName(name, id) {
+    const index = state.categories.findIndex(category => category.id === id);
+
+    state.categories[index].name = name;
+    setState({ ...state });
+    saveCategories(state.categories);
+  }
+
+  function saveCategories(categories) {
+    localStorage.setItem("categories", JSON.stringify(categories.map(category => ({
+      id: category.id,
+      name: category.name,
+      files: category.files.map(item => item.id)
+    }))));
+  }
+
   function renderMoreBtns() {
     return (
       <>
-        <Link to="/statistics" className="btn icon-text-btn files-more-dropdown-btn">
+        <Link to="/statistics" className="btn icon-text-btn files-more-dropdown-btn files-sidebar-stats-btn">
           <Icon id="stats" size="24px"/>
           <span>Statistics</span>
         </Link>
@@ -670,7 +767,7 @@ export default function Files() {
           <Icon id="menu" size="24px"/>
         </button>
         <Header shouldRenderUser={true}/>
-        <div className={`files-categories-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
+        <div className={`files-sidebar-container${categoryMenuVisible ? " visible" : ""}`} onClick={hideMenu}>
           <div className="files-sidebar">
             <div className="files-sidebar-title-container">
               <span className="files-sidebar-title">ModestRead</span>
@@ -680,7 +777,6 @@ export default function Files() {
                 <li key={i}>
                   <button className={`btn icon-text-btn files-category-btn${state.visibleCategory === category.id ? " active" : ""}`}
                     onClick={() => selectCategory(category.id)}>
-                    <Icon id={category.icon} size="24px"/>
                     <span>{category.name}</span>
                     <span>{category.files.length}</span>
                   </button>
@@ -697,25 +793,19 @@ export default function Files() {
               body={{ className: "files-more-dropdown" }}>
               {renderMoreBtns()}
               <div className="files-layout-setting">
-                <button className={`btn icon-text-btn files-layout-setting-item${state.type === "grid" ? " active" : ""}`}
+                <button className={`btn icon-text-btn files-layout-setting-item${state.layoutType === "grid" ? " active" : ""}`}
                   onClick={() => changeLayout("grid")}>
                   <Icon id="grid" size="24px"/>
                   <span>Grid</span>
                 </button>
-                <button className={`btn icon-text-btn files-layout-setting-item${state.type === "list" ? " active" : ""}`}
+                <button className={`btn icon-text-btn files-layout-setting-item${state.layoutType === "list" ? " active" : ""}`}
                   onClick={() => changeLayout("list")}>
                   <Icon id="list" size="24px"/>
                   <span>List</span>
                 </button>
               </div>
-              <label className="checkbox-container files-show-categories-setting">
-                <input type="checkbox" className="sr-only checkbox-input" onChange={toggleCategoryNames}
-                  checked={state.showCategories}/>
-                <div className="checkbox">
-                  <div className="checkbox-tick"></div>
-                </div>
-                <span className="checkbox-label">Show categories</span>
-              </label>
+              <button className="btn text-btn text-btn-alt dropdown-btn files-more-dropdown-categories-btn"
+                onClick={showCategoryModal}>Categories</button>
             </Dropdown>
           </div>
         </div>
@@ -726,23 +816,9 @@ export default function Files() {
   function renderFile(file) {
     return (
       <FileCard file={file} showLink={true} user={user} key={file.id}>
-        <Dropdown
-          toggle={{
-            content: <Icon id="bookshelf"/>,
-            title: "Set reading status",
-            className: "btn icon-btn"
-          }}>
-          <div className="files-file-card-dropdown-group">
-            <div className="files-file-card-dropdown-group-title">Reading Status</div>
-            {state.categories.slice(1).map((category, i) => (
-              <button className={`btn icon-text-btn dropdown-btn files-file-card-dropdown-btn${file.status === category.id ? " active" : ""}`} key={i}
-                onClick={() => changeReadingStatus(file.id, category.id)}>
-                <Icon id={category.icon}/>
-                <span>{category.name}</span>
-              </button>
-            ))}
-          </div>
-        </Dropdown>
+        <button className="btn icon-btn" onClick={() => enableFileCategoryUpdate(file)}>
+          <Icon id="bookshelf"/>
+        </button>
         <Dropdown
           toggle={{
             content: <Icon id="dots-vertical"/>,
@@ -779,10 +855,29 @@ export default function Files() {
     );
   }
 
-  function renderEmptyCategoryNotice() {
+  function renderFiles(files) {
+    return (
+      <ul className={`files-cards ${state.layoutType}`}>
+        {files.map(file => file.loading ? <FileCardPlaceholder key={file.id}/> : renderFile(file))}
+      </ul>
+    );
+  }
+
+  function renderFileCategory() {
+    const categories = state.searchCategories || state.categories;
+    const category = categories.find(({ id }) => id === state.visibleCategory);
+
+    if (category?.files.length) {
+      return renderFiles(category.files);
+    }
+    const { files: originalFiles } = state.categories.find(({ id }) => id === state.visibleCategory);
+
+    if (state.searchCategories && originalFiles.length) {
+      return <p className="files-category-notice">Your search term doesn't match any files in this category.</p>;
+    }
     return (
       <div className="files-category-notice">
-        <p className="files-category-notice-message">You don't have any files.</p>
+        <p className="files-category-notice-message">You have no files in this category.</p>
         <label className="btn icon-text-btn primary-btn no-files-notice-btn">
           <Icon id="upload" size="24px"/>
           <span>Import Files</span>
@@ -790,67 +885,6 @@ export default function Files() {
         </label>
       </div>
     );
-  }
-
-  function renderFiles(files) {
-    return (
-      <ul className={`files-cards ${state.type}`}>
-        {files.map(file => file.loading ? <FileCardPlaceholder key={file.id}/> : renderFile(file))}
-      </ul>
-    );
-  }
-
-  function renderAllCatergories(categories) {
-    const items = [];
-    let empty = true;
-
-    for (const category of categories.slice(1)) {
-      if (category.files.length) {
-        empty = false;
-
-        items.push((
-          <div className="files-category" key={category.name}>
-            <h3 className="files-category-name">
-              <Icon id={category.icon} size="24px"/>
-              <span className="files-category-name-text">{category.name}</span>
-            </h3>
-            {renderFiles(category.files)}
-          </div>
-        ));
-      }
-    }
-
-    if (empty) {
-      return renderEmptyCategoryNotice();
-    }
-    return (
-      <div>{items}</div>
-    );
-  }
-
-  function renderFileCategory() {
-    const categories = state.searchCategories || state.categories;
-
-    if (state.visibleCategory === "all" && state.showCategories) {
-      if (state.matchedFileCount === 0) {
-        return <p className="files-category-notice">Your search term doesn't match any files.</p>;
-      }
-      return renderAllCatergories(categories);
-    }
-    const category = categories.find(({ id }) => id === state.visibleCategory);
-
-    if (category?.files.length) {
-      return renderFiles(category.files);
-    }
-    const { files: originalFiles, id } = state.categories.find(({ id }) => id === state.visibleCategory);
-
-    if (state.searchCategories && originalFiles.length) {
-      return <p className="files-category-notice">Your search term doesn't match any files in this category.</p>;
-    }
-    else if (id === "all") {
-      return renderEmptyCategoryNotice();
-    }
-    return <p className="files-category-notice">You have no files in this category.</p>;
   }
 
   if (indicatorVisible) {
@@ -878,20 +912,33 @@ export default function Files() {
           <FilesSort sortBy={state.sortBy} sortOrder={state.sortOrder} sortFileCatalog={sortFileCatalog}/>
         </div>
         {notification && (
-          <Notification notification={notification} expandable={notification.expandable}
-            dismiss={dismissNotification} margin="top">
-            {notification.files ? (
-              <ul className="files-duplicate-files">
-                {notification.files.map((file, i) => (
-                  <li className="files-duplicate-file" key={i}>{file}</li>
-                ))}
-              </ul>
-            ) : null}
-          </Notification>
+          <Suspense fallback={null}>
+            <Notification notification={notification} expandable={notification.expandable}
+              dismiss={dismissNotification} margin="top">
+              {notification.files ? (
+                <ul className="files-duplicate-files">
+                  {notification.files.map((file, i) => (
+                    <li className="files-duplicate-file" key={i}>{file}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </Notification>
+          </Suspense>
         )}
         {renderFileCategory()}
-        {modal ? <ConfirmationModal {...modal} hide={hideModal}/> : null}
+        {confirmationModal ? (
+          <Suspense fallback={null}>
+            <ConfirmationModal {...confirmationModal} hide={hideConfirmationModal}/>
+          </Suspense>
+        ) : null}
         {importMessage ? <div className="files-import-message">{importMessage}</div> : null}
+        {categoryModal ? (
+          <Suspense fallback={null}>
+            <CategoryModal modal={categoryModal} categories={state.categories}
+              assignCategory={assignCategory} changeCategoryOrder={changeCategoryOrder}
+              removeCategory={removeCategory} createCategory={createCategory} updateCategoryName={updateCategoryName} hide={hideCategoryModal}/>
+          </Suspense>
+        ) : null}
       </div>
     );
   }
