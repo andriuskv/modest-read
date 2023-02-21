@@ -40,11 +40,8 @@ function fetchCachedFile(hash) {
   return get(hash, cachedFilesStore);
 }
 
-async function updateFile(data, { id, isLocal, hash, readingStatus, userId }) {
+async function updateFile(data, { id, isLocal, userId }) {
   if (isLocal) {
-    if (data.status && data.status !== "reading" && readingStatus === "reading") {
-      deleteCachedFile(hash);
-    }
     await update(id, file => ({ ...file, ...data }), store);
     return true;
   }

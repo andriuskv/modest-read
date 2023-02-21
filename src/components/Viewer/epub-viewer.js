@@ -53,23 +53,8 @@ async function initEpubViewer(container, { metadata, blob }, loggedUser) {
 
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
 
-  updateReadingStatus(metadata);
+  updateFile(metadata, { accessedAt: Date.now() }, true);
   startCounting(user);
-}
-
-function updateReadingStatus(metadata) {
-  const params = {};
-
-  if (metadata.status !== "have read") {
-    if (metadata.pageCount === 1) {
-      params.status = "have read";
-    }
-    else {
-      params.status = "reading";
-    }
-  }
-  params.accessedAt = Date.now();
-  updateFile(metadata, params, true);
 }
 
 function updateFile(file, data, skipWaiting = false) {
@@ -511,6 +496,10 @@ async function handleScaleSelect({ target }) {
 
 function cleanupActiveZoomOption() {
   const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+
+  if (!zoomOptionsElement) {
+    return;
+  }
   const optionElement = zoomOptionsElement.querySelector(".active");
 
   if (optionElement) {

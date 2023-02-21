@@ -1,11 +1,16 @@
 import { useEffect } from "react";
 import "./modal.css";
 
-export default function Modal({ children, hide }) {
+export default function Modal({ children, className, nested, hide }) {
   useEffect(() => {
+    // Prevent page scroll when the modal is open
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeydown);
 
     return () => {
+      if (!nested) {
+        document.body.style.overflow = "";
+      }
       window.removeEventListener("keydown", handleKeydown);
     };
   }, []);
@@ -24,7 +29,7 @@ export default function Modal({ children, hide }) {
 
   return (
     <div className="modal-mask" onClick={handleClick}>
-      <div className="modal">{children}</div>
+      <div className={`modal${className ? ` ${className}` : ""}`}>{children}</div>
     </div>
   );
 }
