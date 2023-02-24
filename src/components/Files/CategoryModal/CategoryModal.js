@@ -75,20 +75,20 @@ export default function CategoryModal({ modal, categories, assignCategory, chang
               <>
                 <div className="category-modal-list-item-order-btn-container">
                   <button className="btn icon-btn" onClick={() => changeCategoryOrder(-1, category.id)}
-                    disabled={index === 0}>
+                    disabled={index === 0} title="Move up">
                     <Icon id="arrow-up"/>
                   </button>
                   <button className="btn icon-btn" onClick={() => changeCategoryOrder(1, category.id)}
-                    disabled={index === categories.length - 1}>
+                    disabled={index === categories.length - 1} title="Move down">
                     <Icon id="arrow-down"/>
                   </button>
                 </div>
-                <button className="btn text-btn-alt category-modal-list-item-btn" onClick={() => enableCategoryNameEdit(category.name, category.id)}>
+                <button className="btn text-btn-alt category-modal-list-item-btn" onClick={() => enableCategoryNameEdit(category.name, category.id)} title="Rename">
                   <span>{category.name}</span>
                   <span>{category.files.length}</span>
                 </button>
                 {category.id === "default" ? null : (
-                  <button className="btn icon-btn" onClick={() => showConfirmationModal(category.id, category.name)}>
+                  <button className="btn icon-btn" onClick={() => showConfirmationModal(category.id, category.name)} title="Remove">
                     <Icon id="trash"/>
                   </button>
                 )}

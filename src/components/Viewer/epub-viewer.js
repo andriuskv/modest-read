@@ -20,6 +20,7 @@ let saveTimeoutId = 0;
 let dataToSave = {};
 let user = {};
 let mouseDownStartPos = null;
+let cleanupController = null;
 
 async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   const { default: epubjs } = await import("epubjs");
@@ -29,7 +30,7 @@ async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   scale = settings.epub.scale;
   epubElement = container;
   rendition = getRendition(settings.epub.viewMode, settings.epub.spreadPages, settings.epub.margin);
-
+  cleanupController = new AbortController();
   document.body.style.overscrollBehavior = "none";
 
   initTheme();
@@ -345,21 +346,8 @@ function cleanupEpubViewer(reloading) {
 }
 
 function cleanupScale() {
-  const zoomOutElement = document.getElementById("js-viewer-zoom-out");
-  const zoomInElement = document.getElementById("js-viewer-zoom-in");
-
-  zoomOutElement.removeEventListener("click", handleZoomOut);
-  zoomInElement.removeEventListener("click", handleZoomIn);
-
-  const selectElement = document.getElementById("js-viewer-scale-select");
-  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
-
-  if (selectElement) {
-    selectElement.removeEventListener("change", handleScaleSelect);
-  }
-  else if (zoomOptionsElement) {
-    zoomOptionsElement.removeEventListener("click", handleZoomOptionClick);
-  }
+  cleanupController.abort();
+  cleanupController = null;
 }
 
 function initPage(pageNumber, pageCount) {
@@ -433,65 +421,41 @@ function nextPage() {
 }
 
 function initScale(scale) {
-  const zoomOutElement = document.getElementById("js-viewer-zoom-out");
-  const zoomInElement = document.getElementById("js-viewer-zoom-in");
+  updateZoomElementValue(scale);
 
-  updateScaleElement(scale);
+  for (const element of document.querySelectorAll(".viewer-toolbar-tool-btn")) {
+    const type = element.getAttribute("data-type");
 
-  zoomOutElement.addEventListener("click", handleZoomOut);
-  zoomInElement.addEventListener("click", handleZoomIn);
-
-  const selectElement = document.getElementById("js-viewer-scale-select");
-  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
-
-  if (selectElement) {
-    selectElement.addEventListener("change", handleScaleSelect);
-  }
-  else if (zoomOptionsElement) {
-    const zoomOptionElement = zoomOptionsElement.querySelector(`[data-value="${scale.currentScale}"]`);
-
-    if (zoomOptionElement) {
-      zoomOptionElement.classList.add("active");
+    if (type === "in") {
+      element.addEventListener("click", zoomIn, { signal: cleanupController.signal });
     }
-    zoomOptionsElement.addEventListener("click", handleZoomOptionClick);
+    else if (type === "out") {
+      element.addEventListener("click", zoomOut, { signal: cleanupController.signal });
+    }
   }
+  const zoomOptionsElement = document.getElementById("js-viewer-toolbar-zoom-dropdown-options");
+  const zoomOptionElement = zoomOptionsElement.querySelector(`[data-value="${scale.name}"]`);
+
+  if (zoomOptionElement) {
+    zoomOptionElement.classList.add("active");
+  }
+  zoomOptionsElement.addEventListener("click", handleZoomOptionClick, { signal: cleanupController.signal });
 }
 
-function updateScaleElement(scale) {
-  const selectElement = document.getElementById("js-viewer-scale-select");
-  const zoomValueElement = document.getElementById("js-viewer-zoom-value");
-
-  if (selectElement) {
-    selectElement.value = scale.name;
-    selectElement.firstElementChild.textContent = `${scale.displayValue}%`;
+function updateZoomElementValue(scale) {
+  for (const element of document.querySelectorAll(".viewer-zoom-value")) {
+    element.textContent = scale.displayValue;
   }
-  else {
-    zoomValueElement.textContent = `${scale.displayValue}%`;
-  }
-}
-
-function handleZoomOut() {
-  zoomOut();
-  cleanupActiveZoomOption();
-}
-
-function handleZoomIn() {
-  zoomIn();
-  cleanupActiveZoomOption();
 }
 
 function zoomIn() {
   setScale(Math.min(scale.currentScale * 1.1, maxScale));
+  cleanupActiveZoomOption();
 }
 
 function zoomOut() {
   setScale(Math.max(scale.currentScale / 1.1, minScale));
-}
-
-async function handleScaleSelect({ target }) {
-  const { value } = target;
-
-  setScale(value, value);
+  cleanupActiveZoomOption();
 }
 
 function cleanupActiveZoomOption() {
@@ -525,12 +489,12 @@ function handleZoomOptionClick({ target, currentTarget }) {
 function setScale(value, name = "custom") {
   scale.name = name;
   scale.currentScale = value;
-  scale.displayValue = Math.round(value * 100);
+  scale.displayValue = `${Math.round(value * 100)}%`;
 
   settings.epub.scale = scale;
 
   rendition.themes.default({ "html": { "font-size": `${value * 100}% !important` }});
-  updateScaleElement(scale);
+  updateZoomElementValue(scale);
   setSettings(settings);
 }
 
