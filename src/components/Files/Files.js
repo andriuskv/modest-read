@@ -385,6 +385,11 @@ export default function Files() {
         defaultCategory.files.push(file);
       }
     }
+
+    // Remove missing category items
+    for (const category of categories) {
+      category.files = category.files.filter(file => typeof file !== "string");
+    }
     return categories;
   }
 
@@ -495,6 +500,8 @@ export default function Files() {
 
       if (success) {
         files.splice(index, 1);
+        removeCategoryItem(file.id);
+        saveCategories(state.categories);
         setFiles([...files]);
         setState({
           ...state,
@@ -508,6 +515,17 @@ export default function Files() {
     } catch (e) {
       console.log(e);
       setNotification({ value: "Could not remove file. Try again later." });
+    }
+  }
+
+  function removeCategoryItem(fileId) {
+    for (const category of state.categories) {
+      const fileIndex = category.files.findIndex(item => item.id === fileId);
+
+      if (fileIndex >= 0) {
+        category.files.splice(fileIndex, 1);
+        break;
+      }
     }
   }
 
