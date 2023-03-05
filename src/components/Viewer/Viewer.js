@@ -167,6 +167,7 @@ export default function Viewer() {
       if (state.filePreviewVisible) {
         hideFileLoadMessage();
         setState({ file: state.file, currentFile: file, loading: true });
+        fileService.cacheFile(hash, file);
       }
       else {
         setFileLoadMessage({
@@ -205,10 +206,12 @@ export default function Viewer() {
         const { getNewEpubFile } = await import("./epub-viewer");
         fileMetadata = await getNewEpubFile(file, user);
       }
-      fileMetadata.status = "reading";
       fileMetadata.hash = hash;
 
       saveLoadedFile(file, fileMetadata);
+    }
+    else {
+      fileService.cacheFile(hash, file);
     }
 
     if (viewerState.current) {
