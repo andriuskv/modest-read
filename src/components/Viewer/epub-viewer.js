@@ -285,6 +285,14 @@ function handleClickOnRendition(event) {
   }
 
   if (event.target.nodeName === "A" && event.target.href) {
+    const splitPathItems = new URL(event.target.href).pathname.split("/");
+    // Remove leading "/"
+    const pathname = splitPathItems.slice(1).join("/");
+    const unescapedPathname = unescape(pathname);
+
+    if (pathname !== unescapedPathname) {
+      rendition.display(unescapedPathname);
+    }
     return;
   }
 
