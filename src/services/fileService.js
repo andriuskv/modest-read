@@ -151,7 +151,7 @@ function getSortingValue(sortBy, file) {
 function sortFiles(files, { sortBy, sortOrder }) {
   if (sortBy === "last-accessed") {
     // Invert sort order because we want most recently read files to appear first.
-    return sortByLastAccessed(files, sortBy, -sortOrder);
+    return sortBySortingValue(files, sortBy, -sortOrder);
   }
   return sortBySortingValue(files, sortBy, sortOrder);
 }
@@ -169,20 +169,6 @@ function sortBySortingValue(files, sortBy, sortOrder) {
     }
     return 0;
   });
-}
-
-function sortByLastAccessed(files, sortBy, sortOrder) {
-  const [reading, rest] = files.reduce((arr, file) => {
-    if (file.status === "reading") {
-      arr[0].push(file);
-    }
-    else {
-      arr[1].push(file);
-    }
-    return arr;
-  }, [[], []]);
-
-  return sortBySortingValue(reading, sortBy, sortOrder).concat(sortBySortingValue(rest, sortBy, sortOrder));
 }
 
 export {

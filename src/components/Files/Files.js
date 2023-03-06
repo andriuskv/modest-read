@@ -641,13 +641,18 @@ export default function Files() {
     }
     const sortedFiles = fileService.sortFiles(files, { sortBy, sortOrder });
 
+    for (const category of state.categories) {
+      category.files = fileService.sortFiles(category.files, { sortBy, sortOrder });
+    }
+
     setFiles(sortedFiles);
     setState({
       ...state,
       sortBy,
       sortOrder,
-      categories: getCategories(sortedFiles)
+      categories: state.categories
     });
+    saveCategories(state.categories);
     setSettings({ sortBy, sortOrder });
   }
 
