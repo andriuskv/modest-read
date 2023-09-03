@@ -54,6 +54,7 @@ module.exports = function(env = {}) {
         directory: path.join(__dirname, "public")
       },
       client: {
+        overlay: false,
         logging: "error"
       },
       open: true,

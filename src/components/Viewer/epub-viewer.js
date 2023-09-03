@@ -47,15 +47,26 @@ async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   metadata.pageNumber = metadata.location ? book.locations.locationFromCfi(metadata.location) + 1 : 1;
 
   rendition.on("relocated", handleRelocation);
-  rendition.on("keydown", handleKeyDownOnRendition);
   rendition.on("click", handleClickOnRendition);
   rendition.on("mousedown", handleMouseDownOnRendition);
   rendition.display(metadata.location);
 
+  document.addEventListener("keydown", handleKeyDown);
   window.addEventListener("dropdown-visible", handleDropdownVisibility);
+  window.addEventListener("blur", blurIframe);
 
   updateFile(metadata, { accessedAt: Date.now() }, true);
   startCounting(user);
+}
+
+function blurIframe() {
+  const element = document.activeElement;
+
+  if (element instanceof HTMLIFrameElement) {
+    requestAnimationFrame(() => {
+      element.blur();
+    });
+  }
 }
 
 function updateFile(file, data, skipWaiting = false) {
@@ -255,22 +266,18 @@ function handleRelocation(locations) {
   updatePageBtnElementState(pageNumber, book.locations.length(), { location, index, atStart: locations.atStart });
 }
 
-function handleKeyDownOnRendition(event) {
+function handleKeyDown(event) {
   if (event.ctrlKey) {
-    document.activeElement.blur();
-
-    if (event.key === "+") {
-      zoomIn();
+    if (event.key === "=") {
       event.preventDefault();
+      zoomIn();
     }
     if (event.key === "-") {
-      zoomOut();
       event.preventDefault();
+      zoomOut();
     }
-    return;
   }
-
-  if (event.key === "ArrowLeft") {
+  else if (event.key === "ArrowLeft") {
     previousPage();
   }
   else if (event.key === "ArrowRight") {
@@ -350,7 +357,10 @@ function cleanupEpubViewer(reloading) {
   document.body.style.overscrollBehavior = "";
   updateFile(fileMetadata, dataToSave, true);
   stopCounting();
+
+  document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
+  window.removeEventListener("blur", blurIframe);
 }
 
 function cleanupScale() {
@@ -574,14 +584,12 @@ function resetRendition(viewMode, spreadPages, margin) {
   epubElement.innerHTML = "";
 
   rendition.off("relocated", handleRelocation);
-  rendition.off("keydown", handleKeyDownOnRendition);
   rendition.off("click", handleClickOnRendition);
   rendition.off("mousedown", handleMouseDownOnRendition);
 
   rendition = getRendition(viewMode, spreadPages, margin);
 
   rendition.on("relocated", handleRelocation);
-  rendition.on("keydown", handleKeyDownOnRendition);
   rendition.on("click", handleClickOnRendition);
   rendition.on("mousedown", handleMouseDownOnRendition);
   rendition.display(fileMetadata.location);

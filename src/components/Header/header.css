@@ -7,7 +7,7 @@
   width: 100%;
   margin-bottom: var(--space-md);
 
-  @media (max-width: 900px) {
+  @media (width <= 900px) {
     justify-content: center;
     margin-bottom: 0;
   }
@@ -35,7 +35,7 @@
 }
 
 .user-email-label {
-  padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
+  padding: var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);
   color: var(--color-grey-10);
   font-size: var(--text-sm);
   font-weight: 500;
@@ -44,8 +44,7 @@
 .user-email {
   @mixin text-truncate;
 
-  padding: 0 var(--space-md) 0 var(--space-lg);
-  font-weight: 500;
+  padding: 0 var(--space-xl);
 }
 
 .user-dropdown-group {
