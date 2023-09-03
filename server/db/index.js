@@ -1,6 +1,13 @@
 const pgp = require("pg-promise")();
 
-const db = pgp(process.env.DATABASE_URL);
+const db = pgp({
+  connectionString: process.env.DATABASE_URL,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  idle_in_transaction_session_timeout: 60000,
+  maxLifetime: 600000,
+  allowExitOnIdle: true
+});
 
 (async function() {
   await db.none(`

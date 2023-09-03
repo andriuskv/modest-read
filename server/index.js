@@ -8,7 +8,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(cors({
   credentials: true,
-  origin: ["https://modest-read.onrender.com"],
+  origin: process.env.URL.split(","),
   allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json({ limit: "10mb" }));

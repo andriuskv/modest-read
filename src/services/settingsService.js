@@ -17,7 +17,8 @@ function initSettings() {
       textOpacity: 1,
       scale: {
         name: "1",
-        currentScale: 1
+        currentScale: 1,
+        displayValue: "100%"
       },
       margin: {
         horizontal: 100,
@@ -30,7 +31,8 @@ function initSettings() {
       invertColors: false,
       scale: {
         name: "1",
-        currentScale: 1.3333
+        currentScale: 1.3333,
+        displayValue: "100%"
       }
     }
   });

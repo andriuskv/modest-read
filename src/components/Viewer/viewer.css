@@ -4,7 +4,7 @@
   }
 
   &.invert {
-    & .viewer-page {
+    .viewer-page {
       filter: invert(100%);
     }
   }
@@ -51,19 +51,15 @@
 
 .viewer-page-text {
   position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   overflow: hidden;
   opacity: 0.25;
   line-height: 1;
   text-align: initial;
-  text-size-adjust: none;
   forced-color-adjust: none;
   transform-origin: 0% 0%;
 
-  & > span {
+  :is(span, br) {
     position: absolute;
     white-space: pre;
     color: transparent;
@@ -75,6 +71,10 @@
 .viewer-annotation-layer {
   & section {
     position: absolute;
+    text-align: initial;
+    pointer-events: auto;
+    box-sizing: border-box;
+    transform-origin: 0 0;
 
     & a {
       position: absolute;
