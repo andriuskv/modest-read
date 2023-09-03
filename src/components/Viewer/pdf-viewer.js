@@ -28,6 +28,7 @@ let dataToSave = {};
 let user = {};
 let mouseDownStartPos = null;
 let cleanupController = null;
+let annotationLayer = null;
 
 async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack");
@@ -135,6 +136,7 @@ function cleanupPdfViewer(reloading) {
       pdfElement.innerHTML = "";
     }
     pdfInstance = null;
+    annotationLayer = null;
 
     stopCounting();
     clearTimeout(saveTimeoutId);
@@ -566,6 +568,10 @@ async function renderPageContent(container) {
     canvasContext: canvas.getContext("2d"),
     enableWebGL: true,
     viewport
+    // pageColors: {
+    //   background: "rgb(100,100,100)",
+    //   foreground: "rgb(255,255,255)"
+    // }
   }).promise;
 
   requestAnimationFrame(() => {
@@ -594,23 +600,24 @@ async function renderAnnotations(viewport, page, container) {
     }
     return;
   }
-  const params = {
-    page,
-    annotations,
-    viewport: viewport.clone({ dontFlip: true }),
-    div: annotationLayerDiv,
-    linkService: new LinkService(pdfInstance, pdfElement, window.location.href)
-  };
-
-  if (annotationLayerDiv && settings.pdf.viewMode === "multi") {
-    pdfjs.AnnotationLayer.update(params);
+  if (annotationLayerDiv && annotationLayer && settings.pdf.viewMode === "multi") {
+    annotationLayer.update({ viewport: viewport.clone({ dontFlip: true }) });
   }
   else {
     const div = document.createElement("div");
     div.className = "viewer-annotation-layer";
     container.appendChild(div);
-    params.div = div;
-    pdfjs.AnnotationLayer.render(params);
+
+    annotationLayer = new pdfjs.AnnotationLayer({
+      div,
+      page,
+      viewport
+    });
+
+    annotationLayer.render({
+      annotations,
+      linkService: new LinkService(pdfInstance, pdfElement, window.location.href)
+    });
 
     if (annotationLayerDiv) {
       annotationLayerDiv.remove();
@@ -1005,10 +1012,10 @@ async function renderSingleEmptyPage(pdfElement, pdfInstance, file) {
   pdfElement.appendChild(div);
 }
 
-async function renderEmptyPage(pageNumber, file, fragmenet, pdf) {
+async function renderEmptyPage(pageNumber, file, fragment, pdf) {
   const div = await getPageDiv(pdf, { ...file, pageNumber });
 
-  fragmenet.appendChild(div);
+  fragment.appendChild(div);
 }
 
 async function renderEmptyPages(pdfElement, pdfInstance, file) {

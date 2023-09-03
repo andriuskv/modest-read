@@ -1,16 +1,19 @@
 {
   "extends": "stylelint-config-standard",
   "rules": {
-    "declaration-colon-newline-after": null,
+    "import-notation": null,
     "custom-property-empty-line-before": null,
     "max-line-length": null,
     "shorthand-property-no-redundant-values": null,
     "font-family-name-quotes": "always-unless-keyword",
+    "declaration-block-no-redundant-longhand-properties": null,
+    "font-family-no-missing-generic-family-keyword": null,
+    "value-keyword-case": null,
     "comment-empty-line-before": null,
     "selector-list-comma-newline-after": null,
+    "property-no-vendor-prefix": null,
     "value-no-vendor-prefix": null,
     "at-rule-no-unknown": null,
-    "no-descending-specificity": null,
-    "value-keyword-case": null
+    "no-descending-specificity": null
   }
 }
