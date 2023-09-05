@@ -65,6 +65,11 @@
     color: transparent;
     cursor: text;
     transform-origin: 0% 0%;
+
+    &::selection {
+      color: transparent;
+      background-color: hsl(260deg 48% 52%);
+    }
   }
 }
 

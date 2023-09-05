@@ -568,10 +568,6 @@ async function renderPageContent(container) {
     canvasContext: canvas.getContext("2d"),
     enableWebGL: true,
     viewport
-    // pageColors: {
-    //   background: "rgb(100,100,100)",
-    //   foreground: "rgb(255,255,255)"
-    // }
   }).promise;
 
   requestAnimationFrame(() => {

@@ -264,10 +264,14 @@ function delay(milliseconds) {
   });
 }
 
-async function computeHash(buffer) {
-  const { default: CryptoJS } = await import("crypto-js");
-  const wordArray = CryptoJS.lib.WordArray.create(buffer);
-  return CryptoJS.MD5(wordArray).toString();
+async function computeHash(item) {
+  const { default: md5 } = await import("js-md5");
+  let value = item;
+
+  if (item.toString().includes("File")) {
+    value = await item.arrayBuffer();
+  }
+  return md5(value);
 }
 
 function copyObject(obj, mainObj) {

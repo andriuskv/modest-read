@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, delay } from "utils";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, computeHash, delay } from "utils";
 import { useUser } from "contexts/user-context";
 import * as fileService from "services/fileService";
 import { getSettings, setSettings, setSetting } from "services/settingsService";
@@ -65,17 +65,12 @@ export default function Files() {
     let loadingCount = 0;
 
     async function loadPdfFile(file) {
-      const [{ default: CryptoJS }, pdf] = await Promise.all([
-        import("crypto-js"),
-        getPdfInstance(file.blob)
-      ]);
-      const [metadata, coverImage, buffer] = await Promise.all([
+      const pdf = await getPdfInstance(file.blob);
+      const [metadata, coverImage, hash] = await Promise.all([
         pdf.getMetadata(),
         pageToDataURL(pdf),
-        file.blob.arrayBuffer()
+        computeHash(file.blob)
       ]);
-      const wordArray = CryptoJS.lib.WordArray.create(buffer);
-      const hash = CryptoJS.MD5(wordArray).toString();
 
       fileService.cacheFile(hash, file.blob);
 
@@ -97,22 +92,17 @@ export default function Files() {
     }
 
     async function loadEpubFile(file) {
-      const [{ default: CryptoJS }, { default: epubjs }] = await Promise.all([
-        import("crypto-js"),
-        import("epubjs")
-      ]);
+      const { default: epubjs } = await import("epubjs");
       const book = epubjs(file.blob);
 
       await book.ready;
 
-      const [metadata, coverImage, buffer] = await Promise.all([
+      const [metadata, coverImage, hash] = await Promise.all([
         book.loaded.metadata,
         getEpubCoverUrl(book),
-        file.blob.arrayBuffer(),
+        computeHash(file.blob),
         book.locations.generate(1650)
       ]);
-      const wordArray = CryptoJS.lib.WordArray.create(buffer);
-      const hash = CryptoJS.MD5(wordArray).toString();
 
       if (metadata.title) {
         file.title = metadata.title;
