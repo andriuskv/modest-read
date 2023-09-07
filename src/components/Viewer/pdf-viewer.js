@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
-import { dispatchCustomEvent, getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "../../utils";
-import * as fileService from "../../services/fileService";
-import { getSettings, setSettings } from "../../services/settingsService";
-import LinkService from "../../services/viewerLinkService";
-import { startCounting, stopCounting } from "../../services/statsService";
+import { dispatchCustomEvent, getPdfInstance, pageToDataURL, parsePdfMetadata, scrollToPage, getPageElementBox, getScrollbarWidth, getElementByAttr, getFileSizeString } from "utils";
+import * as fileService from "services/fileService";
+import { getSettings, setSettings } from "services/settingsService";
+import LinkService from "services/viewerLinkService";
+import { startCounting, stopCounting } from "services/statsService";
 import { initOutline } from "./outline";
 
 const settings = getSettings();
@@ -99,9 +99,9 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
 
     window.addEventListener("scroll", handleSinglePageScroll);
     window.addEventListener("click", handleAnnotationClick);
-    container.addEventListener("click", handleNavigationAreaClick);
-    container.addEventListener("mousedown", handleMouseDownOnRendition);
   }
+  container.addEventListener("mousedown", handleMouseDownOnRendition);
+  container.addEventListener("click", handleNavigationAreaClick);
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
   window.addEventListener("wheel", handleWheel, { passive: false });
@@ -335,6 +335,10 @@ function handleAnnotationClick({ target }) {
 }
 
 function handleNavigationAreaClick(event) {
+  if (settings.navigationAreasDisabled) {
+    return;
+  }
+
   if (event.target.nodeName === "A" && event.target.href) {
     return;
   }
@@ -913,8 +917,6 @@ async function setViewMode(event) {
     window.addEventListener("scroll", handleScroll);
     window.removeEventListener("scroll", handleSinglePageScroll);
     window.removeEventListener("click", handleAnnotationClick);
-    pdfElement.removeEventListener("click", handleNavigationAreaClick);
-    pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
   }
   else {
     unregisterIntersectionObserver();
@@ -922,8 +924,6 @@ async function setViewMode(event) {
     renderSinglePage(pageNumber);
     window.scrollTo(0, 0);
 
-    pdfElement.addEventListener("click", handleNavigationAreaClick);
-    pdfElement.addEventListener("mousedown", handleMouseDownOnRendition);
     window.addEventListener("scroll", handleSinglePageScroll);
     window.addEventListener("click", handleAnnotationClick);
     window.removeEventListener("scroll", handleScroll);

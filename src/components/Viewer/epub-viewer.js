@@ -303,6 +303,10 @@ function handleClickOnRendition(event) {
     return;
   }
 
+  if (settings.navigationAreasDisabled) {
+    return;
+  }
+
   // Disable navigation to different page if mouse down and up positions differ
   if (event.screenX !== mouseDownStartPos.x || event.screenY !== mouseDownStartPos.y) {
     return;

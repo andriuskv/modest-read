@@ -55,6 +55,11 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
     setSetting(name, value);
   }
 
+  function handleCheckboxChange(event) {
+    setViewerSettings("navigationAreasDisabled", event.target.checked);
+    setSetting("navigationAreasDisabled", event.target.checked);
+  }
+
   return (
     <>
       <div className="viewer-toolbar" ref={toolbarRef}>
@@ -144,6 +149,17 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
                 <Icon id="pages"/>
                 <span>Multi page</span>
               </button>
+            </div>
+            <div className="viewer-toolbar-dropdown-group viewer-toolbar-dropdown-group-alt">
+              <label className="viewer-toolbar-settings-item">
+                <input type="checkbox" className="sr-only checkbox-input"
+                  checked={settings.navigationAreasDisabled}
+                  onChange={handleCheckboxChange}/>
+                <div className="checkbox">
+                  <div className="checkbox-tick"></div>
+                </div>
+                <span className="checkbox-label">Disable navigation areas</span>
+              </label>
             </div>
             {file.type === "epub" && (
               <>
