@@ -22,7 +22,7 @@
     transform: translateY(-100%);
   }
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     justify-content: space-between;
   }
 }
@@ -37,7 +37,7 @@
     padding-right: 36px;
   }
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     flex-grow: 0;
     width: auto;
   }
@@ -72,7 +72,7 @@
   border-radius: 999px;
   background-color: var(--color-grey-40);
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     background-color: transparent;
 
     & > .viewer-toolbar-tool-btn {
@@ -94,7 +94,7 @@
 }
 
 .viewer-toolbar-zoom-dropdown-container {
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     margin-left: var(--space-sm);
   }
 }
@@ -105,7 +105,7 @@
   padding-top: 0;
   transform: translate(-50%, var(--space-md));
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     left: 0;
     transform: translateY(var(--space-md));
   }
@@ -132,7 +132,7 @@
     border-left: 1px solid var(--color-grey-70);
     border-right: 1px solid var(--color-grey-70);
 
-    @media (max-width: 480px) {
+    @media (width <= 480px) {
       display: none;
     }
   }
@@ -141,7 +141,7 @@
 .viewer-zoom-dropdown-icon {
   display: none;
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
      display: flex;
   }
 }
@@ -155,7 +155,7 @@
     border-radius: 0;
   }
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
      display: flex;
   }
 }
@@ -176,7 +176,7 @@
   padding-top: var(--space-md);
   padding-bottom: var(--space-md);
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     padding-top: 0;
   }
 }
@@ -188,7 +188,7 @@
   border-radius: 999px;
   background-color: var(--color-grey-40);
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -213,7 +213,7 @@
   font-size: var(--text-sm);
   white-space: nowrap;
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     border: none;
 
     &:focus-within {
@@ -235,12 +235,12 @@
     margin-right: var(--space-xs);
     background-color: var(--color-grey-30);
 
-    @media (max-width: 480px) {
+    @media (width <= 480px) {
       padding-left: var(--space-md);
     }
   }
 
-  @media (max-width: 480px) {
+  @media (width <= 480px) {
     height: 100%;
     border-top-left-radius: 99px;
     border-bottom-left-radius: 99px;
@@ -302,6 +302,7 @@
 
 .viewer-toolbar-settings-item {
   display: flex;
+  align-items: center;
 
   &:not(:last-of-type) {
     margin-bottom: var(--space-md);
@@ -310,6 +311,7 @@
 
 .viewer-themes {
   display: flex;
+  gap: var(--space-xl);
   margin-bottom: var(--space-xl);
 }
 
@@ -321,10 +323,6 @@
   box-shadow: 0 0 0 2px var(--color);
   font-weight: bold;
   color: var(--color);
-
-  &:not(:last-of-type) {
-    margin-right: var(--space-xl);
-  }
 
   &:hover {
     opacity: 0.8;
