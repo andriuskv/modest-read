@@ -31,18 +31,16 @@ let cleanupController = null;
 let annotationLayer = null;
 
 async function initPdfViewer(container, { metadata, blob }, loggedUser) {
-  pdfjs = await import("pdfjs-dist/webpack");
+  pdfjs = await import("pdfjs-dist/webpack.mjs");
   user = loggedUser;
   pdfElement = container;
   pdfInstance = await getPdfInstance(blob);
   fileMetadata = metadata;
-  scale = settings.pdf.scale;
+  scale = settings.pdf.scale || getInitialScale();
   rotation = metadata.rotation || 0;
   pageNumber = metadata.pageNumber || 1;
   cleanupController = new AbortController();
   document.body.style.overscrollBehavior = "none";
-
-  container.style.setProperty("--scale-factor", scale.currentScale);
 
   ([pageDimensions] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
@@ -50,6 +48,8 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
       renderEmptyPages(pdfElement, pdfInstance, metadata) :
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
   ]));
+
+  setSelectedScale(scale.name);
 
   const params = {
     scrollLeft: metadata.scrollLeft,
@@ -764,6 +764,21 @@ function updateZoomElementValue(scale) {
   for (const element of document.querySelectorAll(".viewer-zoom-value")) {
     element.textContent = scale.displayValue;
   }
+}
+
+function getInitialScale() {
+  const { offsetWidth, offsetHeight } = document.documentElement;
+
+  if (offsetWidth >= offsetHeight) {
+    return {
+      name: "fit-page",
+      displayValue: "Fit page"
+    };
+  }
+  return {
+    name: "fit-width",
+    displayValue: "Fit width"
+  };
 }
 
 function setScale(value, name = "custom") {
