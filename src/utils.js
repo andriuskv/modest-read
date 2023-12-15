@@ -46,7 +46,7 @@ async function pageToDataURL(pdf) {
 }
 
 async function getPdfInstance(file) {
-  const [pdfjs, arrayBuffer] = await Promise.all([import("pdfjs-dist/webpack"), file.arrayBuffer()]);
+  const [pdfjs, arrayBuffer] = await Promise.all([import("pdfjs-dist/webpack.mjs"), file.arrayBuffer()]);
   return pdfjs.getDocument(new Uint8Array(arrayBuffer)).promise;
 }
 

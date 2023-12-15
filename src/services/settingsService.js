@@ -29,12 +29,7 @@ function initSettings() {
     },
     pdf: {
       viewMode: "multi",
-      invertColors: false,
-      scale: {
-        name: "1",
-        currentScale: 1.3333,
-        displayValue: "100%"
-      }
+      invertColors: false
     }
   });
 }
