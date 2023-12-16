@@ -30,6 +30,11 @@ export default function Viewer() {
       return;
     }
     init();
+
+    return () => {
+      const element = document.querySelector("meta[name=viewport]");
+      element.content = "width=device-width, initial-scale=1, minimum-scale=1";
+    };
   }, [id, user]);
 
   useEffect(() => {
@@ -83,10 +88,23 @@ export default function Viewer() {
         setState({ file, filePreviewVisible: true });
       }
       setDocumentTitle(file.name);
+      setViewportMetaTag();
     }
     else {
       setState({ error: true });
       setDocumentTitle("Error");
+    }
+  }
+
+  function setViewportMetaTag() {
+    const isTouchDevice = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const element = document.querySelector("meta[name=viewport]");
+
+    if (isTouchDevice) {
+      element.content = "width=device-width, user-scalable=no";
+    }
+    else {
+      element.content = "width=device-width, initial-scale=1, minimum-scale=1";
     }
   }
 

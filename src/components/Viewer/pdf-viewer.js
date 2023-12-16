@@ -29,6 +29,8 @@ let user = {};
 let mouseDownStartPos = null;
 let cleanupController = null;
 let annotationLayer = null;
+let zooming = false;
+let zoomTimeoutId = 0;
 
 async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack.mjs");
@@ -49,7 +51,7 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
   ]));
 
-  setSelectedScale(scale.name);
+  await initScale(scale);
 
   const params = {
     scrollLeft: metadata.scrollLeft,
@@ -78,7 +80,6 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   }
   window.scrollTo(params.scrollLeft, params.scrollTop);
 
-  initScale(scale);
   initColorInversion();
   initPage();
   initOutline(getOutline, goToDestination);
@@ -152,15 +153,23 @@ function cleanupPdfViewer(reloading) {
 
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("scroll", handleSinglePageScroll);
-  window.removeEventListener("keydown", handleKeyDown);
-  window.removeEventListener("keyup", handleKeyUp);
-  window.removeEventListener("wheel", handleWheel, { passive: false });
+  document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener("keyup", handleKeyUp);
+  document.removeEventListener("wheel", handleWheel, { passive: false });
   window.removeEventListener("click", handleAnnotationClick);
   pdfElement.removeEventListener("click", handleNavigationAreaClick);
   pdfElement.removeEventListener("mousedown", handleMouseDownOnRendition);
 }
 
-function initScale(scale) {
+async function initScale(scale) {
+  if (scale.name === "custom") {
+    pdfElement.style.setProperty("--scale-factor", scale.currentScale);
+  }
+  else {
+    const scaleValue = scale.currentScale ?? await getSelectedScale(scale.name);
+
+    pdfElement.style.setProperty("--scale-factor", scaleValue);
+  }
   updateZoomElementValue(scale);
 
   for (const element of document.querySelectorAll(".viewer-toolbar-tool-btn")) {
@@ -383,13 +392,13 @@ function handleKeyDown(event) {
   ctrlPressed = event.ctrlKey;
 
   if (event.ctrlKey) {
-    if (event.key === "+") {
-      zoomIn();
+    if (event.key === "+" || event.key === "=") {
       event.preventDefault();
+      zoomIn();
     }
     if (event.key === "-") {
-      zoomOut();
       event.preventDefault();
+      zoomOut();
     }
     return;
   }
@@ -513,9 +522,10 @@ function registerIntersectionObserver() {
   }
   const height = views[pageNumber - 1].height / 2;
   observer = new IntersectionObserver(callback, { rootMargin: `${height}px 0px` });
-  Array.from(pdfElement.children).forEach(element => {
+
+  for (const element of pdfElement.children) {
     observer.observe(element);
-  });
+  }
 }
 
 function unregisterIntersectionObserver() {
@@ -739,12 +749,10 @@ function nextPage() {
 
 function zoomIn() {
   setScale(Math.min(scale.currentScale * 1.1, maxScale));
-  cleanupActiveZoomOption();
 }
 
 function zoomOut() {
   setScale(Math.max(scale.currentScale / 1.1, minScale));
-  cleanupActiveZoomOption();
 }
 
 function cleanupActiveZoomOption() {
@@ -781,7 +789,12 @@ function getInitialScale() {
   };
 }
 
-function setScale(value, name = "custom") {
+function setScale(value, name = "custom", noDelay) {
+  if (!zooming) {
+    unregisterIntersectionObserver();
+    cleanupActiveZoomOption();
+    zooming = true;
+  }
   const oldScaleValue = scale.currentScale;
   let scrollTop = 0;
   let scrollLeft = 0;
@@ -809,33 +822,40 @@ function setScale(value, name = "custom") {
 
     scrollTop = views[pageNumber - 1].top - (top / oldScaleValue * value);
     scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
-
-    registerIntersectionObserver();
   }
   else {
-    renderSinglePage(pageNumber);
+    updatePageInSingleMode(pageNumber);
 
     scrollTop = fileMetadata.scrollTop / oldScaleValue * value;
     scrollLeft = fileMetadata.scrollLeft / oldScaleValue * value;
   }
-  settings.pdf.scale = scale;
-
-  updateFile(fileMetadata, { scale: scale.currentScale, scrollTop, scrollLeft });
   updateZoomElementValue(scale);
   window.scrollTo(scrollLeft, scrollTop);
-  setSettings(settings);
+
+  clearTimeout(zoomTimeoutId);
+  zoomTimeoutId = setTimeout(() => {
+    zooming = false;
+
+    if (settings.pdf.viewMode === "multi") {
+      registerIntersectionObserver();
+    }
+    else {
+      renderSinglePage(pageNumber);
+    }
+    settings.pdf.scale = scale;
+    updateFile(fileMetadata, { scale: scale.currentScale, scrollTop, scrollLeft });
+    setSettings(settings);
+  }, noDelay ? 1 : 500);
 }
 
-async function setSelectedScale(value) {
-  let newScale = 0;
-
+async function getSelectedScale(value) {
   if (value === "fit-width") {
     const { offsetWidth, scrollHeight, offsetHeight } = document.documentElement;
     const { width, height } = await getPageViewport(pdfInstance, { pageNumber, rotation }, true);
     const maxHeight = offsetHeight - 16;
     let maxWidth = offsetWidth - 16;
     let scrollbarWidth = 0;
-    newScale = maxWidth / width;
+    const newScale = maxWidth / width;
 
     if (Math.round(newScale * width) >= maxWidth) {
       const newPageHeight = Math.round(newScale * height);
@@ -853,8 +873,7 @@ async function setSelectedScale(value) {
       }
     }
     maxWidth += scrollbarWidth;
-    newScale = maxWidth / width;
-
+    return maxWidth / width;
   }
   else if (value === "fit-page") {
     const { scrollWidth, offsetWidth, offsetHeight } = document.documentElement;
@@ -862,7 +881,7 @@ async function setSelectedScale(value) {
     const maxWidth = offsetWidth - 16;
     let maxHeight = offsetHeight - 16;
     let scrollbarWidth = 0;
-    newScale = maxHeight / height;
+    const newScale = maxHeight / height;
 
     if (Math.round(newScale * height) >= maxHeight) {
       const newPageWidth = Math.round(newScale * width);
@@ -877,25 +896,24 @@ async function setSelectedScale(value) {
       }
     }
     maxHeight += scrollbarWidth;
-    newScale = maxHeight / height;
+    return maxHeight / height;
   }
-  else {
-    newScale = defaultScale * value;
-  }
-  setScale(newScale, value);
+  return defaultScale * value;
 }
 
-function handleZoomOptionClick({ target, currentTarget }) {
+async function handleZoomOptionClick({ target, currentTarget }) {
   const value = target.getAttribute("data-value");
 
   if (value) {
+    const scale = await getSelectedScale(value);
     const prevActiveElement = currentTarget.querySelector(".active");
+
+    setScale(scale, value, true);
 
     if (prevActiveElement) {
       prevActiveElement.classList.remove("active");
     }
     target.classList.add("active");
-    setSelectedScale(value);
   }
 }
 
