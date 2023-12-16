@@ -29,6 +29,8 @@ let user = {};
 let mouseDownStartPos = null;
 let cleanupController = null;
 let annotationLayer = null;
+let zooming = false;
+let zoomTimeoutId = 0;
 
 async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack.mjs");
@@ -747,12 +749,10 @@ function nextPage() {
 
 function zoomIn() {
   setScale(Math.min(scale.currentScale * 1.1, maxScale));
-  cleanupActiveZoomOption();
 }
 
 function zoomOut() {
   setScale(Math.max(scale.currentScale / 1.1, minScale));
-  cleanupActiveZoomOption();
 }
 
 function cleanupActiveZoomOption() {
@@ -789,7 +789,12 @@ function getInitialScale() {
   };
 }
 
-function setScale(value, name = "custom") {
+function setScale(value, name = "custom", noDelay) {
+  if (!zooming) {
+    unregisterIntersectionObserver();
+    cleanupActiveZoomOption();
+    zooming = true;
+  }
   const oldScaleValue = scale.currentScale;
   let scrollTop = 0;
   let scrollLeft = 0;
@@ -891,25 +896,26 @@ async function getSelectedScale(value) {
       }
     }
     maxHeight += scrollbarWidth;
-    newScale = maxHeight / height;
+    return maxHeight / height;
   }
-  else {
-    newScale = defaultScale * value;
-  }
-  setScale(newScale, value);
+  return defaultScale * value;
 }
 
-function handleZoomOptionClick({ target, currentTarget }) {
+async function handleZoomOptionClick({ target, currentTarget }) {
   const value = target.getAttribute("data-value");
 
   if (value) {
+    const scale = await getSelectedScale(value);
     const prevActiveElement = currentTarget.querySelector(".active");
+
+    zooming = true;
+    unregisterIntersectionObserver();
+    setScale(scale, value, true);
 
     if (prevActiveElement) {
       prevActiveElement.classList.remove("active");
     }
     target.classList.add("active");
-    setSelectedScale(value);
   }
 }
 
