@@ -392,13 +392,13 @@ function handleKeyDown(event) {
   ctrlPressed = event.ctrlKey;
 
   if (event.ctrlKey) {
-    if (event.key === "+") {
-      zoomIn();
+    if (event.key === "+" || event.key === "=") {
       event.preventDefault();
+      zoomIn();
     }
     if (event.key === "-") {
-      zoomOut();
       event.preventDefault();
+      zoomOut();
     }
     return;
   }
@@ -908,8 +908,6 @@ async function handleZoomOptionClick({ target, currentTarget }) {
     const scale = await getSelectedScale(value);
     const prevActiveElement = currentTarget.querySelector(".active");
 
-    zooming = true;
-    unregisterIntersectionObserver();
     setScale(scale, value, true);
 
     if (prevActiveElement) {
