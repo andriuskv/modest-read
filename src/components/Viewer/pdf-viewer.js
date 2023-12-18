@@ -31,6 +31,7 @@ let cleanupController = null;
 let annotationLayer = null;
 let zooming = false;
 let zoomTimeoutId = 0;
+let pageUnloadTimeoutIds = {};
 
 async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   pdfjs = await import("pdfjs-dist/webpack.mjs");
@@ -145,6 +146,7 @@ function cleanupPdfViewer(reloading) {
     cleanupViewMode();
     cleanupPageSelection();
     cleanupColorInversion();
+    cleanupPageUnloads();
   }
   document.body.style.overscrollBehavior = "";
   pdfElement.style.setProperty("--scale-factor", "");
@@ -250,6 +252,13 @@ function cleanupPageSelection() {
 
   previousPageElement.removeEventListener("click", previousPage);
   nextPageElement.removeEventListener("click", nextPage);
+}
+
+function cleanupPageUnloads() {
+  for (const page of Object.keys(pageUnloadTimeoutIds)) {
+    clearTimeout(pageUnloadTimeoutIds[page]);
+  }
+  pageUnloadTimeoutIds = {};
 }
 
 function handleScroll() {
@@ -537,21 +546,40 @@ function unregisterIntersectionObserver() {
 
 function callback(entries) {
   entries.forEach(({ isIntersecting, target }) => {
-    if (!isIntersecting || (target.hasAttribute("data-loaded") && !target.hasAttribute("data-rerender-needed"))) {
+    if (isIntersecting) {
+      const page = target.getAttribute("data-page-number");
+      clearTimeout(pageUnloadTimeoutIds[page]);
+      delete pageUnloadTimeoutIds[page];
+
+      if (target.hasAttribute("data-loaded") && !target.hasAttribute("data-rerender-needed")) {
+        return;
+      }
+    }
+    else if (target.hasAttribute("data-loaded")) {
+      const page = target.getAttribute("data-page-number");
+      clearTimeout(pageUnloadTimeoutIds[page]);
+      pageUnloadTimeoutIds[page] = setTimeout(() => {
+        target.removeAttribute("data-loaded");
+        target.removeAttribute("data-rerender-needed");
+        target.innerHTML = "";
+        delete pageUnloadTimeoutIds[page];
+      }, 30000);
       return;
     }
-    target.setAttribute("data-loaded", "true");
+    else {
+      return;
+    }
     renderPageContent(target);
   });
 }
 
 async function renderPageContent(container) {
   const number = parseInt(container.getAttribute("data-page-number"), 10);
-  const { width, height } = getScaledPageDimensions(number - 1, scale.currentScale);
   const canvas = document.createElement("canvas");
   let textLayerDiv = null;
   let oldCanvas = null;
 
+  container.setAttribute("data-loaded", "true");
   canvas.classList.add("viewer-page-canvas");
 
   if (container.hasAttribute("data-rerender-needed")) {
@@ -572,6 +600,8 @@ async function renderPageContent(container) {
     scale: scale.currentScale,
     rotation: (rotation + page.rotate) % 360
   });
+  const width = Math.ceil(viewport.width);
+  const height = Math.ceil(viewport.height);
 
   canvas.width = width;
   canvas.height = height;
@@ -663,7 +693,6 @@ function updatePages(scaleValue) {
 function renderSinglePage(pageNumber) {
   updatePageInSingleMode(pageNumber);
   renderPageContent(pdfElement.firstElementChild);
-  pdfElement.firstElementChild.setAttribute("data-loaded", "true");
 }
 
 function updatePageInSingleMode(pageNumber) {
@@ -997,8 +1026,8 @@ function getPageViews() {
 
 function getScaledPageDimensions(index, scale) {
   const pageDimension = pageDimensions[index];
-  let width = Math.floor(pageDimension.width * scale);
-  let height = Math.floor(pageDimension.height * scale);
+  let width = Math.ceil(pageDimension.width * scale);
+  let height = Math.ceil(pageDimension.height * scale);
 
   if (swapDimensions) {
     ([width, height] = [height, width]);
@@ -1008,15 +1037,19 @@ function getScaledPageDimensions(index, scale) {
 
 async function getPageViewport(pdf, { pageNumber, rotation = 0 }, useDefaultScale = false) {
   const page = await pdf.getPage(pageNumber);
-  return page.getViewport({ scale: useDefaultScale ? 1 : scale.currentScale, rotation: rotation + page.rotate });
+  const viewport = page.getViewport({ scale: useDefaultScale ? 1 : scale.currentScale, rotation: rotation + page.rotate });
+  return {
+    width: Math.ceil(viewport.width),
+    height: Math.ceil(viewport.height)
+  };
 }
 
 async function getPageDiv(pdf, file) {
   const { width, height } = await getPageViewport(pdf, file);
   const div = document.createElement("div");
 
-  div.style.width = `${Math.floor(width)}px`;
-  div.style.height = `${Math.floor(height)}px`;
+  div.style.width = `${width}px`;
+  div.style.height = `${height}px`;
 
   div.setAttribute("data-page-number", file.pageNumber);
   div.classList.add("viewer-page");
