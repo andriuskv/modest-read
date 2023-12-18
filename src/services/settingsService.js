@@ -23,7 +23,7 @@ function initSettings() {
       },
       margin: {
         horizontal: 100,
-        top: 20,
+        top: 40,
         bottom: 20
       }
     },

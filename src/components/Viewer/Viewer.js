@@ -17,7 +17,7 @@ export default function Viewer() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { id } = useParams();
-  const [state, setState] = useState({});
+  const [state, setState] = useState({ loading: true });
   const [settings, setSettings] = useState(() => settingsService.getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [marginModal, setMarginModal] = useState(null);
@@ -87,7 +87,13 @@ export default function Viewer() {
       else {
         setState({ file, filePreviewVisible: true });
       }
-      setDocumentTitle(file.name);
+
+      if (file.title && file.author) {
+        setDocumentTitle(`${file.title} by ${file.author}`);
+      }
+      else {
+        setDocumentTitle(file.name);
+      }
       setViewportMetaTag();
     }
     else {
@@ -296,7 +302,7 @@ export default function Viewer() {
   return (
     <>
       {state.filePreviewVisible ? (
-        <FilePreview file={state.file} user={user} loading={state.loading} notification={fileLoadMessage}
+        <FilePreview file={state.file} user={user} notification={fileLoadMessage}
           dismissNotification={hideFileLoadMessage}
           handleFileUpload={handleFileUpload}
           loadPreviewFile={loadPreviewFile}/>
@@ -309,9 +315,9 @@ export default function Viewer() {
             handleFileUpload={handleFileUpload}
             showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>
-          {state.loading && <Spinner/>}
         </>
       )}
+      {state.loading && <Spinner/>}
       <div id="js-viewer" className="viewer" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
       {marginModal && (

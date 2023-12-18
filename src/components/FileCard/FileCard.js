@@ -11,7 +11,6 @@ export default function FileCard({ file, user, showLink, children }) {
           draggable="false"
           title={`Open ${file.name}`}>
           <img src={file.coverImage} className="file-card-image" draggable="false" alt=""/>
-          <Icon id="zoom-in" className="file-card-icon" size="36px"/>
         </Link>
       ) : (
         <div className="file-card-left">

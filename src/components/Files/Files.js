@@ -42,7 +42,7 @@ export default function Files() {
     clearTimeout(initTimeoutId.current);
     initTimeoutId.current = setTimeout(() => {
       setIndicatorVisible(true);
-    }, 2000);
+    }, 1000);
 
     if (user.loading) {
       return;
@@ -57,7 +57,7 @@ export default function Files() {
       setLoading(false);
       setIndicatorVisible(false);
     }
-  }, [user, landingPageHidden]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, landingPageHidden]);
 
   useEffect(() => {
     const filesToSave = [];
