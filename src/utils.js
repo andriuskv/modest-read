@@ -1,5 +1,12 @@
 function setDocumentTitle(title) {
-  document.title = `${title} | ModestRead`;
+  const isOpenedAsPwa = window.matchMedia("(display-mode: standalone)").matches;
+
+  if (isOpenedAsPwa) {
+    document.title = title;
+  }
+  else {
+    document.title = `${title} | ModestRead`;
+  }
 }
 
 function classNames(...classNames) {

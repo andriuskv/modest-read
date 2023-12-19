@@ -49,6 +49,24 @@ export default function Viewer() {
   }, [state.file, location.pathname]);
 
   useEffect(() => {
+    if (settings.toolbarVisible) {
+      setTitleBarColor("#2d2c30");
+    }
+    else if (state.file?.type === "pdf") {
+      setTitleBarColor();
+    }
+    else {
+      const colors = {
+        black: "black",
+        white: "white",
+        grey: "#1d1c1b",
+        orange: "#fbf0d9"
+      };
+      setTitleBarColor(colors[settings.epub.theme]);
+    }
+  }, [settings.toolbarVisible]);
+
+  useEffect(() => {
     window.addEventListener("drop", memoizedDropHandler);
     window.addEventListener("dragover", handleDragover);
 
@@ -170,6 +188,12 @@ export default function Viewer() {
 
       cleanupEpubViewer(reloading);
     }
+    setTitleBarColor();
+  }
+
+  function setTitleBarColor(color = "#232225") {
+    const element = document.querySelector("meta[name=theme-color]");
+    element.content = color;
   }
 
   async function uploadFile(file) {
