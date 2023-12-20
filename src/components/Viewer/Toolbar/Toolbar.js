@@ -1,11 +1,12 @@
 import { useLayoutEffect, useRef } from "react";
+import { dispatchCustomEvent } from "utils";
 import { setSetting } from "services/settingsService";
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.css";
 
-export default function Toolbar({ file, settings, setViewerSettings, handleFileUpload, exitViewer, showMarginModal }) {
+export default function Toolbar({ file, settings, setViewerSettings, updateTitleBarColor, exitViewer, showMarginModal }) {
   const toolbarRef = useRef(null);
   const toolbarToggleBtnRef = useRef(null);
   const timeoutId = useRef(0);
@@ -30,6 +31,7 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
     toolbarToggleBtnRef.current.style.transform = `rotate(${visible ? 180 : 0}deg)`;
 
     if (visible) {
+      updateTitleBarColor(visible);
       toolbarRef.current.classList.add("visible");
 
       requestAnimationFrame(() => {
@@ -46,6 +48,7 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
       timeoutId.current = setTimeout(() => {
         toolbarRef.current.classList.remove("visible");
         setSettings("toolbarVisible", visible);
+        updateTitleBarColor(visible);
       }, 200);
     }
   }
@@ -58,6 +61,11 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
   function handleCheckboxChange(event) {
     setViewerSettings("navigationAreasDisabled", event.target.checked);
     setSetting("navigationAreasDisabled", event.target.checked);
+  }
+
+  function handleFileInputChange(event) {
+    dispatchCustomEvent("files", event.target.files);
+    event.target.value = "";
   }
 
   return (
@@ -218,7 +226,7 @@ export default function Toolbar({ file, settings, setViewerSettings, handleFileU
               <label className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
                 <Icon id="upload"/>
                 <span>Load File</span>
-                <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
+                <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip"/>
               </label>
             </div>
             <div className="viewer-toolbar-dropdown-group">

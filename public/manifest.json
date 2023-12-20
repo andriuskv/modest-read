@@ -16,5 +16,17 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#232225",
-  "background_color": "#232225"
+  "background_color": "#232225",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "file_handlers": [
+    {
+      "action": "/#/viewer/open",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "application/epub+zip": [".epub"]
+      }
+    }
+  ]
 }

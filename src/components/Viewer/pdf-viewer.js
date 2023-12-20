@@ -600,8 +600,8 @@ async function renderPageContent(container) {
     scale: scale.currentScale,
     rotation: (rotation + page.rotate) % 360
   });
-  const width = Math.ceil(viewport.width);
-  const height = Math.ceil(viewport.height);
+  const width = Math.floor(viewport.width);
+  const height = Math.floor(viewport.height);
 
   canvas.width = width;
   canvas.height = height;
@@ -1026,8 +1026,8 @@ function getPageViews() {
 
 function getScaledPageDimensions(index, scale) {
   const pageDimension = pageDimensions[index];
-  let width = Math.ceil(pageDimension.width * scale);
-  let height = Math.ceil(pageDimension.height * scale);
+  let width = Math.floor(pageDimension.width * scale);
+  let height = Math.floor(pageDimension.height * scale);
 
   if (swapDimensions) {
     ([width, height] = [height, width]);
@@ -1039,8 +1039,8 @@ async function getPageViewport(pdf, { pageNumber, rotation = 0 }, useDefaultScal
   const page = await pdf.getPage(pageNumber);
   const viewport = page.getViewport({ scale: useDefaultScale ? 1 : scale.currentScale, rotation: rotation + page.rotate });
   return {
-    width: Math.ceil(viewport.width),
-    height: Math.ceil(viewport.height)
+    width: Math.floor(viewport.width),
+    height: Math.floor(viewport.height)
   };
 }
 

@@ -1,8 +1,9 @@
 import { createStore, set, setMany, values, get, update, del } from "idb-keyval";
-import { getResponse } from "utils";
+import { dispatchCustomEvent, getResponse } from "utils";
 
 const store = createStore("modest-keep", "files");
 const cachedFilesStore = createStore("modest-keep-file-cache", "files");
+let fileCache = [];
 
 async function fetchFiles(settings, user) {
   const [idbFiles, response] = await Promise.all([values(store), user.id ? fetchServerFiles(user.id) : {}]);
@@ -171,6 +172,74 @@ function sortBySortingValue(files, sortBy, sortOrder) {
   });
 }
 
+function handleDragover(event) {
+  event.preventDefault();
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+
+  if (event.dataTransfer.files.length) {
+    dispatchCustomEvent("files", event.dataTransfer.files);
+  }
+}
+
+function getFileCache() {
+  return fileCache;
+}
+
+function resetFileCache() {
+  fileCache.length = 0;
+}
+
+(function initFileHandlers() {
+  window.addEventListener("dragover", handleDragover);
+  window.addEventListener("drop", handleDrop);
+
+  document.addEventListener("paste", async event => {
+    const clipboardItems = await navigator.clipboard.read();
+    const blobs = [];
+
+    event.preventDefault();
+
+    for (const clipboardItem of clipboardItems) {
+      const types = clipboardItem.types?.filter(type => type.startsWith("application/pdf") || type.startsWith("application/epub+zip"));
+
+      for (const type of types) {
+        const blob = await clipboardItem.getType(type);
+
+        blobs.push(blob);
+      }
+    }
+
+    if (blobs.length) {
+      dispatchCustomEvent("files", blobs);
+    }
+  });
+
+  if ("launchQueue" in window && "files" in window.LaunchParams.prototype) {
+    window.launchQueue.setConsumer(async launchParams => {
+      if (!launchParams.files.length) {
+        return;
+      }
+      const blobs = [];
+
+      for (const fileHandle of launchParams.files) {
+        const blob = await fileHandle.getFile();
+
+        blobs.push(blob);
+      }
+
+      if (blobs.length) {
+        fileCache = [...blobs];
+        console.log(fileCache);
+
+        dispatchCustomEvent("files", blobs);
+      }
+    });
+  }
+})();
+
 export {
   fetchFiles,
   fetchFile,
@@ -181,5 +250,7 @@ export {
   fetchCachedFile,
   cacheFile,
   findFile,
-  sortFiles
+  sortFiles,
+  getFileCache,
+  resetFileCache
 };
