@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { computeHash, setDocumentTitle } from "utils";
 import { useUser } from "contexts/user-context";
@@ -23,13 +23,20 @@ export default function Viewer() {
   const [marginModal, setMarginModal] = useState(null);
   const viewerRef = useRef(null);
   const viewerState = useRef(0);
-  const memoizedDropHandler = useCallback(handleDrop, [state, fileLoadMessage]);
+  const firstFileLoaded = useRef(false);
+  const fileHandleRetries = useRef(0);
 
   useLayoutEffect(() => {
     if (user.loading) {
       return;
     }
-    init();
+
+    if (id === "open" && !firstFileLoaded.current) {
+      initFileHandle();
+    }
+    else {
+      init();
+    }
 
     return () => {
       const element = document.querySelector("meta[name=viewport]");
@@ -49,34 +56,6 @@ export default function Viewer() {
   }, [state.file, location.pathname]);
 
   useEffect(() => {
-    if (settings.toolbarVisible) {
-      setTitleBarColor("#2d2c30");
-    }
-    else if (state.file?.type === "pdf") {
-      setTitleBarColor();
-    }
-    else {
-      const colors = {
-        black: "black",
-        white: "white",
-        grey: "#1d1c1b",
-        orange: "#fbf0d9"
-      };
-      setTitleBarColor(colors[settings.epub.theme]);
-    }
-  }, [settings.toolbarVisible]);
-
-  useEffect(() => {
-    window.addEventListener("drop", memoizedDropHandler);
-    window.addEventListener("dragover", handleDragover);
-
-    return () => {
-      window.removeEventListener("drop", memoizedDropHandler);
-      window.removeEventListener("dragover", handleDragover);
-    };
-  }, [memoizedDropHandler]);
-
-  useEffect(() => {
     if (!state.loading || !state.file || state.filePreviewVisible) {
       return;
     }
@@ -84,12 +63,40 @@ export default function Viewer() {
       blob: state.currentFile,
       metadata: state.file
     });
+    window.addEventListener("files", handleFileUpload);
+
+    return () => {
+      window.removeEventListener("files", handleFileUpload);
+    };
   }, [state.filePreviewVisible, state.file]);
+
+  function initFileHandle() {
+    const files = fileService.getFileCache();
+    firstFileLoaded.current = true;
+
+    if (files.length) {
+      loadNewFile({ file: files[0] });
+    }
+    // Edge case when app is in files view and file is opened through file manager.
+    else if (fileHandleRetries.current < 4) {
+      setTimeout(() => {
+        initFileHandle();
+      }, 100 * 2 ** fileHandleRetries.current);
+      fileHandleRetries.current += 1;
+    }
+    else {
+      fileHandleRetries.current = 0;
+      window.addEventListener("files", initFileHandle, { once: true });
+      setState({ error: true });
+      setDocumentTitle("Error");
+    }
+  }
 
   async function init() {
     if (state.reload || viewerState.current) {
       return;
     }
+    firstFileLoaded.current = true;
     viewerState.current = 1;
 
     const type = new URLSearchParams(location.search).get("type") || "";
@@ -120,6 +127,24 @@ export default function Viewer() {
     }
   }
 
+  function updateTitleBarColor(toolbarVisible = settings.toolbarVisible) {
+    if (toolbarVisible) {
+      setTitleBarColor("#2d2c30");
+    }
+    else if (state.file?.type === "pdf") {
+      setTitleBarColor();
+    }
+    else {
+      const colors = {
+        black: "black",
+        white: "white",
+        grey: "#1d1c1b",
+        orange: "#fbf0d9"
+      };
+      setTitleBarColor(colors[settings.epub.theme]);
+    }
+  }
+
   function setViewportMetaTag() {
     const isTouchDevice = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const element = document.querySelector("meta[name=viewport]");
@@ -132,25 +157,13 @@ export default function Viewer() {
     }
   }
 
-  function handleDrop(event) {
-    event.preventDefault();
-
-    if (event.dataTransfer.files.length) {
-      const [file] = event.dataTransfer.files;
-
-      uploadFile(file);
-    }
-  }
-
-  function handleDragover(event) {
-    event.preventDefault();
-  }
-
   function handleFileUpload(event) {
-    const [file] = event.target.files;
+    if (id === "open") {
+      return;
+    }
+    const [file] = event.detail;
 
     uploadFile(file);
-    event.target.value = "";
   }
 
   async function initViewer(container, file) {
@@ -171,11 +184,16 @@ export default function Viewer() {
     }
     delete state.loading;
     setState({ ...state });
+    updateTitleBarColor();
   }
 
   async function cleanupViewer(reloading = false) {
     if (!state.file || state.filePreviewVisible) {
       return;
+    }
+
+    if (!reloading) {
+      fileService.resetFileCache();
     }
 
     if (state.file.type === "pdf") {
@@ -266,7 +284,14 @@ export default function Viewer() {
       await cleanupViewer(true);
     }
     navigate(`/viewer/${fileMetadata.id}${fileMetadata.local ? "?type=local" : ""}`, { replace: true });
-    setDocumentTitle(fileMetadata.name);
+
+    if (fileMetadata.title && fileMetadata.author) {
+      setDocumentTitle(`${fileMetadata.title} by ${fileMetadata.author}`);
+    }
+    else {
+      setDocumentTitle(fileMetadata.name);
+    }
+    setViewportMetaTag();
     setState({ file: fileMetadata, currentFile: file, reload: true, loading: true });
   }
 
@@ -328,15 +353,14 @@ export default function Viewer() {
       {state.filePreviewVisible ? (
         <FilePreview file={state.file} user={user} notification={fileLoadMessage}
           dismissNotification={hideFileLoadMessage}
-          handleFileUpload={handleFileUpload}
           loadPreviewFile={loadPreviewFile}/>
       ) : null}
       {state.file && !state.filePreviewVisible && (
         <>
           <Toolbar file={state.file}
             settings={settings}
+            updateTitleBarColor={updateTitleBarColor}
             setViewerSettings={setViewerSettings}
-            handleFileUpload={handleFileUpload}
             showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>
         </>

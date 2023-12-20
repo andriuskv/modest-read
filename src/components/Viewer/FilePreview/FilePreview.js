@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom";
+import { dispatchCustomEvent } from "utils";
 import Icon from "components/Icon";
 import Notification from "components/Notification";
 import BannerImage from "components/BannerImage";
 import FileCard from "components/FileCard";
 import "./file-preview.css";
 
-export default function FilePreview({ file, user, notification, dismissNotification, handleFileUpload, loadPreviewFile }) {
+export default function FilePreview({ file, user, notification, dismissNotification, loadPreviewFile }) {
+  function handleFileInputChange(event) {
+    dispatchCustomEvent("files", event.target.files);
+    event.target.value = "";
+  }
+
   return (
     <div className="viewer-file-preview-container">
       <BannerImage/>
@@ -18,7 +24,7 @@ export default function FilePreview({ file, user, notification, dismissNotificat
             <Icon id="home" size="24px"/>
           </Link>
           <label className="btn viewer-file-preview-import-btn">
-            <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip"/>
+            <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip"/>
             <span>Select File</span>
           </label>
         </FileCard>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, computeHash, delay } from "utils";
@@ -34,8 +34,6 @@ export default function Files() {
   const [confirmationModal, setConfirmationModal] = useState(null);
   const [indicatorVisible, setIndicatorVisible] = useState(false);
   const [categoryModal, setCategoryModal] = useState(false);
-  const memoizedDropHandler = useCallback(handleDrop, [state, files]);
-  const memoizedDragoverHandler = useCallback(handleDragover, [state, files]);
   const initTimeoutId = useRef(0);
 
   useEffect(() => {
@@ -174,17 +172,15 @@ export default function Files() {
       setFilesLoading(false);
       loadFiles();
     }
-  }, [filesLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filesLoading]);
 
   useEffect(() => {
-    window.addEventListener("drop", memoizedDropHandler);
-    window.addEventListener("dragover", memoizedDragoverHandler);
+    window.addEventListener("files", handleFileUpload);
 
     return () => {
-      window.removeEventListener("drop", memoizedDropHandler);
-      window.removeEventListener("dragover", memoizedDragoverHandler);
+      window.removeEventListener("files", handleFileUpload);
     };
-  }, [memoizedDropHandler, memoizedDragoverHandler]);
+  }, [state, files]);
 
   async function init() {
     try {
@@ -220,16 +216,8 @@ export default function Files() {
     }
   }
 
-  function handleDrop(event) {
-    event.preventDefault();
-
-    if (event.dataTransfer.files.length) {
-      processFiles(event.dataTransfer.files);
-    }
-  }
-
-  function handleDragover(event) {
-    event.preventDefault();
+  function handleFileUpload(event) {
+    processFiles(event.detail);
   }
 
   function processFiles(importedFiles) {
@@ -383,7 +371,7 @@ export default function Files() {
     return categories;
   }
 
-  function handleFileUpload(event) {
+  function handleFileInputChange(event) {
     if (event.target.files.length) {
       processFiles(event.target.files);
     }
@@ -767,7 +755,7 @@ export default function Files() {
         <label className="btn icon-text-btn dropdown-btn files-more-dropdown-btn files-import-btn">
           <Icon id="upload" size="24px"/>
           <span>Import Files</span>
-          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
+          <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
       </>
     );
@@ -894,7 +882,7 @@ export default function Files() {
         <label className="btn icon-text-btn primary-btn no-files-notice-btn">
           <Icon id="upload" size="24px"/>
           <span>Import Files</span>
-          <input type="file" onChange={handleFileUpload} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
+          <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
       </div>
     );
