@@ -564,19 +564,19 @@ export default function Files() {
       action = {
         iconId: "cloud",
         name: "Upload",
-        message: "Are you sure you want to upload this file? It will become inaccessible without internet connection."
+        message: "Are you sure you want to upload metadata of this file? It will become inaccessible without internet connection."
       };
     }
     else {
       action = {
-        iconId: "home",
+        iconId: "download",
         name: "Download",
-        message: "Are you sure you want to download this file? It will become inaccessible to other devices."
+        message: "Are you sure you want to download metadata of this file? It will no longer be available to other devices."
       };
     }
     setConfirmationModal({
       iconId: action.iconId,
-      title: `${action.name} this file?`,
+      title: `${action.name} metadata?`,
       message: action.message,
       actionName: action.name,
       action: () => transferFile(file)
@@ -836,7 +836,7 @@ export default function Files() {
             ) : (
               <button className="btn icon-text-btn dropdown-btn files-file-card-dropdown-btn"
                 onClick={() => showFileTransferModal(file)}>
-                <Icon id="home"/>
+                <Icon id="download"/>
                 <span>Download</span>
               </button>
             ) : null}
