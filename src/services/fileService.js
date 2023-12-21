@@ -232,7 +232,6 @@ function resetFileCache() {
 
       if (blobs.length) {
         fileCache = [...blobs];
-        console.log(fileCache);
 
         dispatchCustomEvent("files", blobs);
       }
