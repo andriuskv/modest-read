@@ -177,18 +177,22 @@ export default function Files() {
       const settings = getSettings();
       const data = await fileService.fetchFiles(settings, user);
 
-      clearTimeout(initTimeoutId.current);
-      setIndicatorVisible(false);
-
       if (data.message) {
         setNotification({ value: data.message });
       }
 
       if (data.files) {
+        const categories = getCategories(data.files);
+        let visibleCategory = localStorage.getItem("visible-category");
+
+        if (!categories.some(category => category.id === visibleCategory)) {
+          visibleCategory = "default";
+        }
+
         setFiles(data.files);
         setState({
-          visibleCategory: "default",
-          categories: getCategories(data.files),
+          visibleCategory,
+          categories,
           sortBy: settings.sortBy,
           sortOrder: settings.sortOrder,
           layoutType: settings.layoutType
@@ -374,6 +378,7 @@ export default function Files() {
         ...state,
         visibleCategory: category
       });
+      localStorage.setItem("visible-category", category);
 
       if (categoryMenuVisible) {
         setCategoryMenuVisibility(false);
