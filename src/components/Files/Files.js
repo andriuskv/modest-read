@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, computeHash, delay } from "utils";
@@ -6,7 +6,6 @@ import { useUser } from "contexts/user-context";
 import * as fileService from "services/fileService";
 import { getSettings, setSettings, setSetting } from "services/settingsService";
 import Header from "components/Header";
-import BannerImage from "components/BannerImage";
 import Icon from "components/Icon";
 import Dropdown from "components/Dropdown";
 import LandingPage from "components/LandingPage";
@@ -32,16 +31,9 @@ export default function Files() {
   const [importMessage, setImportMessage] = useState("");
   const [landingPageHidden, setLandingPageHidden] = useState(() => localStorage.getItem("hide-landing-page"));
   const [confirmationModal, setConfirmationModal] = useState(null);
-  const [indicatorVisible, setIndicatorVisible] = useState(false);
   const [categoryModal, setCategoryModal] = useState(false);
-  const initTimeoutId = useRef(0);
 
   useEffect(() => {
-    clearTimeout(initTimeoutId.current);
-    initTimeoutId.current = setTimeout(() => {
-      setIndicatorVisible(true);
-    }, 1000);
-
     if (user.loading) {
       return;
     }
@@ -51,9 +43,7 @@ export default function Files() {
     }
     else {
       window.title = "ModestRead";
-      clearTimeout(initTimeoutId.current);
       setLoading(false);
-      setIndicatorVisible(false);
     }
   }, [user, landingPageHidden]);
 
@@ -884,15 +874,6 @@ export default function Files() {
           <span>Import Files</span>
           <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip" multiple/>
         </label>
-      </div>
-    );
-  }
-
-  if (indicatorVisible) {
-    return (
-      <div className="files-loading-indicator">
-        <BannerImage/>
-        <div className="files-loading-indicator-text">Loading...</div>
       </div>
     );
   }

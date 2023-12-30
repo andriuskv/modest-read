@@ -416,16 +416,3 @@
   font-size: var(--text-sm);
   font-weight: 500;
 }
-
-.files-loading-indicator {
-  display: flex;
-  justify-content: center;
-}
-
-.files-loading-indicator-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: var(--text-xl);
-}
