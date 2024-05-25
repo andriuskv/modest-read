@@ -48,17 +48,6 @@ export default function Viewer() {
     if (!state.file) {
       return;
     }
-    return () => {
-      if (location.pathname === "/") {
-        cleanupViewer();
-      }
-    };
-  }, [state.file, location.pathname]);
-
-  useEffect(() => {
-    if (!state.file) {
-      return;
-    }
 
     if (state.loading && !state.filePreviewVisible) {
       initViewer(viewerRef.current, {
