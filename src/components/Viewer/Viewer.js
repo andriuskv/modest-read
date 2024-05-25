@@ -56,13 +56,16 @@ export default function Viewer() {
   }, [state.file, location.pathname]);
 
   useEffect(() => {
-    if (!state.loading || !state.file || state.filePreviewVisible) {
+    if (!state.file) {
       return;
     }
-    initViewer(viewerRef.current, {
-      blob: state.currentFile,
-      metadata: state.file
-    });
+
+    if (state.loading && !state.filePreviewVisible) {
+      initViewer(viewerRef.current, {
+        blob: state.currentFile,
+        metadata: state.file
+      });
+    }
     window.addEventListener("files", handleFileUpload);
 
     return () => {
