@@ -61,9 +61,12 @@ module.exports = function(env = {}) {
       hot: false,
       compress: true,
       port: 3000,
-      proxy: {
-        "/api": "http://localhost:9000"
-      }
+      proxy: [
+        {
+          context: ["/api"],
+          target: "http://localhost:9000"
+        }
+      ]
     },
     mode,
     target: "browserslist",

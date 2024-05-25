@@ -149,6 +149,7 @@ function cleanupPdfViewer(reloading) {
     cleanupPageUnloads();
   }
   document.body.style.overscrollBehavior = "";
+  document.querySelector(".hiddenCanvasElement")?.remove();
   pdfElement.style.setProperty("--scale-factor", "");
   unregisterIntersectionObserver();
   updateFile(fileMetadata, dataToSave, true);
