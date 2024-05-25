@@ -728,6 +728,10 @@ function updatePageBtnElementState(pageNumber) {
   const previousPageElement = document.getElementById("js-viewer-previous-page");
   const nextPageElement = document.getElementById("js-viewer-next-page");
 
+  if (!previousPageElement || !nextPageElement) {
+    return;
+  }
+
   if (pageNumber === 1) {
     previousPageElement.disabled = true;
   }
