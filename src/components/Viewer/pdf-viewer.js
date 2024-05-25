@@ -45,14 +45,14 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   cleanupController = new AbortController();
   document.body.style.overscrollBehavior = "none";
 
+  await initScale(scale);
+
   ([pageDimensions] = await Promise.all([
     getPageDimensions(pdfInstance, metadata.rotation),
     settings.pdf.viewMode === "multi" ?
       renderEmptyPages(pdfElement, pdfInstance, metadata) :
       renderSingleEmptyPage(pdfElement, pdfInstance, metadata)
   ]));
-
-  await initScale(scale);
 
   const params = {
     scrollLeft: metadata.scrollLeft,
@@ -170,7 +170,7 @@ async function initScale(scale) {
   }
   else {
     const scaleValue = scale.currentScale ?? await getSelectedScale(scale.name);
-
+    scale.currentScale = scaleValue;
     pdfElement.style.setProperty("--scale-factor", scaleValue);
   }
   updateZoomElementValue(scale);
