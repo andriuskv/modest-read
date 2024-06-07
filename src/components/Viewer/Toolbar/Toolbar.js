@@ -6,13 +6,13 @@ import Dropdown from "components/Dropdown";
 import FileInfo from "../FileInfo";
 import "./toolbar.css";
 
-export default function Toolbar({ file, settings, setViewerSettings, updateTitleBarColor, exitViewer, showMarginModal }) {
+export default function Toolbar({ file, shouldBeHidden, settings, setViewerSettings, updateTitleBarColor, exitViewer, showMarginModal }) {
   const toolbarRef = useRef(null);
   const toolbarToggleBtnRef = useRef(null);
   const timeoutId = useRef(0);
 
   useLayoutEffect(() => {
-    toolbarRef.current.classList.toggle("visible", settings.toolbarVisible);
+    toolbarRef.current.classList.toggle("revealed", settings.toolbarVisible);
     toolbarRef.current.classList.toggle("hiding", !settings.toolbarVisible);
     toolbarToggleBtnRef.current.style.transform = `rotate(${settings.toolbarVisible ? 180 : 0}deg)`;
 
@@ -21,7 +21,7 @@ export default function Toolbar({ file, settings, setViewerSettings, updateTitle
     return () => {
       window.removeEventListener("toolbar-toggle", toggleToolbar);
     };
-  }, []);
+  }, [shouldBeHidden]);
 
   function toggleToolbar() {
     const visible = !settings.toolbarVisible;
@@ -32,7 +32,7 @@ export default function Toolbar({ file, settings, setViewerSettings, updateTitle
 
     if (visible) {
       updateTitleBarColor(visible);
-      toolbarRef.current.classList.add("visible");
+      toolbarRef.current.classList.add("revealed");
 
       requestAnimationFrame(() => {
         toolbarRef.current.classList.remove("hiding");
@@ -46,7 +46,7 @@ export default function Toolbar({ file, settings, setViewerSettings, updateTitle
       toolbarRef.current.classList.add("hiding");
 
       timeoutId.current = setTimeout(() => {
-        toolbarRef.current.classList.remove("visible");
+        toolbarRef.current.classList.remove("revealed");
         setSettings("toolbarVisible", visible);
         updateTitleBarColor(visible);
       }, 200);
@@ -70,7 +70,7 @@ export default function Toolbar({ file, settings, setViewerSettings, updateTitle
 
   return (
     <>
-      <div className="viewer-toolbar" ref={toolbarRef}>
+      <div className={`viewer-toolbar${shouldBeHidden ? " hidden" : ""}`} ref={toolbarRef}>
         <div className="view-toolbar-side">
           <FileInfo file={file}/>
           <button id="js-viewer-outline-toggle-btn" className="btn icon-btn icon-btn-alt viewer-outline-toggle-btn" title="Toggle outline">

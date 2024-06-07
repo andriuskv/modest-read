@@ -33,13 +33,6 @@ async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   cleanupController = new AbortController();
   document.body.style.overscrollBehavior = "none";
 
-  initTheme();
-  initTextOpacity();
-  initScale(scale);
-  initPage(metadata.pageNumber, metadata.pageCount);
-  initViewMode(settings.epub.viewMode, settings.epub.spreadPages);
-  initOutline(getOutline, goToDestination);
-
   await book.ready;
   await book.locations.generate(1650);
 
@@ -87,6 +80,15 @@ function updateFile(file, data, skipWaiting = false) {
 function handleDropdownVisibility({ detail }) {
   dropdownId = detail.id;
   hideDropdown = detail.hide;
+}
+
+function initToolbar() {
+  initTheme();
+  initTextOpacity();
+  initScale(scale);
+  initPage(fileMetadata.pageNumber, fileMetadata.pageCount);
+  initViewMode(settings.epub.viewMode, settings.epub.spreadPages);
+  initOutline(getOutline, goToDestination);
 }
 
 function initViewMode(viewMode, spreadPages) {
@@ -356,8 +358,9 @@ function cleanupEpubViewer(reloading) {
     clearTimeout(saveTimeoutId);
     cleanupViewMode();
     cleanupTextOpacity();
-    cleanupScale();
   }
+  cleanupController.abort();
+  cleanupController = null;
   document.body.style.overscrollBehavior = "";
   updateFile(fileMetadata, dataToSave, true);
   stopCounting();
@@ -365,11 +368,6 @@ function cleanupEpubViewer(reloading) {
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);
   window.removeEventListener("blur", blurIframe);
-}
-
-function cleanupScale() {
-  cleanupController.abort();
-  cleanupController = null;
 }
 
 function initPage(pageNumber, pageCount) {
@@ -687,6 +685,7 @@ function handlePageInputKeydown(event) {
 export {
   initEpubViewer,
   cleanupEpubViewer,
+  initToolbar,
   updateEpubMargin,
   getNewEpubFile
 };

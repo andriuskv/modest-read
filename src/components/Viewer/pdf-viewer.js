@@ -81,35 +81,26 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   }
   window.scrollTo(params.scrollLeft, params.scrollTop);
 
-  initColorInversion();
-  initPage();
-  initOutline(getOutline, goToDestination);
-
-  const [singlePageViewElement, multiPageViewElement] = document.getElementById("js-viewer-view-modes").children;
-
   if (settings.pdf.viewMode === "multi") {
     views = views.length ? views: getPageViews();
-    multiPageViewElement.classList.add("active");
     window.addEventListener("scroll", handleScroll);
 
     registerIntersectionObserver();
   }
   else {
     renderSinglePage(pageNumber);
-
-    singlePageViewElement.classList.add("active");
-
     window.addEventListener("scroll", handleSinglePageScroll);
     window.addEventListener("click", handleAnnotationClick);
+  }
+
+  if (settings.pdf.invertColors) {
+    document.getElementById("js-viewer").classList.add("invert");
   }
   container.addEventListener("mousedown", handleMouseDownOnRendition);
   container.addEventListener("click", handleNavigationAreaClick);
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
   window.addEventListener("wheel", handleWheel, { passive: false });
-
-  document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePages);
-  document.getElementById("js-viewer-view-modes").addEventListener("click", setViewMode);
 
   params.accessedAt = Date.now();
 
@@ -142,12 +133,13 @@ function cleanupPdfViewer(reloading) {
 
     stopCounting();
     clearTimeout(saveTimeoutId);
-    cleanupScale();
     cleanupViewMode();
     cleanupPageSelection();
     cleanupColorInversion();
     cleanupPageUnloads();
   }
+  cleanupController.abort();
+  cleanupController = null;
   document.body.style.overscrollBehavior = "";
   document.querySelector(".hiddenCanvasElement")?.remove();
   pdfElement.style.setProperty("--scale-factor", "");
@@ -173,6 +165,36 @@ async function initScale(scale) {
     scale.currentScale = scaleValue;
     pdfElement.style.setProperty("--scale-factor", scaleValue);
   }
+}
+
+function initToolbar() {
+  initZoomOptions();
+  initSettings();
+  initPage();
+  initOutline(getOutline, goToDestination);
+}
+
+function initSettings() {
+  const pageViewsElement = document.getElementById("js-viewer-view-modes");
+  const [singlePageViewElement, multiPageViewElement] = pageViewsElement.children;
+  const invertColorsCheckbox = document.getElementById("js-viewer-invert-colors");
+
+  if (settings.pdf.viewMode === "multi") {
+    multiPageViewElement.classList.add("active");
+  }
+  else {
+    singlePageViewElement.classList.add("active");
+  }
+
+  if (settings.pdf.invertColors) {
+    invertColorsCheckbox.checked = settings.pdf.invertColors;
+  }
+  document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePages);
+  pageViewsElement.addEventListener("click", setViewMode);
+  invertColorsCheckbox.addEventListener("change", handleColorInversion);
+}
+
+function initZoomOptions() {
   updateZoomElementValue(scale);
 
   for (const element of document.querySelectorAll(".viewer-toolbar-tool-btn")) {
@@ -215,16 +237,6 @@ function initPage() {
   pageInputElement.addEventListener("keydown", handlePageInputKeydown);
 }
 
-function initColorInversion() {
-  const invertColorsCheckbox = document.getElementById("js-viewer-invert-colors");
-
-  if (settings.pdf.invertColors) {
-    document.getElementById("js-viewer").classList.add("invert");
-    invertColorsCheckbox.checked = settings.pdf.invertColors;
-  }
-  invertColorsCheckbox.addEventListener("change", handleColorInversion);
-}
-
 function cleanupColorInversion() {
   const element = document.getElementById("js-viewer-invert-colors");
 
@@ -233,11 +245,6 @@ function cleanupColorInversion() {
   if (element) {
     element.removeEventListener("change", handleColorInversion);
   }
-}
-
-function cleanupScale() {
-  cleanupController.abort();
-  cleanupController = null;
 }
 
 function cleanupViewMode() {
@@ -615,14 +622,14 @@ async function renderPageContent(container) {
     viewport
   }).promise;
 
-  requestAnimationFrame(() => {
-    pdfjs.renderTextLayer({
+  requestAnimationFrame(async () => {
+    const textLayer = new pdfjs.TextLayer({
       textContentSource: page.streamTextContent(),
       container: textLayerDiv,
-      viewport,
-      textDivs: []
+      viewport
     });
 
+    textLayer.render();
     renderAnnotations(viewport, page, container);
   });
 
@@ -1099,5 +1106,6 @@ async function renderEmptyPages(pdfElement, pdfInstance, file) {
 export {
   initPdfViewer,
   cleanupPdfViewer,
+  initToolbar,
   getNewPdfFile
 };

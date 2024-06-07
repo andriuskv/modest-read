@@ -198,3 +198,12 @@
 .viewer-margin-modal-input {
   width: 100px;
 }
+
+.hiddenCanvasElement {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  display: none;
+}
