@@ -36,6 +36,11 @@ svg {
   fill: currentColor;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+}
+
 ul {
   margin-top: 0;
   margin-bottom: 0;

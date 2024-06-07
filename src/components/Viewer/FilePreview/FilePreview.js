@@ -3,31 +3,47 @@ import { dispatchCustomEvent } from "utils";
 import Icon from "components/Icon";
 import Notification from "components/Notification";
 import BannerImage from "components/BannerImage";
-import FileCard from "components/FileCard";
 import "./file-preview.css";
+import Spinner from "../Spinner";
 
-export default function FilePreview({ file, user, notification, dismissNotification, loadPreviewFile }) {
+export default function FilePreview({ file, user, loading, notification, dismissNotification, loadPreviewFile }) {
   function handleFileInputChange(event) {
     dispatchCustomEvent("files", event.target.files);
     event.target.value = "";
   }
 
   return (
-    <div className="viewer-file-preview-container">
+    <div className="viewer-preview-container">
       <BannerImage/>
-      <div className="viewer-file-preview">
+      <div className="viewer-preview">
         {notification?.type === "negative" && (
           <Notification notification={notification} margin="bottom" dismiss={dismissNotification}/>
         )}
-        <FileCard file={file} user={user}>
-          <Link to="/" className="btn icon-btn" title="Back to files">
-            <Icon id="home" size="24px"/>
-          </Link>
-          <label className="btn viewer-file-preview-import-btn">
-            <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip"/>
-            <span>Select File</span>
-          </label>
-        </FileCard>
+        <div className="viewer-preview-image-container">
+          <img src={file.coverImage} draggable="false" alt=""/>
+        </div>
+        <div>
+          {file.author && <div className="viewer-preview-info-author">{file.author}</div>}
+          <div className="viewer-preview-info-title">
+            {file.local && user.email ? <Icon id="home" size="16px" className="file-card-local-icon"/> : null}
+            <span>{file.title || file.name}</span>
+          </div>
+          <div className="viewer-preview-secondary-info">
+            <div className="viewer-preview-info-filename">{file.name}</div>
+            <div>{file.sizeString}</div>
+          </div>
+          {loading ? null : (
+            <div className="viewer-preview-bottom">
+              <Link to="/" className="btn icon-btn" title="Back to files">
+                <Icon id="chevron-left" size="24px"/>
+              </Link>
+              <label className="btn viewer-preview-import-btn">
+                <input type="file" onChange={handleFileInputChange} className="sr-only" accept="application/pdf, application/epub+zip"/>
+                <span>Select File</span>
+              </label>
+            </div>
+          )}
+        </div>
         {notification?.type === "warning" && (
           <div className="viewer-file-preview-warning">
             <div className="viewer-file-preview-warning-main">
@@ -41,6 +57,7 @@ export default function FilePreview({ file, user, notification, dismissNotificat
           </div>
         )}
       </div>
+      {loading && <Spinner className="viewer-preview-spinner" noMask/> }
     </div>
   );
 }

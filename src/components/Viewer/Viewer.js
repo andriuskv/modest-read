@@ -17,7 +17,7 @@ export default function Viewer() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { id } = useParams();
-  const [state, setState] = useState({ loading: true });
+  const [state, setState] = useState({});
   const [settings, setSettings] = useState(() => settingsService.getSettings());
   const [fileLoadMessage, setFileLoadMessage] = useState(null);
   const [marginModal, setMarginModal] = useState(null);
@@ -49,12 +49,19 @@ export default function Viewer() {
       return;
     }
 
-    if (state.loading && !state.filePreviewVisible) {
-      initViewer(viewerRef.current, {
-        blob: state.currentFile,
-        metadata: state.file
-      });
+    if (!state.loading && !state.filePreviewVisible) {
+      initToolbar();
     }
+
+    function handleFileUpload(event) {
+      if (id === "open") {
+        return;
+      }
+      const [file] = event.detail;
+
+      uploadFile(file);
+    }
+
     window.addEventListener("files", handleFileUpload);
 
     return () => {
@@ -99,7 +106,20 @@ export default function Viewer() {
       file.type = file.type || "pdf";
 
       if (cachedFile && cachedFile.name === file.name) {
-        setState({ file, currentFile: cachedFile, loading: true });
+        const currentDate = Date.now();
+
+        setState({ file, currentFile: cachedFile, filePreviewVisible: true , loading: true });
+        await initViewer(viewerRef.current, {
+          blob: cachedFile,
+          metadata: file
+        });
+
+        const diff = Date.now() - currentDate;
+
+        // Show file preview for atleast 200 ms
+        setTimeout(() => {
+          setState({ file, currentFile: cachedFile });
+        }, diff > 200 ? 0 : diff);
       }
       else {
         setState({ file, filePreviewVisible: true });
@@ -149,15 +169,6 @@ export default function Viewer() {
     }
   }
 
-  function handleFileUpload(event) {
-    if (id === "open") {
-      return;
-    }
-    const [file] = event.detail;
-
-    uploadFile(file);
-  }
-
   async function initViewer(container, file) {
     viewerState.current = 2;
     file.metadata.type = file.metadata.type || "pdf";
@@ -174,8 +185,6 @@ export default function Viewer() {
 
       await initEpubViewer(container, file, user);
     }
-    delete state.loading;
-    setState({ ...state });
     updateTitleBarColor();
   }
 
@@ -201,6 +210,19 @@ export default function Viewer() {
     setTitleBarColor();
   }
 
+  async function initToolbar() {
+    if (state.file.type === "pdf") {
+      const { initToolbar } = await import("./pdf-viewer");
+
+      await initToolbar();
+    }
+    else if (state.file.type === "epub") {
+      const { initToolbar } = await import("./epub-viewer");
+
+      await initToolbar();
+    }
+  }
+
   function setTitleBarColor(color = "#232225") {
     const element = document.querySelector("meta[name=theme-color]");
     element.content = color;
@@ -224,7 +246,12 @@ export default function Viewer() {
     if (hash === state.file.hash) {
       if (state.filePreviewVisible) {
         hideFileLoadMessage();
-        setState({ file: state.file, currentFile: file, loading: true });
+        setState({ file: state.file, currentFile: file, filePreviewVisible: true , loading: true });
+        await initViewer(viewerRef.current, {
+          blob: file,
+          metadata: state.file
+        });
+        setState({ file: state.file, currentFile: file });
         fileService.cacheFile(hash, file);
       }
       else {
@@ -284,7 +311,14 @@ export default function Viewer() {
       setDocumentTitle(fileMetadata.name);
     }
     setViewportMetaTag();
-    setState({ file: fileMetadata, currentFile: file, reload: true, loading: true });
+
+    // Don't show file preview if another file is already open
+    setState({ file: fileMetadata, currentFile: file, filePreviewVisible: !state.currentFile, reload: true, loading: true });
+    await initViewer(viewerRef.current, {
+      blob: file,
+      metadata: fileMetadata
+    });
+    setState({ file: fileMetadata, currentFile: file });
   }
 
   function loadPreviewFile() {
@@ -343,21 +377,22 @@ export default function Viewer() {
   return (
     <>
       {state.filePreviewVisible ? (
-        <FilePreview file={state.file} user={user} notification={fileLoadMessage}
+        <FilePreview file={state.file} user={user} notification={fileLoadMessage} loading={state.loading}
           dismissNotification={hideFileLoadMessage}
           loadPreviewFile={loadPreviewFile}/>
       ) : null}
-      {state.file && !state.filePreviewVisible && (
+      {state.file ? (
         <>
           <Toolbar file={state.file}
+            shouldBeHidden={state.filePreviewVisible}
             settings={settings}
             updateTitleBarColor={updateTitleBarColor}
             setViewerSettings={setViewerSettings}
             showMarginModal={showMarginModal}
             exitViewer={exitViewer}/>
         </>
-      )}
-      {state.loading && <Spinner/>}
+      ) : null}
+      {!state.filePreviewVisible && state.loading && <Spinner/>}
       <div id="js-viewer" className="viewer" ref={viewerRef}></div>
       <div id="js-viewer-outline" className="viewer-outline-container"></div>
       {marginModal && (

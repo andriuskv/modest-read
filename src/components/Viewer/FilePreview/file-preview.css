@@ -1,31 +1,102 @@
-.viewer-file-preview-container {
+@import "../../../styles/mixins.css";
+
+.viewer-preview-container {
+  z-index: 10;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-xl);
+  min-height: 100dvh;
+  background-color: var(--color-grey-80);
 
-  @media (max-width: 480px) {
+  .banner-image {
+    margin-block: 12dvh;
+  }
+
+  @media (width <= 480px) {
     padding: var(--space-xl) var(--space-md);
   }
 }
 
-.viewer-file-preview {
+.viewer-preview {
   position: relative;
-  max-width: 400px;
+  max-width: 360px;
   width: 100%;
+  padding: var(--space-xl);
 }
 
-.viewer-file-preview-import-btn {
+.viewer-preview-image-container {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 162px;
+  height: 240px;
+  margin-bottom: var(--space-xxxl);
+  margin-inline: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--color-grey-40);
+  background-color: var(--color-grey-50);
+}
+
+.viewer-preview-info-author {
+  margin-bottom: var(--space-md);
+  font-size: var(--text-sm);
+}
+
+.viewer-preview-info-title {
+  @mixin truncate-second-line;
+
+  word-break: break-word;
+  line-height: 1.4;
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+.viewer-preview-info-title-icon {
+  display: inline;
+  margin-right: var(--space-sm);
+  transform: translateY(var(--space-sm));
+}
+
+.viewer-preview-secondary-info {
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--color-grey-10);
+  line-height: 1.4;
+}
+
+.viewer-preview-info-filename {
+  @mixin truncate-second-line;
+
+  word-break: break-all;
+}
+
+.viewer-preview-bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-grey-50);
+}
+
+.viewer-preview-import-btn {
   margin-left: auto;
   background-color: var(--color-primary);
 
-  &:hover, &:focus-within {
+  &:hover, &:has(:focus-visible) {
     background-color: var(--color-primary-10);
   }
 
-  &:focus-within {
+  &:has(:focus-visible) {
     box-shadow: inset 0 0 0 2px var(--color-white);
   }
+}
+
+.viewer-preview-spinner {
+  margin-block: auto;
 }
 
 .viewer-file-preview-warning {

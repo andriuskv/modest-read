@@ -14,12 +14,20 @@
   background-color: var(--color-grey-70);
   transition: 0.2s transform;
 
-  &.visible {
+  &.revealed {
     display: flex;
   }
 
   &.hiding {
     transform: translateY(-100%);
+  }
+
+  &.hidden {
+    display: none;
+
+    & + .viewer-toolbar-toggle-btn  {
+      display: none;
+    }
   }
 
   @media (width <= 480px) {
