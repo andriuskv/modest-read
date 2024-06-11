@@ -299,12 +299,6 @@ body {
     background-color: var(--color-white-20);
   }
 
-  &::-moz-range-track {
-    height: 6px;
-    border-radius: 999px;
-    background-color: var(--color-white-20);
-  }
-
   &::-webkit-slider-thumb {
     appearance: none;
     width: 16px;
@@ -313,6 +307,14 @@ body {
     border-radius: 50%;
     background-color: var(--color-primary);
     transform: translateY(calc(-50% + 3px));
+  }
+}
+
+.range-input {
+  &::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background-color: var(--color-white-20);
   }
 
   &::-moz-range-thumb {
