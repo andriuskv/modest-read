@@ -40,6 +40,11 @@
   background-color: var(--color-grey-50);
 }
 
+.viewer-preview-image {
+  height: 100%;
+  object-fit: cover;
+}
+
 .viewer-preview-info-author {
   margin-bottom: var(--space-md);
   font-size: var(--text-sm);

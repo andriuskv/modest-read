@@ -77,15 +77,24 @@ function resizeImageBlob(blob) {
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+      const width = 162;
+      const height = 240;
 
+      if (img.width > img.height) {
+        img.width = img.width / (img.height / height);
+        img.height = height;
+      }
+      else {
+        img.height = img.height / (img.width / width);
+        img.width = width;
+      }
       canvas.width = img.width;
       canvas.height = img.height;
+
       ctx.drawImage(img, 0, 0, img.width, img.height);
 
       resolve(canvas.toDataURL("image/jpeg", 0.8));
     };
-    img.width = 162;
-    img.height = 240;
     img.src = blob;
   });
 }

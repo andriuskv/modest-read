@@ -20,7 +20,7 @@ export default function FilePreview({ file, user, loading, notification, dismiss
           <Notification notification={notification} margin="bottom" dismiss={dismissNotification}/>
         )}
         <div className="viewer-preview-image-container">
-          <img src={file.coverImage} draggable="false" alt=""/>
+          <img src={file.coverImage} className="viewer-preview-image" draggable="false" alt=""/>
         </div>
         <div>
           {file.author && <div className="viewer-preview-info-author">{file.author}</div>}

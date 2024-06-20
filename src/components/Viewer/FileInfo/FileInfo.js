@@ -33,7 +33,7 @@ export default function FileInfo({ file }) {
       }}
       body={{ className: "file-info" }}>
       <div className="file-info-image-container">
-        <img src={file.coverImage} alt=""/>
+        <img src={file.coverImage} className="file-info-image" draggable="false" alt=""/>
       </div>
       <div className="file-info-items">
         {renderTitle()}

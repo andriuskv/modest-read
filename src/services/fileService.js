@@ -203,7 +203,7 @@ function resetFileCache() {
     event.preventDefault();
 
     for (const clipboardItem of clipboardItems) {
-      const types = clipboardItem.types?.filter(type => type.startsWith("application/pdf") || type.startsWith("application/epub+zip"));
+      const types = clipboardItem.types?.filter(type => isSupportedMimeType(type));
 
       for (const type of types) {
         const blob = await clipboardItem.getType(type);
