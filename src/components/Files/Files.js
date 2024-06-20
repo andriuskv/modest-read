@@ -221,7 +221,7 @@ export default function Files() {
       let message = "";
 
       if (!supportedFiles.length) {
-        message = "File is not supported.";
+        message = "No supported files found.";
       }
       else if (files.find(({ name }) => name === importedFiles[0].name)) {
         message = "File already exist.";
@@ -239,9 +239,15 @@ export default function Files() {
       return;
     }
     const duplicateFiles = [];
+    const invalidFiles = [];
     const newFiles = [];
+    const sizeLimit = 100 * 1000 * 1000;
 
     for (const file of supportedFiles) {
+      if (file.size > sizeLimit) {
+        invalidFiles.push(file.name);
+        continue;
+      }
       const foundFile = files.find(({ name }) => name === file.name);
 
       if (foundFile) {
@@ -268,16 +274,18 @@ export default function Files() {
       }
     }
 
-    if (duplicateFiles.length) {
-      if (duplicateFiles.length === importedFiles.length) {
-        setNotification({ value: "Files already exist." });
+    if (duplicateFiles.length || invalidFiles.length) {
+      const message = "Duplicate and files exceeding 100 MB were skipped.";
+
+      if (duplicateFiles.length + invalidFiles.length === importedFiles.length) {
+        setNotification({ value: `No file were imported. ${message}` });
         setCategoryMenuVisibility(false);
         return;
       }
       else {
         setNotification({
-          value: "Some of the files were not imported because they already exist.",
-          files: duplicateFiles,
+          value: message,
+          files: duplicateFiles.concat(invalidFiles),
           expandable: true
         });
       }

@@ -103,7 +103,6 @@ export default function Viewer() {
 
     if (file?.id) {
       const cachedFile = await fileService.fetchCachedFile(file.hash);
-      file.type = file.type || "pdf";
 
       if (cachedFile && cachedFile.name === file.name) {
         const currentDate = Date.now();
@@ -116,10 +115,9 @@ export default function Viewer() {
 
         const diff = Date.now() - currentDate;
 
-        // Show file preview for atleast 200 ms
         setTimeout(() => {
           setState({ file, currentFile: cachedFile });
-        }, diff > 200 ? 0 : diff);
+        }, diff > 500 ? 0 : 500 - diff);
       }
       else {
         setState({ file, filePreviewVisible: true });
@@ -143,10 +141,7 @@ export default function Viewer() {
     if (toolbarVisible) {
       setTitleBarColor("#2d2c30");
     }
-    else if (state.file?.type === "pdf") {
-      setTitleBarColor();
-    }
-    else {
+    else if (state.file?.type === "epub") {
       const colors = {
         black: "black",
         white: "white",
@@ -154,6 +149,9 @@ export default function Viewer() {
         orange: "#fbf0d9"
       };
       setTitleBarColor(colors[settings.epub.theme]);
+    }
+    else {
+      setTitleBarColor();
     }
   }
 
@@ -171,8 +169,6 @@ export default function Viewer() {
 
   async function initViewer(container, file) {
     viewerState.current = 2;
-    file.metadata.type = file.metadata.type || "pdf";
-
     container.classList.add("visible");
 
     if (file.metadata.type === "pdf") {

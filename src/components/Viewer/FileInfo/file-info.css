@@ -7,7 +7,7 @@
   transform: translateY(calc(var(--space-md) + var(--space-xs)));
   white-space: normal;
 
-  @media (max-width: 480px) {
+  @media (width < 480px) {
     flex-direction: column;
     align-items: center;
     width: 320px;
@@ -27,12 +27,17 @@
   box-shadow: 0 0 0 1px var(--color-grey-40);
   background-color: var(--color-grey-50);
 
-  @media (max-width: 480px) {
+  @media (width < 480px) {
     width: auto;
     height: auto;
     margin-right: 0;
     margin-bottom: var(--space-xl);
   }
+}
+
+.file-info-image {
+  height: 100%;
+  object-fit: cover;
 }
 
 .file-info-items {
