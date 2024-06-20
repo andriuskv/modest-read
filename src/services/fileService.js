@@ -172,15 +172,87 @@ function sortBySortingValue(files, sortBy, sortOrder) {
   });
 }
 
+function isSupportedMimeType(type) {
+  return type.startsWith("application/pdf") || type.startsWith("application/epub+zip");
+}
+
+async function readItems(items) {
+  const filePromises = [];
+  const directoryPromises = [];
+
+  for (const item of items) {
+    if (item.kind === "file" && (item.type === "" || isSupportedMimeType(item.type))) {
+      const entry = item.webkitGetAsEntry();
+
+      if (entry.isDirectory) {
+        directoryPromises.push(readDirectory(entry));
+      }
+      else if (entry.isFile) {
+        filePromises.push(readFile(entry));
+      }
+    }
+  }
+
+  const resolvedItems = await Promise.all([...directoryPromises, ...filePromises]);
+  let files = [];
+
+  for (const item of resolvedItems) {
+    if (Array.isArray(item)) {
+      files = files.concat(item);
+    }
+    else {
+      files.push(item);
+    }
+  }
+
+  return files;
+}
+
+function readDirectory(directory) {
+  return new Promise(resolve => {
+    const reader = directory.createReader();
+    const items = [];
+
+    function readEntries() {
+      reader.readEntries(async entries => {
+        if (entries.length > 0) {
+          for (const entry of entries) {
+            if (entry.isFile) {
+              const file = await readFile(entry);
+
+              if (isSupportedMimeType(file.type)) {
+                items.push(file);
+              }
+            }
+          }
+          // readEntries returns only 100 entries at a time, so we need to call it multiple times.
+          readEntries();
+        } else {
+          resolve(items);
+        }
+      });
+    }
+    readEntries();
+  });
+}
+
+function readFile(entry) {
+  return new Promise(resolve => {
+    entry.file(resolve);
+  });
+}
+
 function handleDragover(event) {
   event.preventDefault();
 }
 
-function handleDrop(event) {
+async function handleDrop(event) {
   event.preventDefault();
 
-  if (event.dataTransfer.files.length) {
-    dispatchCustomEvent("files", event.dataTransfer.files);
+  if (event.dataTransfer.items.length) {
+    const files = await readItems(event.dataTransfer.items);
+
+    dispatchCustomEvent("files", files);
   }
 }
 
