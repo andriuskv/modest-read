@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getElementByAttr, dispatchCustomEvent, getEpubCoverUrl, getFileSizeString } from "../../utils";
 import * as fileService from "../../services/fileService";
 import { getSettings, setSettings } from "../../services/settingsService";
-import { startCounting, stopCounting } from "../../services/statsService";
+import { startCounting, resetCounting } from "../../services/statsService";
 import { initOutline } from "./outline";
 
 const settings = getSettings();
@@ -49,7 +49,7 @@ async function initEpubViewer(container, { metadata, blob }, loggedUser) {
   window.addEventListener("blur", blurIframe);
 
   updateFile(metadata, { accessedAt: Date.now() }, true);
-  startCounting(user);
+  startCounting(!user.email);
 }
 
 function blurIframe() {
@@ -363,7 +363,7 @@ function cleanupEpubViewer(reloading) {
   cleanupController = null;
   document.body.style.overscrollBehavior = "";
   updateFile(fileMetadata, dataToSave, true);
-  stopCounting();
+  resetCounting();
 
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("dropdown-visible", handleDropdownVisibility);

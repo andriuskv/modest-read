@@ -1,14 +1,15 @@
 import { getDaysInMonth, getCurrentDate, getResponse } from "utils";
 
 let readingTime = JSON.parse(localStorage.getItem("reading-time")) || {};
-let isLocalUser = true;
+let countLocally = true;
 let timeStamp = 0;
 let timeStampIntervalId = 0;
 
-function startCounting(user) {
-  isLocalUser = !user.email;
+function startCounting(local) {
+  countLocally = local;
   timeStamp = Date.now();
   timeStampIntervalId = setInterval(saveTimeStamp, 30000);
+  document.addEventListener("visibilitychange", handlePageVisibilityChange);
 }
 
 function stopCounting() {
@@ -16,6 +17,21 @@ function stopCounting() {
     clearInterval(timeStampIntervalId);
     timeStampIntervalId = 0;
     saveTimeStamp();
+  }
+}
+
+function resetCounting() {
+  countLocally = false;
+  stopCounting();
+  document.removeEventListener("visibilitychange", handlePageVisibilityChange);
+}
+
+function handlePageVisibilityChange() {
+  if (document.hidden) {
+    stopCounting();
+  }
+  else if (!timeStampIntervalId) {
+    startCounting(countLocally);
   }
 }
 
@@ -54,7 +70,7 @@ function saveTimeStamp() {
 
   timeStamp = Date.now();
 
-  if (isLocalUser) {
+  if (countLocally) {
     readingTime[year] ??= {};
     readingTime[year][month] ??= {};
     readingTime[year][month][day] = Number(readingTime[year][month][day] || 0) + Math.round(diff / 1000);
@@ -98,7 +114,7 @@ function resetUserStatistics() {
 
 export {
   startCounting,
-  stopCounting,
+  resetCounting,
   fetchStatistics,
   resetStatistics,
   getCalendarYear
