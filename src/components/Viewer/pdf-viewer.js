@@ -3,7 +3,7 @@ import { dispatchCustomEvent, getPdfInstance, pageToDataURL, parsePdfMetadata, s
 import * as fileService from "services/fileService";
 import { getSettings, setSettings } from "services/settingsService";
 import LinkService from "services/viewerLinkService";
-import { startCounting, stopCounting } from "services/statsService";
+import { startCounting, resetCounting } from "services/statsService";
 import { initOutline } from "./outline";
 
 const settings = getSettings();
@@ -105,7 +105,7 @@ async function initPdfViewer(container, { metadata, blob }, loggedUser) {
   params.accessedAt = Date.now();
 
   updateFile(metadata, params, true);
-  startCounting(user);
+  startCounting(!user.email);
 }
 
 function updateFile(file, data, skipWaiting = false) {
@@ -131,7 +131,7 @@ function cleanupPdfViewer(reloading) {
     pdfInstance = null;
     annotationLayer = null;
 
-    stopCounting();
+    resetCounting();
     clearTimeout(saveTimeoutId);
     cleanupViewMode();
     cleanupPageSelection();
