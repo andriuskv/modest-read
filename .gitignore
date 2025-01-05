@@ -19,3 +19,6 @@ yarn-debug.log*
 yarn-error.log*
 
 /config
+.dockerignore
+Dockerfile
+fly.toml

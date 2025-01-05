@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, use } from "react";
 import * as userService from "services/userService";
 
 const UserContext = createContext();
@@ -55,11 +55,11 @@ function UserProvider({ children }) {
     return false;
   }
 
-  return <UserContext.Provider value={{ user, registerUser, loginUser, logoutUser }}>{children}</UserContext.Provider>;
+  return <UserContext value={{ user, registerUser, loginUser, logoutUser }}>{children}</UserContext>;
 }
 
 function useUser() {
-  return useContext(UserContext);
+  return use(UserContext);
 }
 
 export {
