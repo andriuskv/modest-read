@@ -103,8 +103,8 @@ export default function Toolbar({ file, shouldBeHidden, settings, setViewerSetti
                 </button>
               </div>
               <div id="js-viewer-toolbar-zoom-dropdown-options" className="viewer-toolbar-zoom-dropdown-options">
-                {file.type === "pdf" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-width">Fit width</button>}
-                {file.type === "pdf" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-page">Fit page</button>}
+                {file.type !== "epub" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-width">Fit width</button>}
+                {file.type !== "epub" && <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="fit-page">Fit page</button>}
                 <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="0.5">50%</button>
                 <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="0.75">75%</button>
                 <button className="btn text-btn dropdown-btn viewer-toolbar-dropdown-btn" data-value="1">100%</button>
@@ -140,7 +140,7 @@ export default function Toolbar({ file, shouldBeHidden, settings, setViewerSetti
             }}
             body={{ className: "viewer-toolbar-dropdown" }}
             container={{ className: "viewer-toolbar-dropdown-container"}}>
-            {file.type === "pdf" && (
+            {file.type !== "epub" && (
               <div className="viewer-toolbar-dropdown-group">
                 <button id="js-viewer-rotate-btn" className="btn icon-text-btn dropdown-btn viewer-toolbar-dropdown-btn">
                   <Icon id="rotate"/>

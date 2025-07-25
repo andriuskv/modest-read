@@ -30,6 +30,9 @@ function initSettings() {
     pdf: {
       viewMode: "multi",
       invertColors: false
+    },
+    image: {
+      viewMode: "multi"
     }
   });
 }

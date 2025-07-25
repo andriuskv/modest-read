@@ -3,6 +3,7 @@ import { dispatchCustomEvent, getResponse } from "utils";
 
 const store = createStore("modest-keep", "files");
 const cachedFilesStore = createStore("modest-keep-file-cache", "files");
+const imageBlobs = {};
 let fileCache = [];
 
 async function fetchFiles(settings, user) {
@@ -109,7 +110,11 @@ function saveFile(file, userId) {
 }
 
 async function cacheFile(hash, file) {
-  set(hash, file, cachedFilesStore);
+  const sizeLimit = 100 * 1000 * 1000;
+
+  if (file.size < sizeLimit) {
+    set(hash, file, cachedFilesStore);
+  }
 }
 
 async function deleteCachedFile(hash) {
@@ -172,8 +177,14 @@ function sortBySortingValue(files, sortBy, sortOrder) {
   });
 }
 
+async function deflateZip(file) {
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  return zip.loadAsync(file);
+}
+
 function isSupportedMimeType(type) {
-  return type.startsWith("application/pdf") || type.startsWith("application/epub+zip");
+  return type.startsWith("application/pdf") || type.startsWith("application/epub+zip") || type === "application/zip" || type === "application/vnd.comicbook+zip";
 }
 
 async function readItems(items) {
@@ -256,6 +267,17 @@ async function handleDrop(event) {
   }
 }
 
+function setImageBlobs(fileId, blobs) {
+  imageBlobs[fileId] = blobs;
+}
+
+function getImageBlobs(fileId) {
+  return imageBlobs[fileId];
+}
+function removeImageBlobs(fileId) {
+  delete imageBlobs[fileId];
+}
+
 function getFileCache() {
   return fileCache;
 }
@@ -322,6 +344,10 @@ export {
   cacheFile,
   findFile,
   sortFiles,
+  deflateZip,
+  setImageBlobs,
+  getImageBlobs,
+  removeImageBlobs,
   getFileCache,
   resetFileCache
 };
