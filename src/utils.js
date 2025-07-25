@@ -135,6 +135,25 @@ async function getEpubCoverUrl(book) {
   }
 }
 
+function getImageDimensions(blob) {
+  const img = new Image();
+  const url = URL.createObjectURL(blob);
+
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      const { naturalWidth: width, naturalHeight: height } = img;
+
+      URL.revokeObjectURL(url);
+      resolve({ width, height });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not get image dimensions."));
+    };
+    img.src = url;
+  });
+}
+
 function getFileSizeString(bytes) {
   const suffixes = ["B", "kB", "MB", "GB"];
   let size = bytes;
@@ -310,6 +329,8 @@ export {
   getPdfInstance,
   parsePdfMetadata,
   getEpubCoverUrl,
+  resizeImageBlob,
+  getImageDimensions,
   getFileSizeString,
   getPageElementBox,
   scrollToPage,

@@ -207,3 +207,26 @@
   height: 0;
   display: none;
 }
+
+.viewer-image-container {
+  position: relative;
+  width: var(--width);
+  height: var(--height);
+  margin-inline: auto;
+
+  &.swap .viewer-page-image {
+    width: var(--height);
+    height: var(--width);
+  }
+}
+
+.viewer-page-image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: top left;
+  transform: translate(-50%, -50%);
+  rotate: var(--rotation);
+  width: var(--width);
+  height: var(--height);
+}

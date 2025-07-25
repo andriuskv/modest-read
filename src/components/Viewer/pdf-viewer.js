@@ -142,7 +142,7 @@ function cleanupPdfViewer(reloading) {
   cleanupController = null;
   document.body.style.overscrollBehavior = "";
   document.querySelector(".hiddenCanvasElement")?.remove();
-  pdfElement.style.setProperty("--scale-factor", "");
+  pdfElement.style.setProperty("--total-scale-factor", "");
   unregisterIntersectionObserver();
   updateFile(fileMetadata, dataToSave, true);
 
@@ -158,12 +158,12 @@ function cleanupPdfViewer(reloading) {
 
 async function initScale(scale) {
   if (scale.name === "custom") {
-    pdfElement.style.setProperty("--scale-factor", scale.currentScale);
+    pdfElement.style.setProperty("--total-scale-factor", scale.currentScale);
   }
   else {
     const scaleValue = scale.currentScale ?? await getSelectedScale(scale.name);
     scale.currentScale = scaleValue;
-    pdfElement.style.setProperty("--scale-factor", scaleValue);
+    pdfElement.style.setProperty("--total-scale-factor", scaleValue);
   }
 }
 
@@ -478,7 +478,7 @@ function getVisiblePageNumber(views, top) {
     const offset = view.top + (view.height / 2);
     const offset2 = view2.top + (view2.height / 2);
 
-    if (top >= offset && top <= offset2) {
+    if (top >= offset && top <= offset2 || i === views.length - 2 && top >= offset2) {
       return i + 2;
     }
   }
@@ -853,7 +853,7 @@ function setScale(value, name = "custom", noDelay) {
     scale.displayValue = `${Math.round(value * 100 / defaultScale)}%`;
   }
 
-  pdfElement.style.setProperty("--scale-factor", value);
+  pdfElement.style.setProperty("--total-scale-factor", value);
 
   if (settings.pdf.viewMode === "multi") {
     const { top } = getPageElementBox(pageNumber, pdfElement.children);

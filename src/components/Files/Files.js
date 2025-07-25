@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getFileSizeString, computeHash, delay } from "utils";
+import { setDocumentTitle, pageToDataURL, getPdfInstance, parsePdfMetadata, getEpubCoverUrl, getImageDimensions, getFileSizeString, computeHash, delay, resizeImageBlob } from "utils";
 import { useUser } from "contexts/user-context";
 import * as fileService from "services/fileService";
 import { getSettings, setSettings, setSetting } from "services/settingsService";
@@ -115,6 +115,54 @@ export default function Files() {
       filesToSave.push(file);
     }
 
+    async function loadZipFile(file) {
+      const [hash, zip] = await Promise.all([
+        computeHash(file.blob),
+        fileService.deflateZip(file.blob)
+      ]);
+      const imageBlobs = [];
+
+      file.pageCount = 0;
+      file.viewMode = "multi";
+      file.hash = hash;
+      file.images = [];
+
+      fileService.cacheFile(hash, file.blob);
+
+      delete file.loading;
+      delete file.blob;
+
+      for (const item of Object.values(zip.files)) {
+        if (item.dir) {
+          continue;
+        }
+        const fileName = item.name;
+        const fileExtension = fileName.split(".").at(-1).toLowerCase();
+
+        if (["jpg", "jpeg", "png", "gif", "webp"].includes(fileExtension)) {
+          const imageBlob = await zip.files[fileName].async("blob");
+          const dims = await getImageDimensions(imageBlob);
+          const imageFile = {
+            id: uuidv4(),
+            date: new Date(item.date).getTime(),
+            name: fileName,
+            size: imageBlob.size,
+            ...dims,
+            type: "image",
+            sizeString: getFileSizeString(imageBlob.size)
+          };
+          imageBlobs.push(imageBlob);
+          file.images.push(imageFile);
+        }
+      }
+      file.pageCount = file.images.length;
+      file.coverImage = imageBlobs.length ? await resizeImageBlob(URL.createObjectURL(imageBlobs[0])) : null;
+      fileService.setImageBlobs(file.id, imageBlobs);
+      setFiles([...files]);
+      loadingCount -= 1;
+      filesToSave.push(file);
+    }
+
     async function loadFile(file) {
       loadingCount += 1;
 
@@ -123,6 +171,9 @@ export default function Files() {
       }
       else if (file.type === "epub") {
         loadEpubFile(file);
+      }
+      else if (file.type === "zip" || file.type === "cbz") {
+        loadZipFile(file);
       }
     }
 
@@ -215,7 +266,7 @@ export default function Files() {
   }
 
   function processFiles(importedFiles) {
-    const supportedFiles = Array.from(importedFiles).filter(file => file.name.endsWith(".pdf") || file.name.endsWith(".epub"));
+    const supportedFiles = Array.from(importedFiles).filter(file => file.name.endsWith(".pdf") || file.name.endsWith(".epub") || file.name.endsWith(".zip") || file.name.endsWith(".cbz"));
 
     if (importedFiles.length === 1) {
       let message = "";
@@ -244,16 +295,15 @@ export default function Files() {
     const sizeLimit = 100 * 1000 * 1000;
 
     for (const file of supportedFiles) {
-      if (file.size > sizeLimit) {
-        invalidFiles.push(file.name);
-        continue;
-      }
       const foundFile = files.find(({ name }) => name === file.name);
 
       if (foundFile) {
         duplicateFiles.push(file.name);
       }
       else {
+        if (file.size > sizeLimit) {
+          invalidFiles.push(file.name);
+        }
         const params = {};
 
         if (!user.email) {
@@ -275,16 +325,17 @@ export default function Files() {
     }
 
     if (duplicateFiles.length || invalidFiles.length) {
-      const message = "Duplicate and files exceeding 100 MB were skipped.";
-
-      if (duplicateFiles.length + invalidFiles.length === importedFiles.length) {
-        setNotification({ value: `No file were imported. ${message}` });
+      if (duplicateFiles.length === importedFiles.length) {
+        setNotification({ value: "No file were imported" });
         setCategoryMenuVisibility(false);
         return;
       }
       else {
+        const dupMessage = "Some duplicate files were skipped.";
+        const sizeMessage = "Files exceeding 100 MB will not be saved.";
+
         setNotification({
-          value: message,
+          value: `${duplicateFiles.length ? `${dupMessage}${invalidFiles.length ? " " : ""}`: ""}${invalidFiles.length ? sizeMessage : ""}`,
           files: duplicateFiles.concat(invalidFiles),
           expandable: true
         });
@@ -481,6 +532,7 @@ export default function Files() {
 
       if (success) {
         files.splice(index, 1);
+        fileService.removeImageBlobs(file.id);
         removeCategoryItem(file.id);
         saveCategories(state.categories);
         setFiles([...files]);

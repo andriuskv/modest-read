@@ -181,6 +181,11 @@ export default function Viewer() {
 
       await initEpubViewer(container, file, user);
     }
+    else if (file.metadata.type === "zip" || file.metadata.type === "cbz") {
+      const { initImageViewer } = await import("./image-viewer");
+
+      await initImageViewer(container, file, user);
+    }
     updateTitleBarColor();
   }
 
@@ -203,6 +208,11 @@ export default function Viewer() {
 
       cleanupEpubViewer(reloading);
     }
+    else if (state.file.type === "zip" || state.file.type === "cbz") {
+      const { cleanupImageViewer } = await import("./image-viewer");
+
+      cleanupImageViewer(reloading);
+    }
     setTitleBarColor();
   }
 
@@ -217,6 +227,11 @@ export default function Viewer() {
 
       await initToolbar();
     }
+    else if (state.file.type === "zip" || state.file.type === "cbz") {
+      const { initToolbar } = await import("./image-viewer");
+
+      await initToolbar();
+    }
   }
 
   function setTitleBarColor(color = "#232225") {
@@ -228,8 +243,9 @@ export default function Viewer() {
     if (!state.file) {
       return;
     }
+    const supportdFiles = ["pdf", "epub", "zip", "cbz"];
 
-    if (!["pdf", "epub"].includes(state.file.type)) {
+    if (!supportdFiles.includes(state.file.type)) {
       setFileLoadMessage({
         type: "negative",
         value: "File format is not supported.",
@@ -286,6 +302,10 @@ export default function Viewer() {
       else if (fileType === "epub") {
         const { getNewEpubFile } = await import("./epub-viewer");
         fileMetadata = await getNewEpubFile(file, user);
+      }
+      else if (fileType === "zip" || fileType === "cbz") {
+        const { getNewArchiveFile } = await import("./image-viewer");
+        fileMetadata = await getNewArchiveFile(file, user, fileType);
       }
       fileMetadata.hash = hash;
 
