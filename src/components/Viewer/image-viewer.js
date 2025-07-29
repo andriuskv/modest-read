@@ -22,13 +22,19 @@ let views = [];
 let mouseDownStartPos = null;
 let cleanupController = null;
 let pageUnloadTimeoutIds = {};
+let outlineVisible = false;
+let outlineRendered = false;
 
 async function initImageViewer(container, { metadata, blob }, loggedUser) {
   const zip = await fileService.deflateZip(blob);
+  const imageBlobs = [];
 
   for (const item of Object.values(metadata.images)) {
-    item.blob = await zip.files[item.name].async("blob");
+    const blob = await zip.files[item.name].async("blob");
+    item.blob = blob;
+    imageBlobs.push(blob);
   }
+  fileService.setImageBlobs(metadata.id, imageBlobs);
   user = loggedUser;
   containerElement = container;
   fileMetadata = metadata;
@@ -82,6 +88,7 @@ function cleanupImageViewer(reloading) {
     cleanupViewMode();
     cleanupPageSelection();
   }
+  cleanupOutline();
   cleanupController.abort();
   cleanupController = null;
   document.body.style.overscrollBehavior = "";
@@ -466,6 +473,97 @@ function initToolbar() {
   initZoomOptions(scale);
   initPage();
   initViewMode();
+  initOutline();
+}
+
+async function initOutline() {
+  const toggleBtn = document.getElementById("js-viewer-outline-toggle-btn");
+
+  toggleBtn.classList.add("visible");
+  toggleBtn.addEventListener("click", toggleOutline);
+}
+
+async function toggleOutline() {
+  const container = document.getElementById("js-viewer-outline");
+
+  outlineVisible = !outlineVisible;
+  container.classList.toggle("visible", outlineVisible);
+  document.documentElement.style.overflow = outlineVisible ? "hidden" : "";
+
+  if (!outlineVisible) {
+    return;
+  }
+
+  if (!outlineRendered) {
+    const blobs = fileService.getImageBlobs(fileMetadata.id);
+    const div = document.createElement("div");
+    const items = [];
+
+    for (const [index, blob] of Object.entries(blobs)) {
+      items.push(`
+        <li class="viewer-outline-image-list-item">
+          <img src="${URL.createObjectURL(blob)}" class="viewer-outline-image-list-img" data-outline-index="${index}"/>
+        </li>
+      `);
+    }
+    div.classList.add("viewer-outline");
+    div.insertAdjacentHTML("beforeend", `<ul class="viewer-outline-image-list">${items.join("\n")}</ul>`);
+    container.append(div);
+    container.addEventListener("click", handleOutlineClick);
+    outlineRendered = true;
+  }
+  clearActiveOutlineItem();
+
+  const element = document.querySelector(`[data-outline-index="${pageNumber - 1}"]`);
+
+  if (element) {
+    element.parentElement.classList.add("active");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      element.scrollIntoView({
+        block: "center",
+        inline: "center"
+      });
+    }));
+  }
+}
+
+function clearActiveOutlineItem() {
+  for (const element of document.querySelectorAll(".viewer-outline-image-list-item.active")) {
+    element.classList.remove("active");
+  }
+}
+
+function cleanupOutline() {
+  const container = document.getElementById("js-viewer-outline");
+  const toggleBtn = document.getElementById("js-viewer-outline-toggle-btn");
+  outlineRendered = false;
+  outlineVisible = false;
+
+  if (container.firstElementChild) {
+    toggleBtn.removeEventListener("click", toggleOutline);
+    container.firstElementChild.remove();
+  }
+  container.classList.remove("visible");
+  container.removeEventListener("click", handleOutlineClick);
+  toggleBtn.classList.remove("visible");
+}
+
+function handleOutlineClick(event) {
+  if (event.target === event.currentTarget) {
+    outlineVisible = false;
+    event.currentTarget.classList.remove("visible");
+    document.documentElement.style.overflow = "";
+    return;
+  }
+  const element = event.target.closest("[data-outline-index]");
+
+  if (element) {
+    const index = Number(element.getAttribute("data-outline-index"));
+
+    clearActiveOutlineItem();
+    element.parentElement.classList.add("active");
+    setPage(index + 1);
+  }
 }
 
 function initZoomOptions() {
@@ -592,6 +690,7 @@ function initPage() {
   pageInputElement.addEventListener("keydown", handlePageInputKeydown);
 
   containerElement.style.setProperty("--rotation", `${rotation}deg`);
+  document.getElementById("js-viewer-outline").style.setProperty("--rotation", `${rotation}deg`);
   document.getElementById("js-viewer-rotate-btn").addEventListener("click", rotatePage);
 }
 
@@ -654,6 +753,7 @@ function rotatePage() {
 
   rotation = nextRotation === 360 ? 0 : nextRotation;
   containerElement.style.setProperty("--rotation", `${rotation}deg`);
+  document.getElementById("js-viewer-outline").style.setProperty("--rotation", `${rotation}deg`);
 
   updateFile(fileMetadata, { rotation });
 
