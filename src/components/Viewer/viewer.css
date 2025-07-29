@@ -230,3 +230,26 @@
   width: var(--width);
   height: var(--height);
 }
+
+.viewer-outline-image-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.viewer-outline-image-list-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+
+  &.active {
+    outline: 2px solid var(--color-primary);
+  }
+}
+
+.viewer-outline-image-list-img {
+  max-height: 200px;
+  rotate: var(--rotation);
+}
